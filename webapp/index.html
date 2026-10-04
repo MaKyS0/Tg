@@ -59,8 +59,8 @@
     }
     .tabs { display: flex; gap: 6px; }
     .tab {
-      flex: 1; padding: 9px; border: none; border-radius: 10px;
-      background: transparent; color: var(--hint); font-size: 15px; font-weight: 700; cursor: pointer;
+      flex: 1; padding: 9px 4px; border: none; border-radius: 10px;
+      background: transparent; color: var(--hint); font-size: 14px; font-weight: 700; cursor: pointer;
     }
     .tab.active { background: var(--card); color: var(--text); }
     .list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
@@ -72,7 +72,13 @@
     .item:disabled { opacity: .45; cursor: default; }
     .item.equipped { outline: 2px solid var(--accent); }
     .item.equipped:disabled { opacity: 1; }
-    .icon { font-size: 26px; width: 40px; text-align: center; flex: none; }
+    .icon {
+      width: 42px; height: 42px; border-radius: 13px; flex: none; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.4), inset 0 -3px 6px rgba(0,0,0,.18), 0 3px 8px rgba(0,0,0,.25);
+    }
+    .icon svg { width: 24px; height: 24px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
+    .cur { width: 15px; height: 15px; vertical-align: -2px; }
     .skin-icon {
       width: 40px; height: 40px; border-radius: 50%; flex: none;
       display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px;
@@ -82,6 +88,19 @@
     .desc { color: var(--hint); font-size: 13px; }
     .price { font-weight: 800; color: var(--accent); white-space: nowrap; font-size: 15px; }
     .price.free { color: var(--hint); }
+    .item.maxed:disabled { opacity: .7; }
+    .card { background: var(--card); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .rb-row { display: flex; justify-content: space-between; font-size: 15px; }
+    .rebirth-btn {
+      border: none; border-radius: 12px; padding: 12px; font: inherit; font-weight: 800; font-size: 16px; cursor: pointer;
+      color: #fff; background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 12px rgba(139,92,246,.4);
+    }
+    .rebirth-btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
+    .rebirth-btn.armed { background: linear-gradient(135deg, #ef4444, #f97316); }
+    .section { color: var(--hint); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; padding: 4px 2px 0; }
+    .kbd-hint { display: none; color: var(--hint); font-size: 12px; margin-top: 8px; }
+    @media (hover: hover) { .kbd-hint { display: block; } }
   </style>
 </head>
 <body>
@@ -89,15 +108,19 @@
     <div class="score-box">
       <div class="label">Монеты</div>
       <div id="score">0</div>
-      <div class="stats">За клик: <b id="per-click">1</b> · В секунду: <b id="per-sec">0</b></div>
+      <div class="stats">За клик: <b id="per-click">1</b> · В секунду: <b id="per-sec">0</b> · <span id="gem-icon"></span> <b id="gems">0</b></div>
     </div>
     <div class="coin-wrap">
-      <button id="coin" aria-label="Кликнуть по монетке"></button>
+      <div style="text-align:center">
+        <button id="coin" aria-label="Кликнуть по монетке"></button>
+        <div class="kbd-hint">или нажимай Пробел</div>
+      </div>
     </div>
     <section class="panel">
       <div class="tabs">
         <button class="tab active" data-tab="upgrades">Улучшения</button>
         <button class="tab" data-tab="skins">Скины</button>
+        <button class="tab" data-tab="rebirth">Перерождение</button>
       </div>
       <div class="list" id="list"></div>
     </section>
@@ -108,11 +131,37 @@
     const STORAGE_KEY = "state";
     const LEGACY_KEY = "score";
 
+    const svg = (body) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+    const ICONS = {
+      power:    svg('<path d="M5 3l6.2 15.5 2.4-6.3 6.3-2.4z" fill="currentColor"/><path d="M15.5 15.5l4.5 4.5"/>'),
+      auto:     svg('<circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9M9.5 2.5h5M18.5 5.5l1.5-1.5"/>'),
+      mult:     svg('<path d="M12 2.5l2.4 6.9 6.9 2.4-6.9 2.4L12 21l-2.4-6.8-6.9-2.4 6.9-2.4z" fill="currentColor"/>'),
+      gold:     svg('<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>'),
+      start:    svg('<path d="M5 21V3.5M5 4.5h12l-2.5 4 2.5 4H5" fill="currentColor"/>'),
+      discount: svg('<path d="M3 12.5V4h8.5L21 13.5 13.5 21z"/><circle cx="7.8" cy="8.3" r="1.3" fill="currentColor"/>'),
+      gain:     svg('<path d="M6.5 3h11L22 9.5 12 21 2 9.5z" fill="currentColor" fill-opacity=".35"/><path d="M2 9.5h20M9 3l-2 6.5L12 21l5-11.5L15 3"/>'),
+    };
+    const COIN = '<svg class="cur" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ffd23f" stroke="#d99000" stroke-width="1.4"/><circle cx="8" cy="8" r="3.6" fill="none" stroke="#d99000" stroke-width="1.2"/></svg>';
+    const GEM = '<svg class="cur" viewBox="0 0 16 16"><path d="M4 2h8l3 4-7 8-7-8z" fill="#7fe3ff" stroke="#2590c4" stroke-width="1.2" stroke-linejoin="round"/><path d="M1 6h14M6 2L5 6l3 8 3-8-1-4" fill="none" stroke="#2590c4" stroke-width="1"/></svg>';
+
     const UPGRADES = [
-      { id: "power", icon: "👆", name: "Сила клика",  base: 10,  growth: 1.5, desc: "+1 монета за клик" },
-      { id: "auto",  icon: "🤖", name: "Автокликер",  base: 50,  growth: 1.6, desc: "+1 монета в секунду" },
-      { id: "mult",  icon: "✨", name: "Множитель",   base: 200, growth: 1.8, desc: "+25% ко всему доходу" },
+      { id: "power", name: "Сила клика", base: 10,  growth: 1.5, grad: ["#ffa24a", "#ff5a36"], desc: "+1 монета за клик" },
+      { id: "auto",  name: "Автокликер", base: 50,  growth: 1.6, grad: ["#3ddbe6", "#3b82f6"], desc: "+1 монета в секунду" },
+      { id: "mult",  name: "Множитель",  base: 200, growth: 1.8, grad: ["#c58bff", "#7c3aed"], desc: "+25% ко всему доходу" },
     ];
+
+    // Permanent upgrades bought with gems; they survive rebirths.
+    const PERMS = [
+      { id: "gold",     name: "Золотая жила",      base: 1, growth: 2, grad: ["#ffd23f", "#f59e0b"],
+        desc: (l) => `+50% к доходу · сейчас +${50 * l}%` },
+      { id: "start",    name: "Стартовый капитал", base: 2, growth: 2, grad: ["#3ee0a8", "#059669"],
+        desc: (l) => `Старт с ${fmt(200 * (l + 1))} монет (сейчас ${fmt(200 * l)})` },
+      { id: "discount", name: "Торговец",          base: 3, growth: 2, max: 10, grad: ["#f78fc0", "#db2777"],
+        desc: (l) => `−5% к цене улучшений · сейчас −${5 * l}%` },
+      { id: "gain",     name: "Кристальный дар",   base: 5, growth: 2, grad: ["#6cb4ff", "#6366f1"],
+        desc: (l) => `+25% кристаллов · сейчас +${25 * l}%` },
+    ];
+    const REBIRTH_DIVISOR = 2000; // coins earned in a run for the first gem
 
     const SKINS = [
       { id: "classic", name: "Классика", glyph: "$", bonus: 0,  cost: 0,
@@ -130,6 +179,8 @@
     const scoreEl = document.getElementById("score");
     const perClickEl = document.getElementById("per-click");
     const perSecEl = document.getElementById("per-sec");
+    const gemsEl = document.getElementById("gems");
+    document.getElementById("gem-icon").innerHTML = GEM;
     const coin = document.getElementById("coin");
     const listEl = document.getElementById("list");
     const tabs = document.querySelectorAll(".tab");
@@ -137,6 +188,10 @@
     const defaultState = () => ({
       score: 0,
       lv: { power: 0, auto: 0, mult: 0 },
+      gems: 0,
+      rebirths: 0,
+      earned: 0,
+      perm: { gold: 0, start: 0, discount: 0, gain: 0 },
       owned: ["classic"],
       skin: "classic",
     });
@@ -144,11 +199,20 @@
     let tab = "upgrades";
     let ready = false;
     let saveTimer = null;
+    let rebirthArmed = false;
+    let armTimer = null;
 
-    const fmt = (n) => Math.floor(n).toLocaleString("ru-RU");
+    const compact = new Intl.NumberFormat("ru-RU", { notation: "compact", maximumFractionDigits: 2 });
+    const fmt = (n) => (n >= 1e9 ? compact.format(Math.floor(n)) : Math.floor(n).toLocaleString("ru-RU"));
     const skinById = (id) => SKINS.find((s) => s.id === id) || SKINS[0];
-    const upgradeCost = (u) => Math.floor(u.base * Math.pow(u.growth, state.lv[u.id]));
-    const multiplier = () => 1 + 0.25 * state.lv.mult;
+    const upgradeCost = (u) =>
+      Math.max(1, Math.floor(u.base * Math.pow(u.growth, state.lv[u.id]) * (1 - 0.05 * state.perm.discount)));
+    const permCost = (u) => Math.floor(u.base * Math.pow(u.growth, state.perm[u.id]));
+    const multiplier = () => (1 + 0.25 * state.lv.mult) * (1 + 0.5 * state.perm.gold);
+    const gemBoost = () => 1 + 0.25 * state.perm.gain;
+    const rebirthGain = () => Math.floor(Math.sqrt(state.earned / REBIRTH_DIVISOR) * gemBoost());
+    const startCoins = () => 200 * state.perm.start;
+    function addCoins(n) { state.score += n; state.earned += n; }
     const perClick = () => Math.round((1 + state.lv.power + skinById(state.skin).bonus) * multiplier());
     const perSec = () => Math.round(state.lv.auto * multiplier());
 
@@ -174,7 +238,14 @@
         try {
           const s = JSON.parse(raw);
           next.score = Number(s.score) || 0;
+          next.gems = Math.max(0, Math.floor(Number(s.gems) || 0));
+          next.rebirths = Math.max(0, Math.floor(Number(s.rebirths) || 0));
+          next.earned = Math.max(Number(s.earned) || 0, next.score);
           for (const k of Object.keys(next.lv)) next.lv[k] = Math.max(0, Math.floor(Number(s.lv && s.lv[k]) || 0));
+          for (const k of Object.keys(next.perm)) {
+            const max = PERMS.find((x) => x.id === k).max || Infinity;
+            next.perm[k] = Math.min(max, Math.max(0, Math.floor(Number(s.perm && s.perm[k]) || 0)));
+          }
           const owned = Array.isArray(s.owned) ? s.owned.filter((id) => SKINS.some((x) => x.id === id)) : [];
           next.owned = Array.from(new Set(["classic", ...owned]));
           next.skin = next.owned.includes(s.skin) ? s.skin : "classic";
@@ -182,6 +253,7 @@
       } else {
         // progress from the first version (score only)
         next.score = Number(await readKey(LEGACY_KEY)) || 0;
+        next.earned = next.score;
       }
       return next;
     }
@@ -217,48 +289,99 @@
              `box-shadow: 0 0 0 3px ${s.rim} inset; color: ${s.ink};`;
     }
 
+    function itemHTML({ act, name, desc, price, cost, cur, disabled, cls, lead }) {
+      return `
+        <button class="item${cls ? " " + cls : ""}" data-act="${act}"
+                ${cost != null ? `data-cost="${cost}" data-cur="${cur}"` : ""} ${disabled ? "disabled" : ""}>
+          ${lead}
+          <span class="info">
+            <div class="name">${name}</div>
+            <div class="desc">${desc}</div>
+          </span>
+          <span class="price${cost == null ? " free" : ""}">${price}</span>
+        </button>`;
+    }
+
+    const iconTile = (id, grad) =>
+      `<span class="icon" style="background: linear-gradient(135deg, ${grad[0]}, ${grad[1]})">${ICONS[id]}</span>`;
+
     function renderList() {
+      rebirthArmed = false;
+      clearTimeout(armTimer);
       if (tab === "upgrades") {
-        listEl.innerHTML = UPGRADES.map((u) => `
-          <button class="item" data-act="up:${u.id}" data-cost="${upgradeCost(u)}">
-            <span class="icon">${u.icon}</span>
-            <span class="info">
-              <div class="name">${u.name} · ур. ${state.lv[u.id]}</div>
-              <div class="desc">${u.desc}</div>
-            </span>
-            <span class="price">🪙 ${fmt(upgradeCost(u))}</span>
-          </button>`).join("");
-      } else {
+        listEl.innerHTML = UPGRADES.map((u) => itemHTML({
+          act: `up:${u.id}`, lead: iconTile(u.id, u.grad),
+          name: `${u.name} · ур. ${state.lv[u.id]}`, desc: u.desc,
+          price: `${COIN} ${fmt(upgradeCost(u))}`, cost: upgradeCost(u), cur: "coin",
+        })).join("");
+      } else if (tab === "skins") {
         listEl.innerHTML = SKINS.map((s) => {
           const owned = state.owned.includes(s.id);
           const equipped = state.skin === s.id;
-          const price = equipped ? "Надето" : owned ? "Надеть" : `🪙 ${fmt(s.cost)}`;
-          return `
-          <button class="item${equipped ? " equipped" : ""}" data-act="skin:${s.id}"
-                  ${owned ? "" : `data-cost="${s.cost}"`} ${equipped ? "disabled" : ""}>
-            <span class="skin-icon" style="${skinIconStyle(s)}">${s.glyph}</span>
-            <span class="info">
-              <div class="name">${s.name}</div>
-              <div class="desc">${s.bonus ? `+${s.bonus} к клику` : "Без бонуса"}</div>
-            </span>
-            <span class="price${owned ? " free" : ""}">${price}</span>
-          </button>`;
+          return itemHTML({
+            act: `skin:${s.id}`, cls: equipped ? "equipped" : "", disabled: equipped,
+            lead: `<span class="skin-icon" style="${skinIconStyle(s)}">${s.glyph}</span>`,
+            name: s.name, desc: s.bonus ? `+${s.bonus} к клику` : "Без бонуса",
+            price: equipped ? "Надето" : owned ? "Надеть" : `${COIN} ${fmt(s.cost)}`,
+            cost: owned ? null : s.cost, cur: "coin",
+          });
         }).join("");
+      } else {
+        listEl.innerHTML = `
+          <div class="card">
+            <div class="rb-row"><span>Перерождений: <b id="rb-count"></b></span><span>${GEM} <b id="rb-gems"></b></span></div>
+            <div class="desc">Сбрасывает монеты и улучшения (скины остаются) и даёт кристаллы за всё, что заработано в этом забеге.
+              Кристаллы тратятся на постоянные улучшения ниже. Заработано в забеге: <b id="rb-earned"></b></div>
+            <button class="rebirth-btn" id="rb-btn" data-act="rebirth"></button>
+          </div>
+          <div class="section">Постоянные улучшения</div>` + PERMS.map((u) => {
+            const lvl = state.perm[u.id];
+            const maxed = lvl >= (u.max || Infinity);
+            return itemHTML({
+              act: `perm:${u.id}`, cls: maxed ? "maxed" : "", disabled: maxed, lead: iconTile(u.id, u.grad),
+              name: `${u.name} · ур. ${lvl}`, desc: u.desc(lvl),
+              price: maxed ? "МАКС" : `${GEM} ${fmt(permCost(u))}`,
+              cost: maxed ? null : permCost(u), cur: "gem",
+            });
+          }).join("");
       }
+      updateRebirthCard();
       refreshAfford();
     }
 
     function refreshAfford() {
       listEl.querySelectorAll("[data-cost]").forEach((el) => {
-        el.disabled = state.score < Number(el.dataset.cost);
+        const have = el.dataset.cur === "gem" ? state.gems : state.score;
+        el.disabled = have < Number(el.dataset.cost);
       });
+    }
+
+    function updateRebirthCard() {
+      const btn = document.getElementById("rb-btn");
+      if (!btn) return;
+      const g = rebirthGain();
+      document.getElementById("rb-count").textContent = fmt(state.rebirths);
+      document.getElementById("rb-gems").textContent = fmt(state.gems);
+      document.getElementById("rb-earned").textContent = fmt(state.earned);
+      btn.disabled = g < 1;
+      btn.classList.toggle("armed", rebirthArmed && g >= 1);
+      if (g < 1) {
+        const need = Math.ceil(REBIRTH_DIVISOR / (gemBoost() * gemBoost()) - state.earned);
+        btn.textContent = `Нужно заработать ещё ${fmt(need)} монет`;
+      } else if (rebirthArmed) {
+        btn.textContent = `Точно? Нажми ещё раз (+${fmt(g)} кристаллов)`;
+      } else {
+        btn.innerHTML = `Переродиться: +${fmt(g)} ${GEM}`;
+      }
     }
 
     function renderStats() {
       scoreEl.textContent = fmt(state.score);
       perClickEl.textContent = fmt(perClick());
       perSecEl.textContent = fmt(perSec());
+      gemsEl.textContent = fmt(state.gems);
       refreshAfford();
+      updateRebirthCard();
     }
 
     function haptic(kind) {
@@ -289,6 +412,40 @@
       flush();
     }
 
+    function buyPerm(id) {
+      const u = PERMS.find((x) => x.id === id);
+      if (!u || state.perm[id] >= (u.max || Infinity)) return;
+      const cost = permCost(u);
+      if (state.gems < cost) return;
+      state.gems -= cost;
+      state.perm[id] += 1;
+      haptic("success");
+      renderStats();
+      renderList();
+      flush();
+    }
+
+    function rebirth() {
+      const g = rebirthGain();
+      if (g < 1) return;
+      if (!rebirthArmed) {
+        rebirthArmed = true;
+        armTimer = setTimeout(() => { rebirthArmed = false; updateRebirthCard(); }, 3000);
+        updateRebirthCard();
+        return;
+      }
+      state.gems += g;
+      state.rebirths += 1;
+      state.score = startCoins();
+      state.earned = 0;
+      state.lv = { power: 0, auto: 0, mult: 0 };
+      haptic("success");
+      applySkin();
+      renderStats();
+      renderList();
+      flush();
+    }
+
     function useSkin(id) {
       const s = skinById(id);
       if (!state.owned.includes(s.id)) {
@@ -304,25 +461,46 @@
       flush();
     }
 
-    coin.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
+    function pressCoin(x, y) {
       if (!ready) return;
       const gain = perClick();
-      state.score += gain;
+      addCoins(gain);
       renderStats();
       save();
-      showPlus(e.clientX, e.clientY, gain);
+      showPlus(x, y, gain);
       coin.classList.add("pressed");
       haptic();
+    }
+
+    coin.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      pressCoin(e.clientX, e.clientY);
     });
     ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
       coin.addEventListener(ev, () => coin.classList.remove("pressed")));
+
+    // Space clicks the coin. preventDefault stops page scroll and keeps Space
+    // from also "pressing" whichever shop button happens to have focus.
+    document.addEventListener("keydown", (e) => {
+      if (e.code !== "Space") return;
+      e.preventDefault();
+      if (e.repeat) return;
+      const r = coin.getBoundingClientRect();
+      pressCoin(r.left + r.width / 2 + (Math.random() - 0.5) * r.width * 0.5, r.top + r.height * 0.3);
+    });
+    document.addEventListener("keyup", (e) => {
+      if (e.code !== "Space") return;
+      e.preventDefault();
+      coin.classList.remove("pressed");
+    });
 
     listEl.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-act]");
       if (!btn || btn.disabled) return;
       const [kind, id] = btn.dataset.act.split(":");
       if (kind === "up") buyUpgrade(id);
+      else if (kind === "perm") buyPerm(id);
+      else if (kind === "rebirth") rebirth();
       else useSkin(id);
     });
 
@@ -335,7 +513,7 @@
     setInterval(() => {
       const gain = perSec();
       if (!ready || !gain) return;
-      state.score += gain;
+      addCoins(gain);
       renderStats();
       save();
     }, 1000);
