@@ -93,6 +93,27 @@ describe('physics', () => {
   });
 });
 
+describe('combat', () => {
+  it('aiming converges and a shot at a stationary target hits its armour', () => {
+    const map = new MapBuilder(flatMap).build();
+    const w = new World(map, getGameMode('standard'), 9, 0);
+    const shooter = w.addTank(tank('ussr_td9', 0), 0, -100, 0);
+    const target = w.addTank(tank('japan_main10', 1), 8, -30, 2);
+    const hits: string[] = [];
+    w.events.on('hit', (e) => hits.push(e.result.kind));
+    const aim = target.position.clone();
+    aim.y += 1.6;
+    for (let i = 0; i < 60 * 4; i++) {
+      shooter.input.aimPoint = aim.clone();
+      shooter.input.fire = i > 150;
+      w.step();
+    }
+    expect(shooter.battle.shots).toBeGreaterThan(0);
+    expect(hits.length).toBeGreaterThan(0);
+    expect(Math.abs(shooter.turretYaw)).toBeLessThanOrEqual(shooter.data.traverseLimit * Math.PI / 180 + 1e-6);
+  });
+});
+
 describe('game mode', () => {
   it('capture progresses with capturers and resets when a capturer is damaged', () => {
     const map = new MapBuilder(flatMap).build();

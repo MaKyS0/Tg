@@ -117,8 +117,12 @@ export function quickElevation(ammo: AmmoData, range: number, dy: number): numbe
   return Math.atan((v2 - Math.sqrt(disc)) / (g * range));
 }
 
-/** Maximum horizontal range on flat ground (artillery UI). */
+const rangeCache = new Map<string, number>();
+
+/** Maximum horizontal range on flat ground (artillery UI/AI). Memoised per shell type. */
 export function maxRange(ammo: AmmoData): number {
+  const hit = rangeCache.get(ammo.id);
+  if (hit !== undefined) return hit;
   let best = 0;
   for (let a = 0.2; a <= 1.1; a += 0.05) {
     let lo = 0;
@@ -131,6 +135,7 @@ export function maxRange(ammo: AmmoData): number {
     }
     best = Math.max(best, lo);
   }
+  rangeCache.set(ammo.id, best);
   return best;
 }
 
