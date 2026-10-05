@@ -11,6 +11,7 @@ import type { Tank } from '../sim/Tank';
 import type { World } from '../sim/World';
 import { CameraController } from './CameraController';
 import { EffectsSystem } from './EffectsSystem';
+import { GrassField } from './GrassField';
 import { PropRenderer } from './PropRenderer';
 import { Sky } from './Sky';
 import { TankView } from './TankView';
@@ -29,6 +30,7 @@ export class BattleScene {
   readonly views = new Map<number, TankView>();
   private terrain: TerrainRenderer;
   private props: PropRenderer;
+  private grass: GrassField | null = null;
   private sky: Sky;
   private sun: DirectionalLight;
   private envMap: Texture | null = null;
@@ -83,6 +85,10 @@ export class BattleScene {
     this.scene.add(this.terrain.group);
     this.props = new PropRenderer(world.map, { lodDistance: quality.lodDistance, drawDistance: quality.drawDistance, shadows: quality.shadowMapSize > 0 });
     this.scene.add(this.props.group);
+    if (quality.grass) {
+      this.grass = new GrassField(world.terrain, quality.grass.radius, quality.grass.spacing, quality.shadowMapSize > 0);
+      this.scene.add(this.grass.mesh);
+    }
     this.effects = new EffectsSystem(this.scene, quality.id);
 
     for (const t of world.tanks) this.addTankView(t);
@@ -190,6 +196,7 @@ export class BattleScene {
     this.effects.update(dt);
     this.terrain.update(this.time);
     this.props.update(dt, camPos);
+    this.grass?.update(this.time, camPos);
     this.sky.update(this.time, camPos);
     // Shadow frustum follows the camera focus.
     const focus = player ? (ctl.mode === 'arty' ? ctl.artyTarget : _v2) : _v.set(0, 0, 0);
@@ -220,6 +227,7 @@ export class BattleScene {
     for (const v of this.views.values()) v.dispose();
     this.terrain.dispose();
     this.props.dispose();
+    this.grass?.dispose();
     this.effects.dispose();
     this.sky.dispose();
     this.envMap?.dispose();

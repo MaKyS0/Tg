@@ -120,15 +120,23 @@ export function buildArmorLayout(tank: TankData, turret: TurretModule, barrelLen
   const lowerRun = Math.min((noseY - C) * Math.tan(h.angles.lowerFront * DEG), L * 0.18);
   const upperRun = Math.min((top - noseY) * Math.tan(h.angles.upperFront * DEG), L * 0.32);
   // Side profile (z, y) going around; lofted along X from +hw to -hw.
+  const style = tank.style;
+  const slopedRear = style?.hullRear === 'sloped';
   const profile: Array<[number, number]> = [
-    [-L / 2, C], // rear bottom
+    [slopedRear ? -L / 2 + L * 0.05 : -L / 2, C], // rear bottom
     [L / 2 - lowerRun, C], // front bottom
     [L / 2, noseY], // nose
     [L / 2 - upperRun, top], // front roof edge
-    [-L / 2 + 0.15, top], // rear roof edge
+    [slopedRear ? -L / 2 + L * 0.06 : -L / 2 + 0.15, top], // rear roof edge
   ];
   const tags: PlateTag[] = ['bottom', 'lowerFront', 'upperFront', 'roof', 'rear'];
   const thick = [a.bottom, a.lowerFront, a.upperFront, a.roof, a.rear];
+  if (slopedRear) {
+    // Angled upper rear plate over a short vertical lower one.
+    profile.push([-L / 2, C + H * 0.45]);
+    tags.push('rear');
+    thick.push(a.rear);
+  }
   const ringL = profile.map(([z, y]) => new Vector3(hw * 0.86, y, z));
   const ringR = profile.map(([z, y]) => new Vector3(-hw * 0.86, y, z));
   const hull = loft(ringL, ringR, tags, thick, ['side', a.side], ['side', a.side]);
@@ -168,24 +176,66 @@ export function buildArmorLayout(tank: TankData, turret: TurretModule, barrelLen
   const tl = s.length;
   const twid = s.width / 2;
   const cheek = Math.min(tl * 0.35, Math.tan(s.frontAngle * DEG) * twid * 0.8);
-  const frontHalf = twid * 0.62;
-  const plan: Array<[number, number]> = [
-    [frontHalf, tl / 2], // front-left
-    [twid, tl / 2 - cheek], // left cheek end
-    [twid * 0.92, -tl / 2], // rear-left
-    [-twid * 0.92, -tl / 2], // rear-right
-    [-twid, tl / 2 - cheek], // right cheek end
-    [-frontHalf, tl / 2], // front-right
-  ];
-  const planTags: PlateTag[] = ['turretFront', 'turretSide', 'turretRear', 'turretSide', 'turretFront', 'turretFront'];
-  const planThick = [ta.front, ta.side, ta.rear, ta.side, ta.front, ta.front];
+  let turretKind = style?.turret ?? 'welded';
+  if (!tank.hasTurret && (turretKind === 'cast' || turretKind === 'wedge')) turretKind = 'welded';
+  let frontHalf = twid * 0.62;
+  let plan: Array<[number, number]>;
+  let planTags: PlateTag[];
+  let planThick: number[];
+  let slope = s.slope;
+  const edgeTag = (p: [number, number], q: [number, number]): PlateTag => {
+    const mz = (p[1] + q[1]) / 2;
+    return mz > tl * 0.18 ? 'turretFront' : mz < -tl * 0.3 ? 'turretRear' : 'turretSide';
+  };
+  const tagThick = (t: PlateTag) => (t === 'turretFront' ? ta.front : t === 'turretRear' ? ta.rear : ta.side);
+  if (turretKind === 'cast') {
+    // Rounded cast turret: egg-shaped plan, narrower toward the gun, strongly tapered walls.
+    plan = [];
+    const n = 12;
+    for (let i = 0; i < n; i++) {
+      const ang = (i / n) * Math.PI * 2 + Math.PI / n;
+      const sz = Math.sin(ang);
+      plan.push([Math.cos(ang) * twid * (1 - 0.22 * Math.max(0, sz)), sz * tl / 2]);
+    }
+    plan.reverse();
+    frontHalf = twid * 0.5;
+    slope = Math.max(slope, 0.26);
+  } else if (turretKind === 'wedge') {
+    plan = [[twid * 0.3, tl / 2], [twid, tl * 0.02], [twid * 0.84, -tl / 2], [-twid * 0.84, -tl / 2], [-twid, tl * 0.02], [-twid * 0.3, tl / 2]];
+    frontHalf = twid * 0.45;
+    slope = Math.max(slope, 0.2);
+  } else if (turretKind === 'box') {
+    const ch = Math.min(0.18, tl * 0.08);
+    plan = [[twid * 0.88, tl / 2], [twid, tl / 2 - ch], [twid, -tl / 2], [-twid, -tl / 2], [-twid, tl / 2 - ch], [-twid * 0.88, tl / 2]];
+    frontHalf = twid * 0.8;
+    slope = Math.min(slope, 0.07);
+  } else {
+    plan = [[frontHalf, tl / 2], [twid, tl / 2 - cheek], [twid * 0.92, -tl / 2], [-twid * 0.92, -tl / 2], [-twid, tl / 2 - cheek], [-frontHalf, tl / 2]];
+  }
+  if (turretKind === 'welded' || turretKind === 'wedge' || turretKind === 'box') {
+    planTags = ['turretFront', 'turretSide', 'turretRear', 'turretSide', 'turretFront', 'turretFront'];
+  } else {
+    planTags = plan.map((p, i) => edgeTag(p, plan[(i + 1) % plan.length]));
+  }
+  planThick = planTags.map(tagThick);
   const tBase = 0;
   const tTop = s.height;
-  const k = 1 - s.slope;
+  const k = 1 - slope;
   const ringBase = plan.map(([x, z]) => new Vector3(x, tBase, z));
   const ringTop = plan.map(([x, z]) => new Vector3(x * k, tTop, z * k));
   const tur = loft(ringBase, ringTop, planTags, planThick, ['turretRing', ta.side], ['turretRoof', ta.roof]);
   components.push({ name: 'turret', frame: 'turret', role: 'main', part: 'turret', vertices: tur.vertices, faces: tur.faces });
+  if (tank.hasTurret && style?.bustle) {
+    // Rear bustle (ammo/radio stowage) overhanging the engine deck.
+    const bl = tl * 0.26;
+    const bw = twid * 0.72 * (turretKind === 'cast' ? 0.85 : 1);
+    const bust = box(
+      new Vector3(-bw, tTop * 0.22, -tl / 2 - bl), new Vector3(bw, tTop * 0.86, -tl / 2 + tl * 0.12),
+      { front: 'turretRear', side: 'turretSide', rear: 'turretRear', top: 'turretRoof', bottom: 'turretRear' },
+      { front: ta.rear, side: Math.round(ta.side * 0.8), rear: ta.rear, top: ta.roof, bottom: ta.rear },
+    );
+    components.push({ name: 'bustle', frame: 'turret', role: 'main', part: 'turret', ...bust });
+  }
 
   const turretPivot = new Vector3(0, top - 0.02, s.offsetZ);
   const gunPivot = new Vector3(0, s.height * 0.45, tl / 2 - 0.1);

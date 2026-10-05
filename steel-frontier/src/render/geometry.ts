@@ -55,7 +55,17 @@ export const geo = {
   blob(r: number, detail: number, seed: number, jitter: number, color: string | Color = '#ffffff'): BufferGeometry {
     const g = new IcosahedronGeometry(r, detail);
     jitterVertices(g, seed, jitter);
-    g.computeVertexNormals();
+    // Radial normals: soft, rounded shading instead of faceted low-poly look.
+    const pos = g.getAttribute('position');
+    const nor = new Float32Array(pos.count * 3);
+    const v = new Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).normalize();
+      nor[i * 3] = v.x;
+      nor[i * 3 + 1] = v.y;
+      nor[i * 3 + 2] = v.z;
+    }
+    g.setAttribute('normal', new BufferAttribute(nor, 3));
     return prep(g, color);
   },
   rock(seed: number): BufferGeometry {

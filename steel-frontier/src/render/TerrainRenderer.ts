@@ -29,16 +29,38 @@ export class TerrainRenderer {
       roughness: 0.95,
       metalness: 0,
     });
+    const steep = SURFACES[map.data.biome.steep].color;
+    const rockTint = new Color().setRGB(steep[0] * 1.15, steep[1] * 1.12, steep[2] * 1.1, SRGBColorSpace);
+    const rockMap = TextureFactory.rock();
     this.material.onBeforeCompile = (shader) => {
-      // Second, larger-scale detail sample breaks visible repetition.
-      shader.fragmentShader = shader.fragmentShader.replace(
-        '#include <map_fragment>',
-        `#ifdef USE_MAP
-          vec4 sampledDiffuseColor = texture2D( map, vMapUv );
-          vec4 macro = texture2D( map, vMapUv * 0.071 + 0.37 );
-          diffuseColor *= vec4( sampledDiffuseColor.rgb * (0.55 + 0.45 * macro.rgb) * 1.25, 1.0 );
-        #endif`,
-      );
+      shader.uniforms.rockMap = { value: rockMap };
+      shader.uniforms.rockTint = { value: rockTint };
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWN;')
+        .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvWN = normalize(mat3(modelMatrix) * objectNormal);');
+      // Multi-scale detail (near / mid / macro) to hide tiling, warm/cool colour patches, and
+      // triplanar rock blended in on steep slopes.
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWN;\nuniform sampler2D rockMap;\nuniform vec3 rockTint;\nfloat steepW;')
+        .replace(
+          '#include <map_fragment>',
+          `#ifdef USE_MAP
+            float camD = length(vWPos - cameraPosition);
+            vec3 nearT = texture2D(map, vWPos.xz / 2.7).rgb;
+            vec3 midT = texture2D(map, vWPos.xz / 13.0 + 0.31).rgb;
+            vec3 macroT = texture2D(map, vWPos.xz / 97.0 + 0.37).rgb;
+            float nearW = 1.0 - smoothstep(20.0, 110.0, camD);
+            vec3 detail = mix(midT * 1.05, nearT * midT * 1.12, nearW);
+            vec3 tint = mix(vec3(1.08, 1.02, 0.84), vec3(0.88, 1.0, 1.0), smoothstep(0.75, 1.05, macroT.r));
+            vec3 ground = detail * (0.62 + 0.42 * macroT) * tint * 1.22;
+            steepW = smoothstep(0.86, 0.66, vWN.y);
+            vec3 an = abs(vWN);
+            vec2 ruv = an.x > an.z ? vWPos.zy : vWPos.xy;
+            vec3 rock = texture2D(rockMap, ruv / 6.0).rgb * texture2D(rockMap, ruv / 23.0 + 0.5).rgb * 1.5 * rockTint;
+            diffuseColor.rgb *= mix(ground, rock, steepW);
+          #endif`,
+        )
+        .replace('#include <color_fragment>', '#if defined( USE_COLOR ) || defined( USE_COLOR_ALPHA )\n  diffuseColor.rgb *= mix(vColor.rgb, vec3(1.0), steepW);\n#endif');
     };
     this.build(step);
     const T = map.terrain;

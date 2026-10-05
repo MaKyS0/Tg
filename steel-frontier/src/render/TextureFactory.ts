@@ -104,8 +104,16 @@ export const TextureFactory = {
       const size = 256;
       const h = tileableField(size, 11, 6, 5);
       const g = tileableField(size, 12, 24, 3);
-      for (let i = 0; i < h.length; i++) h[i] = h[i] * 0.7 + g[i] * 0.3;
-      return toTexture(grayCanvas(h, size, 0.72, 1.12), true);
+      // Fine speckle (pebbles, grass stems), blurred once so it does not shimmer.
+      const rng = new Random(13);
+      const sp = new Float32Array(size * size).map(() => rng.next());
+      for (let y = 0; y < size; y++)
+        for (let x = 0; x < size; x++) {
+          const i = y * size + x;
+          const n = (sp[i] * 2 + sp[y * size + ((x + 1) % size)] + sp[((y + 1) % size) * size + x]) / 4;
+          h[i] = h[i] * 0.55 + g[i] * 0.25 + n * 0.2;
+        }
+      return toTexture(grayCanvas(h, size, 0.62, 1.18), true);
     });
   },
 
@@ -117,37 +125,117 @@ export const TextureFactory = {
     });
   },
 
-  /** Nation camouflage pattern (blotches) — albedo. */
-  camo(base: string, dark: string, light: string, seed: number): Texture {
-    return cached(`camo:${base}:${dark}:${light}:${seed}`, () => {
+  /** Nation camouflage — albedo. Pattern: blotch, stripe (tiger), splinter, solid, dots (ambush). */
+  camo(base: string, dark: string, light: string, seed: number, pattern: 'blotch' | 'stripe' | 'splinter' | 'solid' | 'dots' = 'blotch'): Texture {
+    return cached(`camo:${base}:${dark}:${light}:${seed}:${pattern}`, () => {
       const size = 256;
       const [c, ctx] = canvas(size);
       const f1 = tileableField(size, seed, 3, 4);
       const f2 = tileableField(size, seed + 1, 4, 4);
       const grain = tileableField(size, seed + 2, 60, 2);
+      const tone = tileableField(size, seed + 3, 2, 3);
       const img = ctx.createImageData(size, size);
       const cb = hexRgb(base);
       const cd = hexRgb(dark);
       const cl = hexRgb(light);
-      for (let i = 0; i < size * size; i++) {
-        let col = cb;
-        if (f1[i] > 0.6) col = cd;
-        else if (f2[i] > 0.63) col = cl;
-        const g = 0.88 + grain[i] * 0.2;
-        img.data[i * 4] = Math.min(255, col[0] * g);
-        img.data[i * 4 + 1] = Math.min(255, col[1] * g);
-        img.data[i * 4 + 2] = Math.min(255, col[2] * g);
-        img.data[i * 4 + 3] = 255;
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const i = y * size + x;
+          let col = cb;
+          if (pattern === 'blotch' || pattern === 'dots') {
+            if (f1[i] > 0.6) col = cd;
+            else if (f2[i] > 0.63) col = cl;
+          } else if (pattern === 'stripe') {
+            // Diagonal, noise-warped tiger stripes (tileable: integer stripe count across the tile).
+            const u = (x + y) / size;
+            const w = Math.sin((u * 6 + f1[i] * 1.6) * Math.PI * 2);
+            if (w > 0.55) col = cd;
+            else if (w < -0.8 && f2[i] > 0.5) col = cl;
+          }
+          const g = (0.86 + grain[i] * 0.2) * (pattern === 'solid' ? 0.9 + tone[i] * 0.2 : 0.96 + tone[i] * 0.08);
+          img.data[i * 4] = Math.min(255, col[0] * g);
+          img.data[i * 4 + 1] = Math.min(255, col[1] * g);
+          img.data[i * 4 + 2] = Math.min(255, col[2] * g);
+          img.data[i * 4 + 3] = 255;
+        }
       }
       ctx.putImageData(img, 0, 0);
-      // Dirt toward the bottom edge of every tile and subtle wear streaks
-      const rng = new Random(seed);
-      ctx.globalAlpha = 0.08;
+      const rng = new Random(seed * 7 + pattern.length);
+      const wrapDraw = (draw: (ox: number, oy: number) => void) => {
+        for (const ox of [-size, 0, size]) for (const oy of [-size, 0, size]) draw(ox, oy);
+      };
+      if (pattern === 'splinter') {
+        // Angular, overlapping polygons in the dark and light colours.
+        for (let k = 0; k < 26; k++) {
+          const cx = rng.next() * size;
+          const cy = rng.next() * size;
+          const r = 15 + rng.next() * 35;
+          const n = 3 + rng.int(0, 2);
+          const pts = Array.from({ length: n }, (_, j) => {
+            const a = (j / n) * Math.PI * 2 + rng.range(-0.4, 0.4);
+            const rr = r * rng.range(0.5, 1.3);
+            return [Math.cos(a) * rr, Math.sin(a) * rr * 0.6] as const;
+          });
+          ctx.fillStyle = k % 3 === 0 ? light : dark;
+          wrapDraw((ox, oy) => {
+            ctx.beginPath();
+            pts.forEach(([px, py], j) => (j ? ctx.lineTo(cx + px + ox, cy + py + oy) : ctx.moveTo(cx + px + ox, cy + py + oy)));
+            ctx.closePath();
+            ctx.fill();
+          });
+        }
+      }
+      if (pattern === 'dots') {
+        for (let k = 0; k < 90; k++) {
+          const cx = rng.next() * size;
+          const cy = rng.next() * size;
+          const r = 2 + rng.next() * 3;
+          ctx.fillStyle = rng.chance(0.5) ? light : base;
+          wrapDraw((ox, oy) => {
+            ctx.beginPath();
+            ctx.arc(cx + ox, cy + oy, r, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+      }
+      // Weathering: rain streaks, dust and chipped paint.
+      ctx.globalAlpha = 0.07;
+      for (let k = 0; k < 260; k++) {
+        ctx.fillStyle = rng.chance(0.55) ? '#2a2418' : '#c9c0a6';
+        ctx.fillRect(rng.next() * size, rng.next() * size, 1 + rng.next() * 2, 6 + rng.next() * 28);
+      }
+      ctx.globalAlpha = 0.35;
       for (let k = 0; k < 120; k++) {
-        ctx.fillStyle = rng.chance(0.5) ? '#2a2418' : '#c9c0a6';
-        ctx.fillRect(rng.next() * size, rng.next() * size, 1 + rng.next() * 2, 6 + rng.next() * 30);
+        ctx.fillStyle = rng.chance(0.6) ? '#3a3631' : '#8d877a';
+        ctx.fillRect(rng.next() * size, rng.next() * size, 1 + rng.next() * 3, 1 + rng.next() * 2);
       }
       ctx.globalAlpha = 1;
+      return toTexture(c, true);
+    });
+  },
+
+  /** Weathered wooden planks (fences, crates). */
+  planks(): Texture {
+    return cached('planks', () => {
+      const size = 256;
+      const [c, ctx] = canvas(size);
+      const grain = tileableField(size, 91, 30, 3);
+      const img = ctx.createImageData(size, size);
+      const rng = new Random(91);
+      const boardTone = Array.from({ length: 8 }, () => 0.75 + rng.next() * 0.35);
+      for (let y = 0; y < size; y++)
+        for (let x = 0; x < size; x++) {
+          const i = y * size + x;
+          const board = Math.floor(x / 32);
+          const edge = x % 32 < 2 ? 0.45 : 1;
+          const streak = 0.8 + 0.2 * Math.sin(y * 0.15 + grain[i] * 9);
+          const v = boardTone[board] * edge * streak * (0.85 + grain[i] * 0.3);
+          img.data[i * 4] = 118 * v;
+          img.data[i * 4 + 1] = 92 * v;
+          img.data[i * 4 + 2] = 64 * v;
+          img.data[i * 4 + 3] = 255;
+        }
+      ctx.putImageData(img, 0, 0);
       return toTexture(c, true);
     });
   },
@@ -237,11 +325,11 @@ export const TextureFactory = {
   },
 
   /** Building facade with windows (world-UV mapped). */
-  facade(style: 'stone' | 'concrete' | 'wood' | 'adobe' | 'hall' | 'container'): Texture {
+  facade(style: 'stone' | 'concrete' | 'wood' | 'adobe' | 'hall' | 'container' | 'wall'): Texture {
     return cached(`facade:${style}`, () => {
       const size = 256;
       const [c, ctx] = canvas(size);
-      const rng = new Random(style.length * 977);
+      const rng = new Random(style.length * 977 + style.charCodeAt(0));
       const palette: Record<string, [string, string]> = {
         stone: ['#9c8f7d', '#6f655a'],
         concrete: ['#8f8e89', '#6c6b67'],
@@ -249,6 +337,7 @@ export const TextureFactory = {
         adobe: ['#c3a57c', '#a5865f'],
         hall: ['#7f8486', '#5c6163'],
         container: ['#b0b0b0', '#8c8c8c'],
+        wall: ['#8e887e', '#6a655d'],
       };
       const [base, dark] = palette[style];
       ctx.fillStyle = base;
@@ -276,9 +365,12 @@ export const TextureFactory = {
         for (let x = 0; x < size; x += 12) ctx.fillRect(x, 0, 4, size);
       } else {
         ctx.fillStyle = dark;
-        for (let y = 0; y < size; y += 32) ctx.fillRect(0, y, size, 2);
+        for (let y = 0; y < size; y += 32) {
+          ctx.fillRect(0, y, size, 2);
+          if (style === 'wall' || style === 'stone') for (let x = (y / 32) % 2 ? 0 : 32; x < size; x += 64) ctx.fillRect(x, y, 2, 32);
+        }
       }
-      if (style !== 'container') {
+      if (style !== 'container' && style !== 'wall') {
         // Windows: one floor = 64 px = 3.2 m
         for (let fy = 0; fy < 4; fy++) {
           for (let fx = 0; fx < 4; fx++) {
@@ -294,6 +386,30 @@ export const TextureFactory = {
             ctx.fillRect(x + 13, y, 2, 32);
             ctx.fillRect(x, y + 15, 28, 2);
           }
+        }
+      }
+      return toTexture(c, true);
+    });
+  },
+
+  /** Leaf clusters for tree canopies: light leaves over dark gaps (multiplied with the foliage colour). */
+  foliage(): Texture {
+    return cached('foliage', () => {
+      const size = 256;
+      const [c, ctx] = canvas(size);
+      ctx.fillStyle = '#5a6650';
+      ctx.fillRect(0, 0, size, size);
+      const rng = new Random(77);
+      for (let k = 0; k < 900; k++) {
+        const x = rng.next() * size;
+        const y = rng.next() * size;
+        const r = 3 + rng.next() * 6;
+        const l = 150 + rng.next() * 105;
+        ctx.fillStyle = `rgb(${l * 0.92},${l},${l * 0.82})`;
+        for (const ox of [-size, 0, size]) for (const oy of [-size, 0, size]) {
+          ctx.beginPath();
+          ctx.ellipse(x + ox, y + oy, r, r * 0.55, rng.next() * Math.PI, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
       return toTexture(c, true);

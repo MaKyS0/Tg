@@ -6,6 +6,7 @@ import type {
 } from './types';
 import type { TankRow, TankTweak } from './techTree';
 import { clamp } from '../core/math';
+import { styleFor } from './tankStyles';
 
 // Tier tables (index = tier). Fractional tiers are interpolated, which is how stock modules are derived.
 const HP_BY_TIER = [100, 150, 230, 330, 450, 610, 800, 1040, 1330, 1680, 2080];
@@ -262,6 +263,7 @@ export function buildTank(row: TankRow, nation: NationData): TankData {
 
   return {
     id: row.id,
+    style: styleFor(row.id, nation.id, row.cls, t, length),
     name: row.name,
     nation: nation.id,
     cls: row.cls,

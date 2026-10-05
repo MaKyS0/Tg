@@ -187,8 +187,34 @@ export interface CamoData {
   firingPenalty: number; // fraction of camo lost when firing
 }
 
+/** Visual/geometric design of a vehicle; also shapes its armour model. */
+export interface TankStyle {
+  turret: 'welded' | 'cast' | 'wedge' | 'box';
+  bustle: boolean;
+  hullRear: 'flat' | 'sloped';
+  wheels: 'small' | 'large' | 'interleaved' | 'bogie';
+  wheelCount: number;
+  returnRollers: boolean;
+  sprocketFront: boolean;
+  skirts: boolean;
+  muzzle: 'none' | 'double' | 'single' | 'cylinder';
+  evacuator: boolean;
+  thermalSleeve: boolean;
+  camo: 'blotch' | 'stripe' | 'splinter' | 'solid' | 'dots';
+  fuelDrums: boolean;
+  spareTracks: boolean;
+  jerrycans: boolean;
+  smokeLaunchers: boolean;
+  basket: boolean;
+  engineDeck: boolean;
+  hullMg: boolean;
+  /** Seed for small per-vehicle details. */
+  seed: number;
+}
+
 export interface TankData {
   id: string;
+  style: TankStyle;
   name: string;
   nation: NationId;
   cls: TankClass;

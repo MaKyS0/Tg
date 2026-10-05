@@ -1,4 +1,4 @@
-import { ACESFilmicToneMapping, PCFShadowMap, SRGBColorSpace, Vector2, WebGLRenderer, type Camera, type Scene } from 'three';
+import { ACESFilmicToneMapping, PCFShadowMap, PCFSoftShadowMap, SRGBColorSpace, Vector2, WebGLRenderer, type Camera, type Scene } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -17,13 +17,15 @@ export interface QualityProfile {
   antialias: boolean;
   fogScale: number;
   bloom: boolean;
+  /** Grass tufts around the camera; null disables them. */
+  grass: { radius: number; spacing: number } | null;
 }
 
 export const QUALITY_PROFILES: Record<GraphicsQuality, QualityProfile> = {
-  low: { id: 'low', pixelRatio: 0.75, shadowMapSize: 0, shadowRange: 0, terrainStep: 5, lodDistance: 140, drawDistance: 420, environment: false, antialias: false, fogScale: 1.5, bloom: false },
-  medium: { id: 'medium', pixelRatio: 1, shadowMapSize: 1024, shadowRange: 90, terrainStep: 2.5, lodDistance: 220, drawDistance: 600, environment: true, antialias: false, fogScale: 1.15, bloom: false },
-  high: { id: 'high', pixelRatio: 1.25, shadowMapSize: 2048, shadowRange: 130, terrainStep: 2.5, lodDistance: 300, drawDistance: 800, environment: true, antialias: true, fogScale: 1, bloom: true },
-  ultra: { id: 'ultra', pixelRatio: 2, shadowMapSize: 4096, shadowRange: 170, terrainStep: 2.5, lodDistance: 420, drawDistance: 1100, environment: true, antialias: true, fogScale: 0.9, bloom: true },
+  low: { id: 'low', pixelRatio: 0.75, shadowMapSize: 0, shadowRange: 0, terrainStep: 5, lodDistance: 140, drawDistance: 420, environment: false, antialias: false, fogScale: 1.5, bloom: false, grass: null },
+  medium: { id: 'medium', pixelRatio: 1, shadowMapSize: 1024, shadowRange: 90, terrainStep: 2.5, lodDistance: 220, drawDistance: 600, environment: true, antialias: false, fogScale: 1.15, bloom: false, grass: { radius: 45, spacing: 2.2 } },
+  high: { id: 'high', pixelRatio: 1.25, shadowMapSize: 2048, shadowRange: 130, terrainStep: 2.5, lodDistance: 300, drawDistance: 800, environment: true, antialias: true, fogScale: 1, bloom: true, grass: { radius: 65, spacing: 1.6 } },
+  ultra: { id: 'ultra', pixelRatio: 2, shadowMapSize: 4096, shadowRange: 170, terrainStep: 2.5, lodDistance: 420, drawDistance: 1100, environment: true, antialias: true, fogScale: 0.9, bloom: true, grass: { radius: 85, spacing: 1.25 } },
 };
 
 /** Owns the WebGL context; applies quality settings and handles resizing. */
@@ -52,6 +54,11 @@ export class RendererCore {
     this.renderScale = renderScale;
     this.shadowsEnabled = shadows && this.quality.shadowMapSize > 0;
     this.renderer.shadowMap.enabled = this.shadowsEnabled;
+    const shadowType = quality === 'high' || quality === 'ultra' ? PCFSoftShadowMap : PCFShadowMap;
+    if (this.renderer.shadowMap.type !== shadowType) {
+      this.renderer.shadowMap.type = shadowType;
+      this.renderer.shadowMap.needsUpdate = true;
+    }
     if (this.quality.bloom && !this.composer) {
       // Post-processing: HDR scene → bloom (muzzle flashes, fire, sun) → tone mapping/colour output.
       this.composer = new EffectComposer(this.renderer);

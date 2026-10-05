@@ -1,7 +1,7 @@
 import { hashString } from '../core/Random';
 import type { Difficulty, ModuleSlot } from '../data/types';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 const PRIMARY_KEY = 'steel-frontier.save';
 const BACKUP_KEY = 'steel-frontier.save.backup';
 
@@ -113,7 +113,7 @@ export const DEFAULT_BINDINGS: Record<InputAction, string[]> = {
 export function defaultSettings(): Settings {
   return {
     graphics: 'high', renderScale: 1, shadows: true, fov: 70,
-    masterVolume: 0.8, sfxVolume: 0.9, engineVolume: 0.7, ambientVolume: 0.5, voice: true,
+    masterVolume: 0.8, sfxVolume: 0.9, engineVolume: 0.7, ambientVolume: 0.5, voice: false,
     mouseSensitivity: 1, sniperSensitivity: 0.5, gamepadSensitivity: 1, invertY: false,
     bindings: structuredClone(DEFAULT_BINDINGS), teamSize: 15, difficulty: 'normal', showFps: false, touchControls: 'auto',
   };
@@ -247,6 +247,10 @@ export class SaveSystem {
     }
     if (from < 3) {
       for (const t of Object.values(d.tanks ?? {})) t.purchasedModules ??= [...(t.researchedModules ?? [])];
+    }
+    if (from < 4 && d.settings) {
+      // Synthesised speech for radio messages is now opt-in.
+      d.settings.voice = false;
     }
     d.version = SAVE_VERSION;
     return d;

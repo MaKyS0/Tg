@@ -1,10 +1,10 @@
 import {
-  Color, Group, InstancedMesh, Matrix4, MeshStandardMaterial, Quaternion, Vector3, type BufferGeometry, type Material,
+  BufferGeometry, Color, Float32BufferAttribute, Group, InstancedMesh, Matrix4, MeshStandardMaterial, Quaternion, Vector3, type Material,
 } from 'three';
 import type { MapInstance, PropInstance, PropKind } from '../sim/MapBuilder';
 import { TREE_KINDS } from '../sim/MapBuilder';
 import type { Collider } from '../sim/StaticWorld';
-import { geo, merge, place, srgb, worldUvMaterial } from './geometry';
+import { geo, merge, place, prep, srgb, worldUvMaterial } from './geometry';
 import { TextureFactory } from './TextureFactory';
 
 interface Archetype {
@@ -69,17 +69,48 @@ export class PropRenderer {
     const facade = (style: Parameters<typeof TextureFactory.facade>[0], roof: string, scale = 1 / 12.8) =>
       worldUvMaterial({ map: TextureFactory.facade(style), roughness: 0.9, metalness: 0, vertexColors: true }, scale, srgb(roof));
 
-    add({ key: 'building:0', geometry: place(geo.box(1, 1, 1), 0, 0.5, 0), material: facade('stone', '#4a4643'), castShadow: true, chunked: false });
-    add({ key: 'building:3', geometry: place(geo.box(1, 1, 1), 0, 0.5, 0), material: facade('concrete', '#555553'), castShadow: true, chunked: false });
+    const buildingGeo = () => merge([
+      place(geo.box(1.03, 0.5, 1.03, '#77726b'), 0, -0.2, 0),
+      place(geo.box(1, 1, 1), 0, 0.5, 0),
+      place(geo.box(1.04, 0.03, 1.04, '#9a958c'), 0, 0.985, 0),
+      place(geo.box(1.02, 0.02, 1.02, '#8a857c'), 0, 0.5, 0),
+    ]);
+    add({ key: 'building:0', geometry: buildingGeo(), material: facade('stone', '#4a4643'), castShadow: true, chunked: false });
+    add({ key: 'building:3', geometry: buildingGeo(), material: facade('concrete', '#555553'), castShadow: true, chunked: false });
     const houseGeo = () => {
-      const body = place(geo.box(1, 0.7, 1, '#ffffff'), 0, 0.35, 0);
-      const roofL = place(geo.box(0.62, 0.06, 1.08, '#ffffff'), 0.25, 0.85, 0, 0, 0, 0.62);
-      const roofR = place(geo.box(0.62, 0.06, 1.08, '#ffffff'), -0.25, 0.85, 0, 0, 0, -0.62);
-      const gable = place(geo.box(0.7, 0.3, 0.96, '#ffffff'), 0, 0.78, 0, 0, 0, 0);
-      return merge([body, gable, roofL, roofR]);
+      // Walls up to 0.62, gable roof (ridge along Z) up to 1.0, plinth sunk into the ground.
+      const eave = 0.62;
+      const rise = 0.38;
+      const pitch = Math.atan2(rise, 0.5);
+      const panelLen = Math.hypot(0.5, rise) + 0.1;
+      const nx = Math.sin(pitch);
+      const ny = Math.cos(pitch);
+      const parts = [
+        place(geo.box(1.04, 0.5, 1.04, '#6d6862'), 0, -0.2, 0),
+        place(geo.box(1, eave, 1, '#ffffff'), 0, eave / 2, 0),
+        gablePrism(1, rise, 1.0, eave),
+        place(geo.box(panelLen, 0.045, 1.12, '#ffffff'), 0.25 + nx * 0.02 + 0.04, eave + rise / 2 + ny * 0.02 - 0.03, 0, 0, 0, -pitch),
+        place(geo.box(panelLen, 0.045, 1.12, '#ffffff'), -0.25 - nx * 0.02 - 0.04, eave + rise / 2 + ny * 0.02 - 0.03, 0, 0, 0, pitch),
+        place(geo.box(0.05, 0.05, 1.14, '#ffffff'), 0, eave + rise + 0.015, 0),
+        place(geo.box(0.17, 0.3, 0.03, '#3d2a1b'), 0.22, 0.15, 0.505),
+        place(geo.box(0.09, 0.3, 0.09, '#8a5a48'), -0.22, eave + rise * 0.75, -0.25),
+      ];
+      return merge(parts);
     };
     add({ key: 'house:1', geometry: houseGeo(), material: facade('wood', '#6b2f22', 1 / 9), castShadow: true, chunked: false });
-    add({ key: 'house:2', geometry: place(geo.box(1, 1, 1), 0, 0.5, 0), material: facade('adobe', '#b49870', 1 / 9), castShadow: true, chunked: false });
+    add({
+      key: 'house:2',
+      geometry: merge([
+        place(geo.box(1.03, 0.5, 1.03, '#9d8664'), 0, -0.2, 0),
+        place(geo.box(1, 1, 1), 0, 0.5, 0),
+        place(geo.box(1.03, 0.06, 0.06, '#ffffff'), 0, 1.0, 0.485),
+        place(geo.box(1.03, 0.06, 0.06, '#ffffff'), 0, 1.0, -0.485),
+        place(geo.box(0.06, 0.06, 1.03, '#ffffff'), 0.485, 1.0, 0),
+        place(geo.box(0.06, 0.06, 1.03, '#ffffff'), -0.485, 1.0, 0),
+        place(geo.box(0.17, 0.32, 0.03, '#4a3423'), 0.2, 0.16, 0.505),
+      ]),
+      material: facade('adobe', '#b49870', 1 / 9), castShadow: true, chunked: false,
+    });
     add({ key: 'house:0', geometry: houseGeo(), material: facade('stone', '#5c3a2c', 1 / 9), castShadow: true, chunked: false });
     add({ key: 'house:3', geometry: houseGeo(), material: facade('concrete', '#444444', 1 / 9), castShadow: true, chunked: false });
     add({
@@ -88,7 +119,10 @@ export class PropRenderer {
     });
     const stone = worldUvMaterial({ map: TextureFactory.rock(), roughness: 0.95, vertexColors: true, color: srgb('#8d8478') }, 1 / 4, srgb('#6b645a'));
     add({ key: 'ruin', geometry: place(geo.box(1, 1, 1), 0, 0.5, 0), material: stone, castShadow: true, chunked: false });
-    add({ key: 'wall', geometry: place(geo.box(1, 1, 1), 0, 0.5, 0), material: worldUvMaterial({ map: TextureFactory.facade('concrete'), roughness: 0.9, vertexColors: true }, 1 / 6, srgb('#777')), castShadow: true, chunked: false });
+    add({
+      key: 'wall', geometry: merge([place(geo.box(1, 0.4, 1, '#77726b'), 0, -0.15, 0), place(geo.box(1, 1, 1), 0, 0.5, 0), place(geo.box(1.0, 0.06, 1.25, '#a39d92'), 0, 1.0, 0)]),
+      material: worldUvMaterial({ map: TextureFactory.facade('wall'), roughness: 0.92, vertexColors: true }, 1 / 6, srgb('#8a857c')), castShadow: true, chunked: false,
+    });
     add({
       key: 'chimney', geometry: merge([place(geo.cyl(0.38, 0.5, 1, 10, '#8a4b38'), 0, 0.5, 0), place(geo.cyl(0.42, 0.42, 0.05, 10, '#2a2420'), 0, 0.98, 0)]),
       material: new MeshStandardMaterial({ vertexColors: true, roughness: 0.9 }), castShadow: true, chunked: false,
@@ -98,8 +132,17 @@ export class PropRenderer {
       material: new MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0.6 }), castShadow: true, chunked: false,
     });
     add({ key: 'container', geometry: place(geo.box(1, 1, 1), 0, 0.5, 0), material: worldUvMaterial({ map: TextureFactory.facade('container'), roughness: 0.6, metalness: 0.5, vertexColors: true }, 1 / 3, srgb('#8a8a8a')), castShadow: true, chunked: false });
-    add({ key: 'fence', geometry: place(geo.box(1, 1, 1), 0, 0.5, 0), material: worldUvMaterial({ map: TextureFactory.facade('wood'), roughness: 0.95, vertexColors: true }, 1 / 3, srgb('#5a4029')), castShadow: true, chunked: false });
-    add({ key: 'crate', geometry: place(geo.box(1, 1, 1), 0, 0.5, 0), material: worldUvMaterial({ map: TextureFactory.facade('wood'), roughness: 0.95, vertexColors: true, color: srgb('#b0915f') }, 1 / 1.5, srgb('#8a6d45')), castShadow: true, chunked: false });
+    const planks = worldUvMaterial({ map: TextureFactory.planks(), roughness: 0.95, vertexColors: true }, 1 / 1.6, srgb('#5a4029'));
+    add({
+      key: 'fence', geometry: merge([
+        place(geo.box(1, 0.82, 0.35), 0, 0.5, 0),
+        place(geo.box(1, 0.07, 0.9, '#9a8a78'), 0, 0.32, 0),
+        place(geo.box(1, 0.07, 0.9, '#9a8a78'), 0, 0.72, 0),
+        ...[-0.48, 0, 0.48].map((x) => place(geo.box(0.04, 1.05, 1.1, '#7d6e5e'), x, 0.47, 0)),
+      ]),
+      material: planks, castShadow: true, chunked: false,
+    });
+    add({ key: 'crate', geometry: merge([place(geo.box(1, 1, 1), 0, 0.5, 0), place(geo.box(1.02, 0.08, 1.02, '#8f7a5a'), 0, 0.92, 0), place(geo.box(1.02, 0.08, 1.02, '#8f7a5a'), 0, 0.08, 0)]), material: worldUvMaterial({ map: TextureFactory.planks(), roughness: 0.95, vertexColors: true, color: srgb('#c9a979') }, 1 / 1.2, srgb('#8a6d45')), castShadow: true, chunked: false });
     const steel = new MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.7 });
     const hedgehog = merge([0, 1, 2].map((i) => place(geo.box(0.12, 1.3, 0.12, '#4b4a48'), 0, 0.5, 0, i === 0 ? 0.9 : 0, i === 1 ? 0.9 : 0, i === 2 ? 0.9 : 0)));
     add({ key: 'barricade:0', geometry: hedgehog, material: steel, castShadow: true, chunked: false });
@@ -132,7 +175,8 @@ export class PropRenderer {
     const rockMat = new MeshStandardMaterial({ map: TextureFactory.rock(), normalMap: TextureFactory.rockNormal(), aoMap: TextureFactory.rock(), aoMapIntensity: 0.6, color: srgb(biome.ground === 'snow' ? '#9ea4aa' : biome.ground === 'sand' ? '#b39a76' : '#8b857c'), roughness: 0.92, vertexColors: true });
     add({ key: 'rock', geometry: geo.rock(3), material: rockMat, castShadow: true, chunked: true, low: { geometry: prepLow(geo.rock(5)), material: rockMat } });
 
-    const leaf = (hex: string) => new MeshStandardMaterial({ color: srgb(hex), roughness: 0.85, vertexColors: true, flatShading: true });
+    const foliageTex = TextureFactory.foliage();
+    const leaf = (hex: string) => new MeshStandardMaterial({ color: srgb(hex), map: foliageTex, roughness: 0.9, vertexColors: true });
     const barkMat = new MeshStandardMaterial({ map: TextureFactory.bark(), roughness: 0.95, vertexColors: true });
     const snowy = biome.ground === 'snow';
     const foliage = snowy ? '#5c7363' : biome.ground === 'sand' ? '#6a7a3a' : '#4a6b2a';
@@ -154,7 +198,11 @@ export class PropRenderer {
           break;
         case 'birch':
           trunk = place(geo.cyl(0.05, 0.08, 1, 6, '#f2efe6'), 0, 0.5, 0);
-          canopy = merge([place(geo.blob(0.22, 1, 11, 0.06), 0, 0.72, 0), place(geo.blob(0.18, 1, 12, 0.05), 0.08, 0.88, 0.04)]);
+          canopy = merge([
+            place(geo.blob(0.2, 2, 11, 0.05), 0, 0.72, 0, 0, 0, 0, 1, 1.25, 1),
+            place(geo.blob(0.15, 1, 12, 0.04, '#e8f0dc'), 0.08, 0.9, 0.04),
+            place(geo.blob(0.13, 1, 13, 0.04, '#c8d4bc'), -0.09, 0.6, -0.05),
+          ]);
           canopyMat = leaf(snowy ? '#7c8a72' : '#6a8a34');
           break;
         case 'dead':
@@ -168,9 +216,12 @@ export class PropRenderer {
         default:
           trunk = place(geo.cyl(0.07, 0.12, 1, 6, '#ffffff'), 0, 0.5, 0);
           canopy = merge([
-            place(geo.blob(0.3, 1, 21, 0.08), 0, 0.68, 0),
-            place(geo.blob(0.24, 1, 22, 0.07), 0.15, 0.78, 0.08),
-            place(geo.blob(0.22, 1, 23, 0.07), -0.12, 0.8, -0.1),
+            place(geo.blob(0.3, 2, 21, 0.06, '#d8e0d0'), 0, 0.66, 0),
+            place(geo.blob(0.22, 2, 22, 0.05), 0.17, 0.76, 0.08),
+            place(geo.blob(0.21, 2, 23, 0.05), -0.14, 0.8, -0.1),
+            place(geo.blob(0.17, 1, 24, 0.04, '#f0f4e6'), 0.02, 0.93, 0.03),
+            place(geo.blob(0.16, 1, 25, 0.04, '#c8d4bc'), -0.05, 0.6, 0.2),
+            place(geo.blob(0.15, 1, 26, 0.04, '#c8d4bc'), 0.12, 0.62, -0.17),
           ]);
       }
       add({
@@ -383,6 +434,21 @@ export class PropRenderer {
       a.low?.geometry.dispose();
     }
   }
+}
+
+/** Triangular gable prism: base width `w` at height `y0`, apex `rise` above, ridge along Z with depth `depth`. */
+function gablePrism(w: number, rise: number, depth: number, y0: number): BufferGeometry {
+  const hw = w / 2;
+  const hd = depth / 2;
+  const a = [-hw, y0], b = [hw, y0], c = [0, y0 + rise];
+  const pos: number[] = [];
+  const tri = (p: number[][]) => p.forEach((v) => pos.push(v[0], v[1], v[2]));
+  tri([[a[0], a[1], hd], [b[0], b[1], hd], [c[0], c[1], hd]]);
+  tri([[b[0], b[1], -hd], [a[0], a[1], -hd], [c[0], c[1], -hd]]);
+  const g = new BufferGeometry();
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return prep(g, '#ffffff');
 }
 
 function prepLow(g: BufferGeometry): BufferGeometry {
