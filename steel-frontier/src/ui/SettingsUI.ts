@@ -46,6 +46,7 @@ export class SettingsUI {
             <div class="section-title">Графика</div>
             ${row('Качество', sel('graphics', [['low', 'Низкое'], ['medium', 'Среднее'], ['high', 'Высокое'], ['ultra', 'Ультра']]))}
             ${row('Масштаб рендера', range('renderScale', 0.5, 1.25, 0.05))}
+            ${row('Авто-разрешение (стабильный FPS)', check('dynamicResolution'))}
             ${row('Тени', check('shadows'))}
             ${row('Поле зрения (FOV)', range('fov', 55, 95, 1))}
             ${row('Показывать FPS', check('showFps'))}

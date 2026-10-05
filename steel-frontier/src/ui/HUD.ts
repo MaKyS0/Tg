@@ -32,6 +32,8 @@ export class HUD {
   private slowTimer = 0;
   private teamRows = new Map<number, HTMLDivElement>();
   private unsubs: Array<() => void> = [];
+  /** Appended to the FPS counter (e.g. current dynamic resolution). */
+  fpsSuffix = '';
   private fpsFrames = 0;
   private fpsTime = 0;
   showFps = false;
@@ -211,7 +213,7 @@ export class HUD {
     this.fpsFrames++;
     this.fpsTime += dt;
     if (this.fpsTime > 0.5) {
-      this.els.fps.textContent = `${Math.round(this.fpsFrames / this.fpsTime)} FPS`;
+      this.els.fps.textContent = `${Math.round(this.fpsFrames / this.fpsTime)} FPS${this.fpsSuffix}`;
       this.fpsFrames = 0;
       this.fpsTime = 0;
     }

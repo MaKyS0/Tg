@@ -7,7 +7,6 @@ import type { Terrain } from '../sim/Terrain';
 import type { EffectsSystem } from './EffectsSystem';
 import { burntMaterialFor, createTankParts, type TankParts } from './TankMeshFactory';
 
-const LOD_DISTANCE = 170;
 const _v = new Vector3();
 const _v2 = new Vector3();
 
@@ -25,7 +24,7 @@ export class TankView {
   readonly renderPos = new Vector3();
   hidden = false;
 
-  constructor(readonly tank: Tank, nation: NationData, shadows: boolean) {
+  constructor(readonly tank: Tank, nation: NationData, shadows: boolean, private readonly lodDistance = 170) {
     this.parts = createTankParts(tank, nation, shadows);
     for (const m of this.parts.bodyMeshes) this.originalMaterials.set(m, m.material as Material);
   }
@@ -68,7 +67,7 @@ export class TankView {
     const show = visible && !hideOwnInSniper;
     this.hidden = !show;
     const dist = this.renderPos.distanceTo(camPos);
-    const useLod = dist > LOD_DISTANCE && !this.turretFlight;
+    const useLod = dist > this.lodDistance && !this.turretFlight;
     p.root.visible = show && !useLod;
     p.lod.root.visible = show && useLod;
     const turretYaw = lerp(t.prevTurretYaw, t.prevTurretYaw + wrapAngle(t.turretYaw - t.prevTurretYaw), alpha);

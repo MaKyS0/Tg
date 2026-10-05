@@ -120,10 +120,9 @@ function runningGear(style: TankStyle, side: number, x: number, L: number, tw: n
   const usable = L - 1.3;
   const z0 = -usable / 2;
   const wheel = (r: number, z: number, y: number, xo = 0, width = tw * 0.72) => {
-    out.camo.push(axleX(r * 0.86, width, x + xo, y, z, 14, '#c8c8c8'));
-    out.rubber.push(axleX(r, width * 0.82, x + xo, y, z, 16));
-    out.metal.push(axleX(r * 0.3, width + 0.04, x + xo, y, z, 8, '#5a5752'));
-    out.metal.push(axleX(r * 0.12, width + 0.08, x + xo, y, z, 6, '#2a2826'));
+    out.camo.push(axleX(r * 0.86, width, x + xo, y, z, 12, '#c8c8c8'));
+    out.rubber.push(axleX(r, width * 0.82, x + xo, y, z, 12));
+    out.metal.push(axleX(r * 0.3, width + 0.06, x + xo, y, z, 6, '#4a4844'));
   };
   const n = style.wheelCount;
   switch (style.wheels) {
@@ -170,8 +169,8 @@ function runningGear(style: TankStyle, side: number, x: number, L: number, tw: n
   const sy = trackTop - sr * 0.95;
   out.metal.push(axleX(sr * 0.82, tw * 0.6, x, sy, sz, 10, '#4c4a46'));
   out.metal.push(axleX(sr * 0.32, tw * 0.75, x, sy, sz, 8, '#2c2a28'));
-  for (let k = 0; k < 10; k++) {
-    const a = (k / 10) * Math.PI * 2;
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * Math.PI * 2;
     out.metal.push(place(geo.box(tw * 0.42, 0.07, 0.09, '#3a3835'), x, sy + Math.sin(a) * sr * 0.9, sz + Math.cos(a) * sr * 0.9, a, 0, 0));
   }
   const ir = sr * 0.88;
@@ -403,10 +402,21 @@ function buildGeometries(tank: Tank): TankGeometries {
       gunCamo.push(axleZ(cal * 1.05, cal * 1.05, cal * 1.2, 0, 0, len - cal * 0.6, 14));
   }
 
-  // --- LOD ---
-  const lodHull = merge([place(geo.box(d.width * 0.86, d.height, d.length * 0.95), 0, C + d.height / 2, 0), place(geo.box(d.width, trackTop, d.length, '#333'), 0, trackTop / 2, 0)]);
-  const lodTurret = place(geo.box(s.width * 0.85, s.height, s.length * (bustle ? 1.1 : 0.85)), 0, s.height / 2, bustle ? -s.length * 0.1 : 0);
-  const lodGun = place(geo.cyl(cal * 1.2, cal * 1.2, len, 6, '#444'), 0, 0, len / 2, HALF_PI, 0, 0);
+  // --- LOD: exact armour silhouette with flat running gear (3 draw calls, a few hundred triangles) ---
+  const lodHullParts: BufferGeometry[] = [componentGeometry(comp('hull')!)];
+  for (const side of [1, -1]) {
+    const tx = side * (hw - tw / 2);
+    lodHullParts.push(place(geo.box(tw, trackTop, d.length - 0.3, '#3a3835'), tx, trackTop / 2, 0));
+    lodHullParts.push(place(geo.box(tw + 0.1, 0.05, d.length * 0.98), tx, trackTop + 0.03, 0));
+    const scr = comp(side > 0 ? 'screenL' : 'screenR');
+    if (scr) lodHullParts.push(componentGeometry(scr));
+  }
+  const lodHull = merge(lodHullParts);
+  const lodTurretParts: BufferGeometry[] = [componentGeometry(turComp)];
+  if (bustle) lodTurretParts.push(componentGeometry(bustle));
+  if (comp('cupola')) lodTurretParts.push(place(geo.cyl(Math.min(0.35, twid * 0.3), Math.min(0.35, twid * 0.3), 0.26, 8), twid * 0.35, tTop + 0.11, -s.length * 0.15));
+  const lodTurret = merge(lodTurretParts);
+  const lodGun = merge([componentGeometry(comp('mantlet')!), axleZ(cal * 1.2, cal * 0.95, len - b0, 0, 0, (b0 + len) / 2, 8)]);
 
   const nonEmpty = (parts: BufferGeometry[]) => (parts.length ? merge(parts) : merge([geo.box(0.01, 0.01, 0.01)]));
   const hullCombinedMetal = merge([...hullMetal, ...hullRubber.map((g) => tint(g, 0.12))]);

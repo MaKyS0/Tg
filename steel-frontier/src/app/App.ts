@@ -228,6 +228,7 @@ export class App {
 
   private applySettings(s: Settings): void {
     this.prog.data.settings = s;
+    this.renderer.dynamicEnabled = s.dynamicResolution;
     this.renderer.apply(s.graphics, s.renderScale, s.shadows);
     this.input.bindings = s.bindings;
     this.audio.setVolumes(s.masterVolume, s.sfxVolume, s.engineVolume, s.ambientVolume, s.voice);
@@ -315,6 +316,7 @@ export class App {
     this.paused = false;
     this.fastForward = false;
     this.state = 'battle';
+    this.renderer.resetAdapt();
     if (!this.isTouchMode) this.hud.notice('Кликните по экрану, чтобы управлять мышью · Esc — меню', 6000);
   }
 
@@ -380,16 +382,18 @@ export class App {
       if (player.reloadTimer === 0 && this.lastReload > 0) this.audio.reload();
       this.lastReload = player.reloadTimer;
     }
+    if (!this.paused) this.renderer.adapt(dt);
     const alpha = this.accumulator / SIM_DT;
     scene.update(dt, alpha, this.renderer.height);
     const cam = scene.camera;
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
+    hud.fpsSuffix = this.renderer.dynamicScale < 0.995 ? ` · ${Math.round(this.renderer.dynamicScale * 100)}%` : '';
     hud.update(dt, cam, width, height);
     if (w.frozen) hud.setCenter(String(Math.ceil(w.countdown - w.time)), `${w.mode.data.name}: ${w.mode.data.description}`);
     else if (w.battleTime < 1.5) hud.setCenter('В БОЙ!');
     else if (!w.mode.outcome) hud.setCenter('');
-    const fwd = cam.getWorldDirection(new Vector3());
+    const fwd = cam.getWorldDirection(_camDir);
     this.audio.updateListener(cam.position, fwd, cam.up);
     let nearest = null;
     let nd = 90;
@@ -515,3 +519,5 @@ export class App {
     this.input.endFrame();
   }
 }
+
+const _camDir = new Vector3();

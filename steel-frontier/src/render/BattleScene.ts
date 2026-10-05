@@ -39,7 +39,9 @@ export class BattleScene {
   private tracerData: Array<{ pos: Vector3; vel: Vector3; color: Color; length: number }> = [];
   private tracerColors = new Map<string, Color>();
 
-  constructor(renderer: WebGLRenderer, private readonly world: World, private readonly player: Tank | null, private readonly quality: QualityProfile, fov: number) {
+  private frameNo = 0;
+
+  constructor(private readonly renderer: WebGLRenderer, private readonly world: World, private readonly player: Tank | null, private readonly quality: QualityProfile, fov: number) {
     const biome = world.map.data.biome;
     this.camera = new PerspectiveCamera(fov, 16 / 9, 0.3, 4200);
     this.cameraCtl = new CameraController(this.camera, fov);
@@ -90,6 +92,8 @@ export class BattleScene {
       this.scene.add(this.grass.mesh);
     }
     this.effects = new EffectsSystem(this.scene, quality.id);
+    // Shadow map refreshed every N frames; the sun (and thus the shadow frustum) moves only then.
+    renderer.shadowMap.autoUpdate = quality.shadowInterval <= 1;
 
     for (const t of world.tanks) this.addTankView(t);
     if (player) this.cameraCtl.reset(player);
@@ -97,7 +101,7 @@ export class BattleScene {
   }
 
   private addTankView(t: Tank): void {
-    const v = new TankView(t, registry.getNation(t.data.nation), this.quality.shadowMapSize > 0);
+    const v = new TankView(t, registry.getNation(t.data.nation), this.quality.shadowMapSize > 0, this.quality.tankLod);
     this.scene.add(v.parts.root, v.parts.lod.root);
     this.views.set(t.id, v);
   }
@@ -199,9 +203,13 @@ export class BattleScene {
     this.grass?.update(this.time, camPos);
     this.sky.update(this.time, camPos);
     // Shadow frustum follows the camera focus.
-    const focus = player ? (ctl.mode === 'arty' ? ctl.artyTarget : _v2) : _v.set(0, 0, 0);
-    this.sun.target.position.copy(focus);
-    this.sun.position.copy(focus).addScaledVector(this.sunDirection(), 400);
+    const interval = this.quality.shadowInterval;
+    if (interval <= 1 || this.frameNo++ % interval === 0) {
+      const focus = player ? (ctl.mode === 'arty' ? ctl.artyTarget : _v2) : _v.set(0, 0, 0);
+      this.sun.target.position.copy(focus);
+      this.sun.position.copy(focus).addScaledVector(this.sunDirection(), 400);
+      if (interval > 1) this.renderer.shadowMap.needsUpdate = true;
+    }
   }
 
   private sunDirection(): Vector3 {
@@ -223,6 +231,7 @@ export class BattleScene {
   }
 
   dispose(): void {
+    this.renderer.shadowMap.autoUpdate = true;
     for (const u of this.unsubs) u();
     for (const v of this.views.values()) v.dispose();
     this.terrain.dispose();

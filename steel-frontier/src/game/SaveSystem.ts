@@ -14,6 +14,7 @@ export type InputAction =
 export interface Settings {
   graphics: GraphicsQuality;
   renderScale: number;
+  dynamicResolution: boolean;
   shadows: boolean;
   fov: number;
   masterVolume: number;
@@ -112,7 +113,7 @@ export const DEFAULT_BINDINGS: Record<InputAction, string[]> = {
 
 export function defaultSettings(): Settings {
   return {
-    graphics: 'high', renderScale: 1, shadows: true, fov: 70,
+    graphics: 'high', renderScale: 1, dynamicResolution: true, shadows: true, fov: 70,
     masterVolume: 0.8, sfxVolume: 0.9, engineVolume: 0.7, ambientVolume: 0.5, voice: false,
     mouseSensitivity: 1, sniperSensitivity: 0.5, gamepadSensitivity: 1, invertY: false,
     bindings: structuredClone(DEFAULT_BINDINGS), teamSize: 15, difficulty: 'normal', showFps: false, touchControls: 'auto',

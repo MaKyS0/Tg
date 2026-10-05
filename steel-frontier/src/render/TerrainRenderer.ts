@@ -1,5 +1,5 @@
 import {
-  BufferAttribute, BufferGeometry, Color, Group, Mesh, MeshStandardMaterial, PlaneGeometry, SRGBColorSpace, Vector2,
+  BufferAttribute, BufferGeometry, Color, Group, LOD, Mesh, MeshStandardMaterial, PlaneGeometry, SRGBColorSpace, Vector2,
 } from 'three';
 import { SURFACES, SURFACE_IDS } from '../data/surfaces';
 import type { MapInstance } from '../sim/MapBuilder';
@@ -96,80 +96,162 @@ export class TerrainRenderer {
     return false;
   }
 
+  /**
+   * Samples heights, normals and colours once on a global grid, then cuts it into chunks with up to
+   * three LOD levels (coarser vertex strides far from the camera). Skirts hide LOD cracks.
+   */
   private build(step: number): void {
     const T = this.map.terrain;
     const noise = new Noise2D(this.map.data.seed + 99);
-    const chunks = Math.ceil(T.size / CHUNK);
     const colors = SURFACE_IDS.map((id) => new Color().setRGB(...SURFACES[id].color, SRGBColorSpace));
     const iceColor = new Color().setRGB(0.72, 0.82, 0.9, SRGBColorSpace);
     const tmp = new Color();
     const blend = new Color();
-    for (let cj = 0; cj < chunks; cj++) {
-      for (let ci = 0; ci < chunks; ci++) {
-        const x0 = -T.half + ci * CHUNK;
-        const z0 = -T.half + cj * CHUNK;
-        const n = Math.round(CHUNK / step);
-        const vcount = (n + 1) * (n + 1);
-        const pos = new Float32Array(vcount * 3);
-        const col = new Float32Array(vcount * 3);
-        const uv = new Float32Array(vcount * 2);
-        let k = 0;
-        for (let j = 0; j <= n; j++) {
-          for (let i = 0; i <= n; i++) {
-            const x = Math.min(T.half, x0 + i * step);
-            const z = Math.min(T.half, z0 + j * step);
-            const h = T.heightAt(x, z);
-            pos[k * 3] = x;
-            pos[k * 3 + 1] = h;
-            pos[k * 3 + 2] = z;
-            uv[k * 2] = x / 6;
-            uv[k * 2 + 1] = z / 6;
-            // Average surface colours of nearby cells for soft transitions.
-            blend.setRGB(0, 0, 0);
-            let wsum = 0;
-            for (const [ox, oz, w] of SAMPLE_OFFSETS) {
-              const s = T.surface[T.cellIndex(x + ox * T.cell, z + oz * T.cell)];
-              tmp.copy(colors[s]).multiplyScalar(w);
-              blend.add(tmp);
-              wsum += w;
-            }
-            blend.multiplyScalar(1 / wsum);
-            if (T.isIce(x, z)) blend.copy(iceColor);
-            const slope = T.slopeAt(x, z);
-            const vari = 0.9 + 0.2 * noise.fbm(x * 0.02, z * 0.02, 3);
-            const cavity = (h - (T.heightAt(x + 6, z) + T.heightAt(x - 6, z) + T.heightAt(x, z + 6) + T.heightAt(x, z - 6)) / 4) * 0.04;
-            const shade = Math.max(0.55, Math.min(1.2, vari * (1 - Math.min(0.35, slope * 0.25)) + cavity));
-            const wet = h < T.waterLevel + 0.6 ? 0.75 : 1;
-            col[k * 3] = blend.r * shade * wet;
-            col[k * 3 + 1] = blend.g * shade * wet;
-            col[k * 3 + 2] = blend.b * shade * wet;
-            k++;
-          }
+    const N = Math.round(T.size / step) + 1;
+    const gx = (i: number) => Math.min(T.half, -T.half + i * step);
+    const H = new Float32Array(N * N);
+    const C = new Float32Array(N * N * 3);
+    const NOR = new Float32Array(N * N * 3);
+    for (let j = 0; j < N; j++) {
+      for (let i = 0; i < N; i++) {
+        const x = gx(i);
+        const z = gx(j);
+        const h = T.heightAt(x, z);
+        const k = j * N + i;
+        H[k] = h;
+        // Average surface colours of nearby cells for soft transitions.
+        blend.setRGB(0, 0, 0);
+        let wsum = 0;
+        for (const [ox, oz, w] of SAMPLE_OFFSETS) {
+          const sIdx = T.surface[T.cellIndex(x + ox * T.cell, z + oz * T.cell)];
+          tmp.copy(colors[sIdx]).multiplyScalar(w);
+          blend.add(tmp);
+          wsum += w;
         }
-        const idx: number[] = [];
-        for (let j = 0; j < n; j++) {
-          for (let i = 0; i < n; i++) {
-            const a = j * (n + 1) + i;
-            const b = a + 1;
-            const c = a + (n + 1);
-            const d = c + 1;
-            idx.push(a, c, b, b, c, d);
-          }
-        }
-        const geo = new BufferGeometry();
-        geo.setAttribute('position', new BufferAttribute(pos, 3));
-        geo.setAttribute('color', new BufferAttribute(col, 3));
-        geo.setAttribute('uv', new BufferAttribute(uv, 2));
-        geo.setIndex(idx);
-        geo.computeVertexNormals();
-        geo.computeBoundingSphere();
-        const mesh = new Mesh(geo, this.material);
-        mesh.receiveShadow = true;
-        mesh.matrixAutoUpdate = false;
-        mesh.updateMatrix();
-        this.group.add(mesh);
+        blend.multiplyScalar(1 / wsum);
+        if (T.isIce(x, z)) blend.copy(iceColor);
+        const slope = T.slopeAt(x, z);
+        const vari = 0.9 + 0.2 * noise.fbm(x * 0.02, z * 0.02, 3);
+        const cavity = (h - (T.heightAt(x + 6, z) + T.heightAt(x - 6, z) + T.heightAt(x, z + 6) + T.heightAt(x, z - 6)) / 4) * 0.04;
+        const shade = Math.max(0.55, Math.min(1.2, vari * (1 - Math.min(0.35, slope * 0.25)) + cavity));
+        const wet = h < T.waterLevel + 0.6 ? 0.75 : 1;
+        C[k * 3] = blend.r * shade * wet;
+        C[k * 3 + 1] = blend.g * shade * wet;
+        C[k * 3 + 2] = blend.b * shade * wet;
       }
     }
+    for (let j = 0; j < N; j++) {
+      for (let i = 0; i < N; i++) {
+        const hl = H[j * N + Math.max(0, i - 1)];
+        const hr = H[j * N + Math.min(N - 1, i + 1)];
+        const hd = H[Math.max(0, j - 1) * N + i];
+        const hu = H[Math.min(N - 1, j + 1) * N + i];
+        const nx = hl - hr;
+        const ny = 2 * step;
+        const nz = hd - hu;
+        const len = Math.hypot(nx, ny, nz);
+        const k = (j * N + i) * 3;
+        NOR[k] = nx / len;
+        NOR[k + 1] = ny / len;
+        NOR[k + 2] = nz / len;
+      }
+    }
+
+    const perChunk = Math.round(CHUNK / step);
+    const chunks = Math.ceil((N - 1) / perChunk);
+    for (let cj = 0; cj < chunks; cj++) {
+      for (let ci = 0; ci < chunks; ci++) {
+        const i0 = ci * perChunk;
+        const j0 = cj * perChunk;
+        const ni = Math.min(perChunk, N - 1 - i0);
+        const nj = Math.min(perChunk, N - 1 - j0);
+        const cx = (gx(i0) + gx(i0 + ni)) / 2;
+        const cz = (gx(j0) + gx(j0 + nj)) / 2;
+        let cy = 0;
+        for (let j = j0; j <= j0 + nj; j += Math.max(1, nj >> 2)) for (let i = i0; i <= i0 + ni; i += Math.max(1, ni >> 2)) cy = Math.max(cy, H[j * N + i]);
+        const lod = new LOD();
+        lod.position.set(cx, cy, cz);
+        const strides = lodStrides(ni, nj);
+        strides.forEach((st, level) => {
+          const mesh = new Mesh(this.chunkGeometry(H, C, NOR, N, gx, i0, j0, ni, nj, st, cx, cy, cz), this.material);
+          mesh.receiveShadow = true;
+          lod.addLevel(mesh, LOD_DISTANCES[level], 25);
+        });
+        lod.updateMatrix();
+        lod.matrixAutoUpdate = false;
+        for (const l of lod.levels) {
+          l.object.updateMatrix();
+          l.object.matrixAutoUpdate = false;
+        }
+        this.group.add(lod);
+      }
+    }
+  }
+
+  private chunkGeometry(H: Float32Array, C: Float32Array, NOR: Float32Array, N: number, gx: (i: number) => number,
+    i0: number, j0: number, ni: number, nj: number, st: number, cx: number, cy: number, cz: number): BufferGeometry {
+    const ci = ni / st;
+    const cj = nj / st;
+    const ring = 2 * (ci + cj);
+    const vcount = (ci + 1) * (cj + 1) + ring + 4;
+    const pos = new Float32Array(vcount * 3);
+    const col = new Float32Array(vcount * 3);
+    const nor = new Float32Array(vcount * 3);
+    const uv = new Float32Array(vcount * 2);
+    let k = 0;
+    const put = (gi: number, gj: number, drop: number) => {
+      const g = gj * N + gi;
+      const x = gx(gi);
+      const z = gx(gj);
+      pos[k * 3] = x - cx;
+      pos[k * 3 + 1] = H[g] - cy - drop;
+      pos[k * 3 + 2] = z - cz;
+      col[k * 3] = C[g * 3];
+      col[k * 3 + 1] = C[g * 3 + 1];
+      col[k * 3 + 2] = C[g * 3 + 2];
+      nor[k * 3] = NOR[g * 3];
+      nor[k * 3 + 1] = NOR[g * 3 + 1];
+      nor[k * 3 + 2] = NOR[g * 3 + 2];
+      uv[k * 2] = x / 6;
+      uv[k * 2 + 1] = z / 6;
+      return k++;
+    };
+    for (let j = 0; j <= cj; j++) for (let i = 0; i <= ci; i++) put(i0 + i * st, j0 + j * st, 0);
+    const idx: number[] = [];
+    const v = (i: number, j: number) => j * (ci + 1) + i;
+    for (let j = 0; j < cj; j++) {
+      for (let i = 0; i < ci; i++) {
+        const a = v(i, j);
+        const b = v(i + 1, j);
+        const c = v(i, j + 1);
+        const d = v(i + 1, j + 1);
+        idx.push(a, c, b, b, c, d);
+      }
+    }
+    // Skirt: walk the border and hang a strip below it (both windings, it is seen from either side).
+    const border: Array<[number, number]> = [];
+    for (let i = 0; i < ci; i++) border.push([i, 0]);
+    for (let j = 0; j < cj; j++) border.push([ci, j]);
+    for (let i = ci; i > 0; i--) border.push([i, cj]);
+    for (let j = cj; j > 0; j--) border.push([0, j]);
+    const drop = 1.5 + st * 0.8;
+    const skirt = border.map(([i, j]) => put(i0 + i * st, j0 + j * st, drop));
+    for (let e = 0; e < border.length; e++) {
+      const n = (e + 1) % border.length;
+      const a = v(border[e][0], border[e][1]);
+      const b = v(border[n][0], border[n][1]);
+      const sa = skirt[e];
+      const sb = skirt[n];
+      idx.push(a, sa, b, b, sa, sb, a, b, sa, b, sb, sa);
+    }
+    const geo = new BufferGeometry();
+    geo.setAttribute('position', new BufferAttribute(pos.subarray(0, k * 3), 3));
+    geo.setAttribute('color', new BufferAttribute(col.subarray(0, k * 3), 3));
+    geo.setAttribute('normal', new BufferAttribute(nor.subarray(0, k * 3), 3));
+    geo.setAttribute('uv', new BufferAttribute(uv.subarray(0, k * 2), 2));
+    geo.setIndex(idx);
+    geo.computeBoundingSphere();
+    return geo;
   }
 
   update(time: number): void {
@@ -185,6 +267,19 @@ export class TerrainRenderer {
     this.material.dispose();
     this.waterMat?.dispose();
   }
+}
+
+/** Camera distances (from chunk centre) at which coarser terrain levels take over. */
+const LOD_DISTANCES = [0, 190, 420];
+
+/** Vertex strides for a chunk's LOD levels; each must divide both chunk dimensions. */
+function lodStrides(ni: number, nj: number): number[] {
+  const out = [1];
+  for (const s of [2, 4, 5, 7, 10]) {
+    if (out.length >= 3) break;
+    if (ni % s === 0 && nj % s === 0 && ni / s >= 5 && nj / s >= 5 && s >= out[out.length - 1] * 2) out.push(s);
+  }
+  return out;
 }
 
 const SAMPLE_OFFSETS: Array<[number, number, number]> = [

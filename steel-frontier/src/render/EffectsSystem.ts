@@ -23,11 +23,15 @@ const VERT = /* glsl */ `
   attribute vec4 rgba;
   varying vec4 vColor;
   uniform float scale;
+  uniform float maxSize;
   #include <fog_pars_vertex>
   void main() {
     vColor = rgba;
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = size * scale / max(0.1, -mvPosition.z);
+    // Particles right in front of the lens fade and shrink away: full-screen sprites are pure overdraw.
+    float near = smoothstep(1.5, 7.0, -mvPosition.z);
+    vColor.a *= near;
+    gl_PointSize = min(size * scale / max(0.1, -mvPosition.z), maxSize) * near;
     gl_Position = projectionMatrix * mvPosition;
     #include <fog_vertex>
   }
@@ -85,7 +89,7 @@ class ParticlePool {
     this.geo.setAttribute('size', new BufferAttribute(this.size, 1).setUsage(DynamicDrawUsage));
     this.geo.setDrawRange(0, 0);
     this.material = new ShaderMaterial({
-      uniforms: { map: { value: TextureFactory.softParticle() }, scale: { value: 600 }, fogColor: { value: new Color() }, fogDensity: { value: 0 }, fogNear: { value: 1 }, fogFar: { value: 1000 } },
+      uniforms: { map: { value: TextureFactory.softParticle() }, scale: { value: 600 }, maxSize: { value: 400 }, fogColor: { value: new Color() }, fogDensity: { value: 0 }, fogNear: { value: 1 }, fogFar: { value: 1000 } },
       vertexShader: VERT,
       fragmentShader: FRAG,
       transparent: true,
@@ -143,9 +147,15 @@ class ParticlePool {
       this.rgba[i * 4 + 3] = this.alpha[i] * fadeIn * (1 - t) * (1 - t * 0.3);
     }
     this.geo.setDrawRange(0, this.count);
-    (this.geo.getAttribute('position') as BufferAttribute).needsUpdate = true;
-    (this.geo.getAttribute('rgba') as BufferAttribute).needsUpdate = true;
-    (this.geo.getAttribute('size') as BufferAttribute).needsUpdate = true;
+    // Upload only the live part of each buffer.
+    for (const name of ['position', 'rgba', 'size']) {
+      const a = this.geo.getAttribute(name) as BufferAttribute;
+      a.clearUpdateRanges();
+      if (this.count > 0) {
+        a.addUpdateRange(0, this.count * a.itemSize);
+        a.needsUpdate = true;
+      }
+    }
   }
 
   get active(): number {
@@ -214,6 +224,8 @@ export class EffectsSystem {
     const scale = heightPx / (2 * Math.tan((fovDeg * Math.PI) / 360));
     this.smoke.material.uniforms.scale.value = scale;
     this.glow.material.uniforms.scale.value = scale;
+    this.smoke.material.uniforms.maxSize.value = heightPx * 0.32;
+    this.glow.material.uniforms.maxSize.value = heightPx * 0.4;
   }
 
   private flash(pos: Vector3, intensity: number, dur: number, color = 0xffb070): void {
@@ -388,6 +400,9 @@ class TrackMarks {
     this.pos = new Float32Array(capacity * 6 * 3);
     this.uv = new Float32Array(capacity * 6 * 2);
     this.geo.setAttribute('position', new BufferAttribute(this.pos, 3).setUsage(DynamicDrawUsage));
+    // UVs are identical for every slot, so they are written once.
+    const quadUv = [0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1];
+    for (let i = 0; i < capacity; i++) this.uv.set(quadUv, i * 12);
     this.geo.setAttribute('uv', new BufferAttribute(this.uv, 2));
     const mat = new MeshBasicMaterial({ map: TextureFactory.trackMark(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, opacity: 0.8 });
     this.mesh = new Mesh(this.geo, mat);
@@ -404,18 +419,16 @@ class TrackMarks {
       [x - fx - rx, z - fz - rz], [x - fx + rx, z - fz + rz], [x + fx + rx, z + fz + rz], [x + fx - rx, z + fz - rz],
     ].map(([cx, cz]) => [cx, heightAt(cx, cz) + 0.05, cz]);
     const order = [0, 1, 2, 0, 2, 3];
-    const uvs = [[0, 0], [1, 0], [1, 1], [0, 1]];
     const base = this.next * 18;
     order.forEach((ci, k) => {
       this.pos[base + k * 3] = corners[ci][0];
       this.pos[base + k * 3 + 1] = corners[ci][1];
       this.pos[base + k * 3 + 2] = corners[ci][2];
-      this.uv[this.next * 12 + k * 2] = uvs[ci][0];
-      this.uv[this.next * 12 + k * 2 + 1] = uvs[ci][1];
     });
+    const attr = this.geo.getAttribute('position') as BufferAttribute;
+    attr.addUpdateRange(base, 18);
+    attr.needsUpdate = true;
     this.next = (this.next + 1) % this.capacity;
-    (this.geo.getAttribute('position') as BufferAttribute).needsUpdate = true;
-    (this.geo.getAttribute('uv') as BufferAttribute).needsUpdate = true;
   }
 
   dispose(): void {
