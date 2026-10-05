@@ -39,7 +39,8 @@ export class PlayerController implements TankController {
     if (inp.pressed('zoomOut') && !inp.bindings.zoomOut.includes('WheelDown')) wheel -= 1;
     cam.zoom(wheel, this.tank);
     if (inp.pressed('sniper')) cam.toggleSniper(this.tank);
-    cam.setFreeLook(inp.isDown('lockTurret'));
+    // Without pointer lock the right button drags the view, so it must not freeze the turret.
+    cam.setFreeLook(inp.isDown('lockTurret') && (inp.pointerLocked || !inp.bindings.lockTurret.includes('Mouse2')));
 
     const t = this.tank.input;
     if (inp.pressed('ammo1')) t.ammoSlot = 0;

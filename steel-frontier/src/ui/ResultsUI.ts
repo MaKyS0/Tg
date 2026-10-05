@@ -55,7 +55,7 @@ export function showResults(parent: HTMLElement, world: World, player: Tank, out
           <table class="reward-table"><tr class="muted"><td>Игрок</td><td>Танк</td><td>Урон</td><td>Фраги</td></tr>${team(1 - player.team)}</table>
         </div>
       </div>
-      <div style="text-align:right;margin-top:14px"><button class="btn primary" data-close>В ангар</button></div>
+      <div class="footer"><button class="btn primary" data-close>В ангар</button></div>
     </div>`;
   parent.appendChild(wrap);
   wrap.querySelector('[data-close]')!.addEventListener('click', () => {

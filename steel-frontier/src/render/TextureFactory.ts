@@ -185,6 +185,29 @@ export const TextureFactory = {
     });
   },
 
+  /** Ambient occlusion: darkened panel seams and grime matching the armour normal map layout. */
+  armorAO(): Texture {
+    return cached('armorAO', () => {
+      const size = 512;
+      const grime = tileableField(size, 22, 10, 3);
+      const [c, ctx] = canvas(size);
+      const img = ctx.createImageData(size, size);
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const dx = Math.min(x % 128, 128 - (x % 128));
+          const dy = Math.min(y % 128, 128 - (y % 128));
+          const seam = Math.min(1, Math.min(dx, dy) / 6);
+          const v = (0.55 + 0.45 * seam) * (0.85 + grime[y * size + x] * 0.15);
+          const i = (y * size + x) * 4;
+          img.data[i] = img.data[i + 1] = img.data[i + 2] = v * 255;
+          img.data[i + 3] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return toTexture(c, false);
+    });
+  },
+
   /** Roughness map with worn, smoother edges. */
   armorRoughness(): Texture {
     return cached('armorRough', () => {

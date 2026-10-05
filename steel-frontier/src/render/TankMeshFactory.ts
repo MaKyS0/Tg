@@ -37,12 +37,14 @@ export function nationMaterials(n: NationData): SharedMaterials {
       normalMap: TextureFactory.armorNormal(),
       normalScale: new Vector2(0.7, 0.7),
       roughnessMap: TextureFactory.armorRoughness(),
+      aoMap: TextureFactory.armorAO(),
+      aoMapIntensity: 0.8,
       roughness: 0.85,
       metalness: 0.35,
       vertexColors: true,
     });
     const metal = new MeshStandardMaterial({
-      color: srgb('#3d3b38'), roughness: 0.55, metalness: 0.75, roughnessMap: TextureFactory.armorRoughness(), vertexColors: true,
+      color: srgb('#3d3b38'), roughness: 0.55, metalness: 0.75, roughnessMap: TextureFactory.armorRoughness(), aoMap: TextureFactory.armorAO(), aoMapIntensity: 0.5, vertexColors: true,
     });
     m = { camo, metal, burnt: burntMaterial };
     materialCache.set(n.id, m);
@@ -159,10 +161,10 @@ function buildGeometries(tank: Tank) {
   const cal = Math.max(0.06, tank.gun.caliber / 1000);
   const len = tank.layout.barrelLength;
   const gunParts: BufferGeometry[] = [
-    place(geo.cyl(cal * 1.25, cal * 1.6, len - 0.25, 12, '#4a4844'), 0, 0, 0.25 + (len - 0.25) / 2, Math.PI / 2, 0, 0),
+    place(geo.cyl(cal * 0.85, cal * 1.25, len - 0.25, 12, '#4a4844'), 0, 0, 0.25 + (len - 0.25) / 2, Math.PI / 2, 0, 0),
   ];
-  if (tank.data.tier >= 5) gunParts.push(place(geo.cyl(cal * 1.9, cal * 1.9, len * 0.12, 12, '#3c3a37'), 0, 0, 0.25 + len * 0.55, Math.PI / 2, 0, 0));
-  gunParts.push(place(geo.box(cal * 3.6, cal * 2.4, cal * 4), 0, 0, len - cal * 1.8, 0, 0, 0));
+  if (tank.data.tier >= 5) gunParts.push(place(geo.cyl(cal * 1.45, cal * 1.45, len * 0.12, 12, '#3c3a37'), 0, 0, 0.25 + len * 0.55, Math.PI / 2, 0, 0));
+  gunParts.push(place(geo.box(cal * 2.6, cal * 1.8, cal * 3.2), 0, 0, len - cal * 1.5, 0, 0, 0));
 
   // --- LOD ---
   const lodHull = merge([place(geo.box(d.width * 0.95, d.height, d.length * 0.95), 0, d.clearance + d.height / 2, 0), place(geo.box(d.width, trackTop, d.length, '#333'), 0, trackTop / 2, 0)]);

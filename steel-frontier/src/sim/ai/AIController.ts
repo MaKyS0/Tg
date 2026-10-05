@@ -2,6 +2,7 @@ import { Vector3 } from 'three';
 import type { Vec2 } from '../../data/types';
 import { DEG, clamp, wrapAngle, yawOf } from '../../core/math';
 import { previewShot, rayHitsTank } from '../ArmorSystem';
+import { maxRange } from '../Ballistics';
 import type { Tank } from '../Tank';
 import type { TankController, World } from '../World';
 import type { DifficultyProfile } from './AIDifficulty';
@@ -42,6 +43,7 @@ export class AIController implements TankController {
   private aimWait = 0;
   private aimNoise = new Vector3();
   private noiseTimer = 0;
+  private memoryTimer = 0;
   private stuckTimer = 0;
   private stuckCount = 0;
   private stuckCheckPos = new Vector3();
@@ -102,9 +104,25 @@ export class AIController implements TankController {
       this.targetTimer = 0.35 + world.rng.next() * 0.2;
       this.selectTarget();
     }
-    this.updateMemory();
+    this.memoryTimer -= dt;
+    if (this.memoryTimer <= 0) {
+      this.memoryTimer = 0.25;
+      this.updateMemory();
+    }
     this.drive(dt);
     this.fireControl(dt);
+    this.useConsumables();
+  }
+
+  /** Extinguisher on fire, repair kit when immobilised/disarmed under fire, medkit for a wounded crew. */
+  private useConsumables(): void {
+    const t = this.tank;
+    const inp = t.input;
+    if (this.difficulty.id === 'easy') return;
+    if (t.burning && !t.consumableUsed[2]) inp.consumable = 2;
+    else if (!t.consumableUsed[0] && (t.modules.tracks.status === 'destroyed' || t.modules.gun.status === 'destroyed')
+      && (this.target || this.world.time - t.lastDamageTime < 5)) inp.consumable = 0;
+    else if (!t.consumableUsed[1] && t.crew.filter((c) => c.wounded).length >= 2) inp.consumable = 1;
   }
 
   // --- Perception ------------------------------------------------------------
@@ -409,17 +427,17 @@ export class AIController implements TankController {
       this.setTarget(null);
       return;
     }
-    const maxRange = t.isArtillery ? 2000 : 650;
+    const maxRangeM = t.isArtillery ? this.artyRange() : 650;
     let best: Tank | null = null;
     let bestScore = -Infinity;
     const gun = t.gunWorldPosition(new Vector3());
     const defend = w.mode.defendBase(t.team);
     for (const e of visible) {
       const d = e.position.distanceTo(t.position);
-      if (d > maxRange) continue;
+      if (d > maxRangeM) continue;
       const aim = this.aimPointFor(e, false);
       if (!t.isArtillery && !this.lineOfFire(e, aim)) continue;
-      let score = 1.2 * (1 - d / maxRange) + 0.7 * (1 - e.hpFraction);
+      let score = 1.2 * (1 - d / maxRangeM) + 0.7 * (1 - e.hpFraction);
       // Threat: target aiming at us or recently hurt us.
       e.gunDirection(_dir);
       _v.subVectors(t.position, e.position).normalize();
@@ -441,6 +459,14 @@ export class AIController implements TankController {
       }
     }
     this.setTarget(best);
+  }
+
+  private cachedArtyRange = -1;
+
+  /** Usable artillery range (95% of the ballistic maximum on flat ground). */
+  private artyRange(): number {
+    if (this.cachedArtyRange < 0) this.cachedArtyRange = maxRange(this.tank.ammoTypes[0]) * 0.95;
+    return this.cachedArtyRange;
   }
 
   private bestAmmoAgainst(e: Tank, gun: Vector3, dir: Vector3, dist: number): { index: number; ratio: number } {
@@ -612,7 +638,8 @@ export class AIController implements TankController {
     const target = this.target;
     if (!target || !target.alive) {
       // Keep the gun pointed along the movement direction / toward last known enemy.
-      const rec = [...this.memory.values()].sort((a, b) => b.time - a.time)[0];
+      let rec: Memory | null = null;
+      for (const m of this.memory.values()) if (!rec || m.time > rec.time) rec = m;
       if (rec && w.time - rec.time < 20) inp.aimPoint = _v2.copy(rec.pos).setY(rec.pos.y + 1.5).clone();
       else inp.aimPoint = new Vector3(t.position.x + Math.sin(t.yaw) * 100, t.position.y + 2, t.position.z + Math.cos(t.yaw) * 100);
       return;

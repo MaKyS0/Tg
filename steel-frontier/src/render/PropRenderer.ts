@@ -129,7 +129,7 @@ export class PropRenderer {
       ]), material: new MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.5 }), castShadow: false, chunked: false,
     });
 
-    const rockMat = new MeshStandardMaterial({ map: TextureFactory.rock(), normalMap: TextureFactory.rockNormal(), color: srgb(biome.ground === 'snow' ? '#9ea4aa' : biome.ground === 'sand' ? '#b39a76' : '#8b857c'), roughness: 0.92, vertexColors: true });
+    const rockMat = new MeshStandardMaterial({ map: TextureFactory.rock(), normalMap: TextureFactory.rockNormal(), aoMap: TextureFactory.rock(), aoMapIntensity: 0.6, color: srgb(biome.ground === 'snow' ? '#9ea4aa' : biome.ground === 'sand' ? '#b39a76' : '#8b857c'), roughness: 0.92, vertexColors: true });
     add({ key: 'rock', geometry: geo.rock(3), material: rockMat, castShadow: true, chunked: true, low: { geometry: prepLow(geo.rock(5)), material: rockMat } });
 
     const leaf = (hex: string) => new MeshStandardMaterial({ color: srgb(hex), roughness: 0.85, vertexColors: true, flatShading: true });

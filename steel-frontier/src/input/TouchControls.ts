@@ -24,13 +24,10 @@ export class TouchControls {
         <button data-code="Touch:sniper" class="tb tb-sniper">ПРИЦЕЛ</button>
         <button data-code="Touch:zoomIn" class="tb tb-zin">+</button>
         <button data-code="Touch:zoomOut" class="tb tb-zout">−</button>
-        <button data-code="Touch:ammo1" class="tb tb-a1">1</button>
-        <button data-code="Touch:ammo2" class="tb tb-a2">2</button>
-        <button data-code="Touch:ammo3" class="tb tb-a3">3</button>
-        <button data-code="Touch:repair" class="tb tb-rep">🔧</button>
         <button data-code="Touch:brake" class="tb tb-brake">СТОП</button>
       </div>`;
     parent.appendChild(this.root);
+    document.body.classList.add('touch-mode');
     this.stick = this.root.querySelector('.touch-stick')!;
     this.knob = this.root.querySelector('.touch-knob')!;
     const look = this.root.querySelector('.touch-look') as HTMLDivElement;
@@ -105,6 +102,18 @@ export class TouchControls {
     this.input.touchAxes.moveY = -dy / R;
   }
 
+  /** Makes HUD ammo/consumable slots tappable (they replace dedicated touch buttons). */
+  bindSlots(slots: HTMLElement[], actions: string[]): void {
+    slots.forEach((slot, i) => {
+      const code = `Touch:${actions[i]}`;
+      slot.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.input.setVirtual(code, true);
+      }, { passive: false });
+      slot.addEventListener('touchend', () => this.input.setVirtual(code, false));
+    });
+  }
+
   setVisible(v: boolean): void {
     this.root.style.display = v ? 'block' : 'none';
   }
@@ -113,6 +122,7 @@ export class TouchControls {
     window.removeEventListener('touchmove', this.onMove);
     window.removeEventListener('touchend', this.onEnd);
     window.removeEventListener('touchcancel', this.onEnd);
+    document.body.classList.remove('touch-mode');
     this.root.remove();
   }
 }

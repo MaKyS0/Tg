@@ -63,6 +63,7 @@ export class App {
   private endTimer = -1;
   private fastForward = false;
   private dragging = false;
+  private lockFailed = false;
   private lastMouse = { x: 0, y: 0 };
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly ui: HTMLElement) {
@@ -79,12 +80,17 @@ export class App {
     const unlock = () => this.audio.unlock();
     window.addEventListener('pointerdown', unlock);
     window.addEventListener('keydown', unlock);
+    document.addEventListener('pointerlockerror', () => {
+      this.lockFailed = true;
+      if (this.playerCtl) this.playerCtl.allowMouseFire = true;
+    });
     document.addEventListener('pointerlockchange', () => {
       if (this.state === 'battle' && !this.input.pointerLocked && !this.paused && !this.isTouchMode && this.endTimer < 0 && this.battle?.player?.alive) this.openPauseMenu();
     });
     canvas.addEventListener('mousedown', (e) => {
       if (this.state === 'battle' && !this.paused && !this.isTouchMode) {
-        if (!this.input.pointerLocked) {
+        if (!this.input.pointerLocked && !this.lockFailed) {
+          // The first click only captures the mouse (unless capture is impossible here).
           if (this.playerCtl) this.playerCtl.allowMouseFire = false;
           this.input.requestPointerLock();
         }
@@ -299,6 +305,8 @@ export class App {
     this.hud.showFps = this.settings.showFps;
     if (this.isTouchMode) {
       this.touch = new TouchControls(this.ui, this.input);
+      const slots = [...this.hud.root.querySelectorAll<HTMLElement>('.ammo-slot, .cons-slot')];
+      this.touch.bindSlots(slots, ['ammo1', 'ammo2', 'ammo3', 'repair', 'medkit', 'extinguisher']);
     }
     this.bindBattleAudio();
     this.audio.setAmbience(mapData.biome.ambience);

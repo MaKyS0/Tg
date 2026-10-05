@@ -3,7 +3,7 @@ import { AMMO_KINDS } from '../data/ammo';
 import { CREW_ROLE_NAMES } from '../data/crew';
 import { formatNumber, RAD, ROMAN } from '../core/math';
 import { previewShot } from '../sim/ArmorSystem';
-import { traceTrajectory } from '../sim/Ballistics';
+import { maxRange, traceTrajectory } from '../sim/Ballistics';
 import { rayHitsTank } from '../sim/ArmorSystem';
 import { MODULE_NAMES, type ModuleId, type Tank } from '../sim/Tank';
 import type { World } from '../sim/World';
@@ -20,6 +20,7 @@ const CLASS_SHORT: Record<string, string> = { LT: 'ЛТ', MT: 'СТ', HT: 'ТТ'
 const _v = new Vector3();
 const _v2 = new Vector3();
 const _gunPoint = new Vector3();
+const _seg = new Vector3();
 
 /** In-battle heads-up display (DOM). Cheap parts update every frame; lists update ~8×/s. */
 export class HUD {
@@ -35,6 +36,7 @@ export class HUD {
   private fpsTime = 0;
   showFps = false;
   private scoreboardVisible = false;
+  private artyReach: number | null = null;
 
   constructor(parent: HTMLElement, private readonly world: World, private readonly player: Tank, private readonly cam: CameraController) {
     this.minimap = new Minimap(world.map);
@@ -305,8 +307,9 @@ export class HUD {
     let hitOrigin = new Vector3();
     let found = false;
     let travelled = 0;
+    const seg = _seg;
     traceTrajectory(origin, dir, ammo, ammo.gravityScale > 3 ? 25 : 4, ammo.gravityScale > 3 ? 1 / 15 : 1 / 30, (a, b) => {
-      const seg = new Vector3().subVectors(b, a);
+      seg.subVectors(b, a);
       const len = seg.length();
       seg.divideScalar(len);
       let best = len;
@@ -369,7 +372,11 @@ export class HUD {
     const info = this.els['aim-info'];
     const aimTank = this.cam.aimTank;
     info.textContent = aimTank && aimTank.team !== p.team ? `${aimTank.data.name} · ${Math.round(this.cam.aimDistance)} м` : `${Math.round(this.cam.aimDistance)} м`;
-    if (this.cam.mode === 'arty') info.textContent += ` · полёт ${(travelled / Math.max(1, ammo.velocity * 0.9)).toFixed(1)} с`;
+    if (this.cam.mode === 'arty') {
+      const reach = this.artyReach ??= maxRange(ammo);
+      const horiz = Math.hypot(this.cam.aimPoint.x - p.position.x, this.cam.aimPoint.z - p.position.z);
+      info.textContent += horiz > reach ? ' · ВНЕ ДОСЯГАЕМОСТИ' : ` · полёт ≈${(horiz / Math.max(1, ammo.velocity * 0.75)).toFixed(1)} с`;
+    }
   }
 
   private updateMarkers(camera: PerspectiveCamera, width: number, height: number): void {

@@ -241,7 +241,7 @@ export class EffectsSystem {
       const spread = new Vector3((Math.random() - 0.5), (Math.random() - 0.2) * 0.6, (Math.random() - 0.5));
       this.smoke.spawn({
         pos: _v.copy(pos), vel: _v2.copy(dir).multiplyScalar(4 + Math.random() * 6).add(spread.multiplyScalar(4)),
-        life: 1.6 + Math.random() * 1.6, size: (1.8 + Math.random()) * k + 1, grow: 3, color: new Color(0.62, 0.6, 0.56), endColor: new Color(0.75, 0.74, 0.7), alpha: 0.45, drag: 1.6, gravity: -0.3,
+        life: 1.2 + Math.random() * 1.4, size: (1.6 + Math.random()) * k + 0.8, grow: 2.6, color: new Color(0.62, 0.6, 0.56), endColor: new Color(0.75, 0.74, 0.7), alpha: 0.28, drag: 1.8, gravity: -0.12,
       });
     }
     this.flash(pos, 30 * k + 10, 0.12);
