@@ -88,3 +88,18 @@ describe('armour model & penetration', () => {
     expect(p.effective).toBeGreaterThan(p.penetration);
   });
 });
+
+describe('spaced armour', () => {
+  it('side screens defeat HEAT that would otherwise penetrate the bare side', () => {
+    const screened = makeTank('germany_heavy8');
+    expect(screened.data.hull.screens).toBeGreaterThan(0);
+    const d = screened.data.hull.dims;
+    const y = d.clearance + d.height * 0.8;
+    const side = screened.data.hull.armor.side;
+    const pen = side + 25;
+    const heat = resolveShellHit(screened, new Vector3(40, y, 0), new Vector3(-1, 0, 0), 100, shell('HEAT', pen), 900, new Random(11));
+    const ap = resolveShellHit(screened, new Vector3(40, y, 0), new Vector3(-1, 0, 0), 100, shell('AP', pen + 20), 900, new Random(12));
+    expect(heat.kind).not.toBe('penetration');
+    expect(ap.kind).toBe('penetration');
+  });
+});

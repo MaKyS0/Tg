@@ -143,6 +143,7 @@ export function resolveShellHit(tank: Tank, origin: Vector3, dir: Vector3, maxT:
   const firstT = hits[0].tIn;
   result.t = firstT;
   let firstContact = true;
+  let prevExit = -1;
 
   for (const h of hits) {
     const comp = h.comp;
@@ -167,7 +168,8 @@ export function resolveShellHit(tank: Tank, origin: Vector3, dir: Vector3, maxT:
       continue;
     }
 
-    if (ammo.kind === 'HEAT' && !firstContact) pen *= Math.max(0, 1 - HEAT_LOSS_PER_METER * Math.max(0, h.tIn - firstT));
+    // The HEAT jet loses penetration over the air gap since the previous plate (spaced armour).
+    if (ammo.kind === 'HEAT' && prevExit >= 0) pen *= Math.max(0, 1 - HEAT_LOSS_PER_METER * Math.max(0, h.tIn - prevExit));
     const plate = plateInteraction(ammo, h.thickness, angle);
     if (firstContact || comp.role === 'main') {
       result.point.copy(worldPoint);
@@ -218,6 +220,7 @@ export function resolveShellHit(tank: Tank, origin: Vector3, dir: Vector3, maxT:
     // Plate penetrated.
     pen -= plate.effective;
     firstContact = false;
+    prevExit = Math.max(prevExit, h.tIn + Math.min(0.15, h.tOut - h.tIn));
     if (comp.role === 'spaced') {
       if (comp.module === 'tracks') result.modules.push({ id: 'tracks', damage: ammo.damage * 0.6 });
       continue;

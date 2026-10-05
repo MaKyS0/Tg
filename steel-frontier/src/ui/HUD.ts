@@ -170,7 +170,7 @@ export class HUD {
         while (this.els['kill-feed'].children.length > 6) this.els['kill-feed'].lastChild?.remove();
         setTimeout(() => kill.remove(), 9000);
         if (k === p) this.notice(`Уничтожен ${e.tank.data.name}!`);
-        if (e.tank === p) this.notice('Ваш танк уничтожен', 6000);
+        if (e.tank === p) this.notice('Ваш танк уничтожен · Esc — выйти в ангар', 8000);
       }),
       ev.on('radio', (e) => {
         if (e.team === p.team) this.log('radio-log', `📻 ${e.text}`, '', 6000, 5);

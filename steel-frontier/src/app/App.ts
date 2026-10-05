@@ -63,7 +63,7 @@ export class App {
   private endTimer = -1;
   private fastForward = false;
   private dragging = false;
-  private lockFailed = false;
+  private lastLockError = -1e9;
   private lastMouse = { x: 0, y: 0 };
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly ui: HTMLElement) {
@@ -81,7 +81,7 @@ export class App {
     window.addEventListener('pointerdown', unlock);
     window.addEventListener('keydown', unlock);
     document.addEventListener('pointerlockerror', () => {
-      this.lockFailed = true;
+      this.lastLockError = performance.now();
       if (this.playerCtl) this.playerCtl.allowMouseFire = true;
     });
     document.addEventListener('pointerlockchange', () => {
@@ -89,9 +89,9 @@ export class App {
     });
     canvas.addEventListener('mousedown', (e) => {
       if (this.state === 'battle' && !this.paused && !this.isTouchMode) {
-        if (!this.input.pointerLocked && !this.lockFailed) {
-          // The first click only captures the mouse (unless capture is impossible here).
-          if (this.playerCtl) this.playerCtl.allowMouseFire = false;
+        if (!this.input.pointerLocked) {
+          // The first click only captures the mouse, unless capture keeps failing here (iframes etc.).
+          if (this.playerCtl && performance.now() - this.lastLockError > 4000) this.playerCtl.allowMouseFire = false;
           this.input.requestPointerLock();
         }
       } else if (this.state === 'garage') {
@@ -315,7 +315,7 @@ export class App {
     this.paused = false;
     this.fastForward = false;
     this.state = 'battle';
-    if (!this.isTouchMode) this.input.requestPointerLock();
+    if (!this.isTouchMode) this.hud.notice('Кликните по экрану, чтобы управлять мышью · Esc — меню', 6000);
   }
 
   private bindBattleAudio(): void {
