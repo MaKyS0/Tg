@@ -1,3 +1,6 @@
 .env
 __pycache__/
 .venv/
+fly/data/
+fly/results/*.npy
+fly/results/neurons.csv

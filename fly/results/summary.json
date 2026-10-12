@@ -1,0 +1,14 @@
+{
+ "sugar": {
+  "n_stim": 32,
+  "active": 587
+ },
+ "bitter": {
+  "n_stim": 42,
+  "active": 114
+ },
+ "water": {
+  "n_stim": 30,
+  "active": 122
+ }
+}
