@@ -1,0 +1,36 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "minecraft:bee",
+      "materials": {
+        "default": "entity_alpha"
+      },
+      "textures": {
+        "default": "textures/entity/fly/fly",
+        "angry": "textures/entity/fly/fly_angry"
+      },
+      "geometry": {
+        "default": "geometry.fly"
+      },
+      "animations": {
+        "wings": "animation.fly.wings",
+        "hover": "animation.fly.hover"
+      },
+      "scripts": {
+        "scale": "query.is_baby ? 0.6 : 1.0",
+        "animate": [
+          "wings",
+          "hover"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.fly"
+      ],
+      "spawn_egg": {
+        "base_color": "#25282b",
+        "overlay_color": "#b3201f"
+      }
+    }
+  }
+}

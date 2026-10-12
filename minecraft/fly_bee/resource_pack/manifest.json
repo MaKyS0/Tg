@@ -1,0 +1,30 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Fly Bee — Муха вместо пчелы",
+    "description": "Replaces the bee model with a fly (compound eyes, flapping wings). Муха вместо пчелы.",
+    "uuid": "6f1d1c52-2b7d-4e43-9b7a-3f8e6a0c1d21",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      20,
+      0
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "a3c0e5b8-7d34-4b0e-8f5a-52d1c7e9b604",
+      "version": [
+        1,
+        0,
+        0
+      ],
+      "description": "Fly model"
+    }
+  ]
+}
