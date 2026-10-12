@@ -4,3 +4,4 @@ __pycache__/
 fly/data/
 fly/results/*.npy
 fly/results/neurons.csv
+fly/results_web/

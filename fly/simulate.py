@@ -107,7 +107,10 @@ def main():
     print(f"{W.shape[0]} neurons, {W.nnz} connections", flush=True)
     out = {}
     for sub in args.sub:
-        stim = ann.index[(ann.cell_class == "gustatory") & (ann.cell_sub_class == sub)].values
+        # "sugar+bitter" stimulates both groups at once; "all" = every gustatory neuron
+        parts = sub.split("+")
+        gust = ann.cell_class == "gustatory"
+        stim = ann.index[gust if "all" in parts else gust & ann.cell_sub_class.isin(parts)].values
         counts = np.zeros(W.shape[0]); hist = np.zeros(int(args.ms))
         for k in range(args.trials):
             c, h = simulate(W, stim, args.rate, args.ms, seed=k)
