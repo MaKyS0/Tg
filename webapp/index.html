@@ -21,16 +21,56 @@
       user-select: none; -webkit-user-select: none; overflow: hidden;
     }
     main {
+      position: relative; z-index: 1;
       height: 100%;
       display: flex; flex-direction: column; align-items: center;
       padding: 12px 0 0;
     }
+    #sky { position: fixed; inset: 0; pointer-events: none; }
+    .world-enter { animation: world-in .6s ease-out; }
+    @keyframes world-in { from { opacity: 0; } to { opacity: 1; } }
     .score-box { text-align: center; padding: 0 16px; }
+    .world-pill {
+      display: inline-flex; align-items: center; gap: 6px; margin-bottom: 2px;
+      padding: 3px 10px 3px 3px; border: none; border-radius: 999px;
+      background: var(--card); color: var(--text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .world-pill .dot {
+      width: 22px; height: 22px; border-radius: 50%; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .world-pill .dot svg { width: 14px; height: 14px; }
+    .world-pill b { color: var(--accent); }
     .label { color: var(--hint); font-size: 14px; text-transform: uppercase; letter-spacing: .1em; }
     #score { font-size: 48px; font-weight: 800; font-variant-numeric: tabular-nums; }
     .stats { color: var(--hint); font-size: 14px; }
     .stats b { color: var(--text); }
-    .coin-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; width: 100%; }
+    .coin-wrap { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; width: 100%; }
+    .coin-holder { position: relative; z-index: 1; text-align: center; }
+    #scene {
+      position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: min(100%, 640px); height: 42%; pointer-events: none;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    }
+    #scene svg { display: block; width: 100%; height: 100%; }
+
+    /* World particles. Each <i> gets --s (size), --d (duration), --dl (negative delay) inline. */
+    #fx { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    #fx i { position: absolute; width: var(--s); height: var(--s); border-radius: 50%; }
+    .fx-firefly i { background: #d9f99d; box-shadow: 0 0 8px #84cc16; animation: hover var(--d) ease-in-out var(--dl) infinite; }
+    .fx-sand i { background: #f5c451; animation: blow var(--d) linear var(--dl) infinite, sway 1.6s ease-in-out infinite alternate; }
+    .fx-snow i { background: #e0f2fe; box-shadow: 0 0 4px #38bdf8; animation: fall var(--d) linear var(--dl) infinite, sway 2.4s ease-in-out infinite alternate; }
+    .fx-ember i { background: #ffb347; box-shadow: 0 0 6px #ff5a00; animation: rise var(--d) ease-in var(--dl) infinite, sway 1.2s ease-in-out infinite alternate; }
+    .fx-bubble i { border: 1.5px solid rgba(34, 211, 238, .8); animation: rise var(--d) linear var(--dl) infinite, sway 2s ease-in-out infinite alternate; }
+    .fx-star i { background: #ddd6fe; box-shadow: 0 0 6px #a78bfa; animation: twinkle var(--d) ease-in-out var(--dl) infinite; }
+    @keyframes fall { from { top: -4%; } to { top: 104%; } }
+    @keyframes rise { from { top: 104%; opacity: 1; } to { top: -4%; opacity: 0; } }
+    @keyframes blow { from { left: -4%; } to { left: 104%; } }
+    @keyframes sway { from { transform: translateX(-6px); } to { transform: translateX(6px); } }
+    @keyframes twinkle { 0%, 100% { opacity: .15; transform: scale(.5); } 50% { opacity: 1; transform: scale(1); } }
+    @keyframes hover { 0%, 100% { opacity: .2; transform: translate(0, 0); } 50% { opacity: 1; transform: translate(14px, -20px); } }
+    @media (prefers-reduced-motion: reduce) { #fx { display: none; } }
     #coin {
       position: relative;
       width: min(52vw, 34vh, 260px); aspect-ratio: 1; border: none; border-radius: 50%; padding: 0;
@@ -40,7 +80,7 @@
     }
     #coin.pressed { transform: scale(.92); }
     .plus {
-      position: fixed; pointer-events: none;
+      position: fixed; z-index: 10; pointer-events: none;
       font-size: 28px; font-weight: 800; color: var(--accent);
       text-shadow: 0 2px 4px rgba(0,0,0,.4);
       animation: float .8s ease-out forwards;
@@ -57,10 +97,10 @@
       display: flex; flex-direction: column; gap: 8px;
       max-height: 46vh;
     }
-    .tabs { display: flex; gap: 6px; }
+    .tabs { display: flex; gap: 4px; }
     .tab {
-      flex: 1; padding: 9px 4px; border: none; border-radius: 10px;
-      background: transparent; color: var(--hint); font-size: 14px; font-weight: 700; cursor: pointer;
+      flex: 1 1 auto; padding: 9px 4px; border: none; border-radius: 10px; white-space: nowrap;
+      background: transparent; color: var(--hint); font-size: 13px; font-weight: 700; cursor: pointer;
     }
     .tab.active { background: var(--card); color: var(--text); }
     .list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
@@ -104,14 +144,20 @@
   </style>
 </head>
 <body>
+  <div id="sky"></div>
   <main>
     <div class="score-box">
+      <button class="world-pill" id="world-pill" aria-label="Миры">
+        <span class="dot" id="world-dot"></span><span id="world-name"></span><b id="world-mult"></b>
+      </button>
       <div class="label">Монеты</div>
       <div id="score">0</div>
       <div class="stats">За клик: <b id="per-click">1</b> · В секунду: <b id="per-sec">0</b> · <span id="gem-icon"></span> <b id="gems">0</b></div>
     </div>
     <div class="coin-wrap">
-      <div style="text-align:center">
+      <div id="scene"></div>
+      <div id="fx"></div>
+      <div class="coin-holder">
         <button id="coin" aria-label="Кликнуть по монетке"></button>
         <div class="kbd-hint">или нажимай Пробел</div>
       </div>
@@ -120,6 +166,7 @@
       <div class="tabs">
         <button class="tab active" data-tab="upgrades">Улучшения</button>
         <button class="tab" data-tab="skins">Скины</button>
+        <button class="tab" data-tab="worlds">Миры</button>
         <button class="tab" data-tab="rebirth">Перерождение</button>
       </div>
       <div class="list" id="list"></div>
@@ -140,6 +187,13 @@
       start:    svg('<path d="M5 21V3.5M5 4.5h12l-2.5 4 2.5 4H5" fill="currentColor"/>'),
       discount: svg('<path d="M3 12.5V4h8.5L21 13.5 13.5 21z"/><circle cx="7.8" cy="8.3" r="1.3" fill="currentColor"/>'),
       gain:     svg('<path d="M6.5 3h11L22 9.5 12 21 2 9.5z" fill="currentColor" fill-opacity=".35"/><path d="M2 9.5h20M9 3l-2 6.5L12 21l5-11.5L15 3"/>'),
+      meadow:   svg('<path d="M12 21v-9"/><path d="M12 13C12 8 9 5 4 5c0 5 3 8 8 8zM12 11c0-4 3-7 8-7 0 4-3 7-8 7z" fill="currentColor"/>'),
+      desert:   svg('<path d="M10 21V5a2 2 0 0 1 4 0v16M6 21h12M10 13H8a2 2 0 0 1-2-2V8M14 11h2a2 2 0 0 0 2-2V6"/>'),
+      glacier:  svg('<path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 4l3 2 3-2M9 20l3-2 3 2"/>'),
+      volcano:  svg('<path d="M2 21l6-10h8l6 10z" fill="currentColor"/><path d="M10 8l-1-3M14 8l1-3M12 7V3"/>'),
+      ocean:    svg('<path d="M2 7c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2M2 12c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2M2 17c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/>'),
+      space:    svg('<circle cx="12" cy="12" r="5" fill="currentColor"/><ellipse cx="12" cy="12" rx="10.5" ry="3.5" transform="rotate(-20 12 12)"/>'),
+      lock:     svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
     };
     const COIN = '<svg class="cur" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ffd23f" stroke="#d99000" stroke-width="1.4"/><circle cx="8" cy="8" r="3.6" fill="none" stroke="#d99000" stroke-width="1.2"/></svg>';
     const GEM = '<svg class="cur" viewBox="0 0 16 16"><path d="M4 2h8l3 4-7 8-7-8z" fill="#7fe3ff" stroke="#2590c4" stroke-width="1.2" stroke-linejoin="round"/><path d="M1 6h14M6 2L5 6l3 8 3-8-1-4" fill="none" stroke="#2590c4" stroke-width="1"/></svg>';
@@ -163,6 +217,39 @@
     ];
     const REBIRTH_DIVISOR = 2000; // coins earned in a run for the first gem
 
+    // Worlds are opened in order with coins, need a number of rebirths, survive rebirths,
+    // and multiply all income while you are in them. Scenery paths use a 400×120 viewBox.
+    const WORLDS = [
+      { id: "meadow", name: "Луг", mult: 1, cost: 0, rebirths: 0, fx: "firefly",
+        grad: ["#86efac", "#16a34a"], sky: "74,222,128", ground: "#22c55e",
+        back: "M0 70C60 40 120 45 180 62S300 40 400 55V120H0Z",
+        front: "M0 95C70 70 140 72 210 88S340 78 400 84V120H0Z" },
+      { id: "desert", name: "Пустыня", mult: 2, cost: 10000, rebirths: 1, fx: "sand",
+        grad: ["#fde68a", "#f59e0b"], sky: "251,191,36", ground: "#d97706",
+        back: "M60 120L120 52L180 120ZM150 120L198 72L246 120Z",
+        front: "M0 92C60 70 120 74 190 94S320 78 400 88V120H0Z" },
+      { id: "glacier", name: "Ледник", mult: 4, cost: 200000, rebirths: 3, fx: "snow",
+        grad: ["#bae6fd", "#0284c7"], sky: "125,211,252", ground: "#38bdf8",
+        back: "M0 120V70L45 35L80 62L130 18L185 66L230 40L280 72L330 28L375 58L400 48V120Z",
+        front: "M0 120V92L60 70L110 95L170 76L240 100L300 80L360 98L400 86V120Z" },
+      { id: "volcano", name: "Вулкан", mult: 8, cost: 5e6, rebirths: 6, fx: "ember",
+        grad: ["#fca5a5", "#dc2626"], sky: "239,68,68", ground: "#991b1b",
+        back: "M0 120V98L120 92L175 32H225L280 92L400 98V120Z",
+        front: "M0 120V104C80 96 150 108 220 102S350 106 400 100V120Z",
+        extra: '<ellipse cx="200" cy="33" rx="25" ry="5" fill="#ff7a1a" opacity=".9"/>' },
+      { id: "ocean", name: "Океан", mult: 16, cost: 1e8, rebirths: 10, fx: "bubble",
+        grad: ["#67e8f9", "#0e7490"], sky: "34,211,238", ground: "#0891b2",
+        back: "M0 70Q25 58 50 70T100 70T150 70T200 70T250 70T300 70T350 70T400 70V120H0Z",
+        front: "M0 92Q25 80 50 92T100 92T150 92T200 92T250 92T300 92T350 92T400 92V120H0Z" },
+      { id: "space", name: "Космос", mult: 32, cost: 2e9, rebirths: 15, fx: "star",
+        grad: ["#c4b5fd", "#5b21b6"], sky: "139,92,246", ground: "#6d28d9",
+        back: "M0 120V96Q200 58 400 96V120Z",
+        front: "M0 120V110Q100 98 200 104T400 106V120Z",
+        extra: '<circle cx="320" cy="32" r="13" fill="#a78bfa" opacity=".55"/>' +
+               '<ellipse cx="320" cy="32" rx="25" ry="6" fill="none" stroke="#a78bfa" stroke-width="2" opacity=".6" transform="rotate(-15 320 32)"/>' },
+    ];
+    const FX_SPEED = { firefly: 5, sand: 3, snow: 7, ember: 4, bubble: 5, star: 2.5 }; // base seconds per cycle
+
     const SKINS = [
       { id: "classic", name: "Классика", glyph: "$", bonus: 0,  cost: 0,
         c: ["#fff6a8", "#ffd23f", "#f0a500", "#b8740a"], rim: "#d99000", rim2: "#ffdf6b", glow: "255,190,0", ink: "#b06a00", hi: "#ffe98a" },
@@ -174,6 +261,12 @@
         c: ["#ffc0c8", "#ff4d63", "#cc1634", "#7d0a1f"], rim: "#b0122c", rim2: "#ff8a9a", glow: "255,60,90", ink: "#5e0616", hi: "#ffd0d6" },
       { id: "diamond", name: "Алмаз", glyph: "♦", bonus: 30, cost: 25000,
         c: ["#e8fbff", "#7fe3ff", "#2fa8e0", "#17679a"], rim: "#2590c4", rim2: "#b5f0ff", glow: "80,200,255", ink: "#0e4a73", hi: "#e8fbff" },
+      { id: "amethyst", name: "Аметист", glyph: "✦", bonus: 100, cost: 250000,
+        c: ["#f3e8ff", "#c084fc", "#9333ea", "#581c87"], rim: "#7e22ce", rim2: "#d8b4fe", glow: "168,85,247", ink: "#3b0764", hi: "#f3e8ff" },
+      { id: "magma", name: "Магма", glyph: "✹", bonus: 400, cost: 5e6,
+        c: ["#fff1c2", "#ff9d2e", "#e5420f", "#6b1405"], rim: "#b3300a", rim2: "#ffb35c", glow: "255,110,20", ink: "#4a0d02", hi: "#ffe0a3" },
+      { id: "galaxy", name: "Галактика", glyph: "☾", bonus: 1500, cost: 1e8,
+        c: ["#e0e7ff", "#818cf8", "#4338ca", "#1e1b4b"], rim: "#312e81", rim2: "#a5b4fc", glow: "99,102,241", ink: "#eef2ff", hi: "#1e1b4b" },
     ];
 
     const scoreEl = document.getElementById("score");
@@ -184,6 +277,9 @@
     const coin = document.getElementById("coin");
     const listEl = document.getElementById("list");
     const tabs = document.querySelectorAll(".tab");
+    const skyEl = document.getElementById("sky");
+    const sceneEl = document.getElementById("scene");
+    const fxEl = document.getElementById("fx");
 
     const defaultState = () => ({
       score: 0,
@@ -194,6 +290,8 @@
       perm: { gold: 0, start: 0, discount: 0, gain: 0 },
       owned: ["classic"],
       skin: "classic",
+      worlds: ["meadow"],
+      world: "meadow",
     });
     let state = defaultState();
     let tab = "upgrades";
@@ -205,10 +303,12 @@
     const compact = new Intl.NumberFormat("ru-RU", { notation: "compact", maximumFractionDigits: 2 });
     const fmt = (n) => (n >= 1e9 ? compact.format(Math.floor(n)) : Math.floor(n).toLocaleString("ru-RU"));
     const skinById = (id) => SKINS.find((s) => s.id === id) || SKINS[0];
+    const worldById = (id) => WORLDS.find((w) => w.id === id) || WORLDS[0];
     const upgradeCost = (u) =>
       Math.max(1, Math.floor(u.base * Math.pow(u.growth, state.lv[u.id]) * (1 - 0.05 * state.perm.discount)));
     const permCost = (u) => Math.floor(u.base * Math.pow(u.growth, state.perm[u.id]));
-    const multiplier = () => (1 + 0.25 * state.lv.mult) * (1 + 0.5 * state.perm.gold);
+    const multiplier = () =>
+      (1 + 0.25 * state.lv.mult) * (1 + 0.5 * state.perm.gold) * worldById(state.world).mult;
     const gemBoost = () => 1 + 0.25 * state.perm.gain;
     const rebirthGain = () => Math.floor(Math.sqrt(state.earned / REBIRTH_DIVISOR) * gemBoost());
     const startCoins = () => 200 * state.perm.start;
@@ -249,6 +349,9 @@
           const owned = Array.isArray(s.owned) ? s.owned.filter((id) => SKINS.some((x) => x.id === id)) : [];
           next.owned = Array.from(new Set(["classic", ...owned]));
           next.skin = next.owned.includes(s.skin) ? s.skin : "classic";
+          const worlds = Array.isArray(s.worlds) ? s.worlds.filter((id) => WORLDS.some((x) => x.id === id)) : [];
+          next.worlds = Array.from(new Set(["meadow", ...worlds]));
+          next.world = next.worlds.includes(s.world) ? s.world : "meadow";
         } catch {}
       } else {
         // progress from the first version (score only)
@@ -284,6 +387,36 @@
       coin.style.textShadow = `0 2px 0 ${s.hi}`;
     }
 
+    const worldGrad = (w) => `linear-gradient(135deg, ${w.grad[0]}, ${w.grad[1]})`;
+
+    function applyWorld() {
+      const w = worldById(state.world);
+      skyEl.style.background =
+        `radial-gradient(130% 60% at 50% 0%, rgba(${w.sky}, .3), transparent 70%), ` +
+        `linear-gradient(to top, rgba(${w.sky}, .12), transparent 60%)`;
+      sceneEl.innerHTML = `<svg viewBox="0 0 400 120" preserveAspectRatio="none">
+        ${w.extra || ""}
+        <path d="${w.back}" fill="${w.ground}" opacity=".35"/>
+        <path d="${w.front}" fill="${w.ground}" opacity=".65"/></svg>`;
+      let dots = "";
+      for (let i = 0; i < 18; i++) {
+        const d = FX_SPEED[w.fx] * (1 + Math.random());
+        dots += `<i style="left:${(Math.random() * 100).toFixed(1)}%; top:${(Math.random() * 100).toFixed(1)}%; ` +
+                `--s:${(2 + Math.random() * 4).toFixed(1)}px; --d:${d.toFixed(2)}s; --dl:-${(Math.random() * d).toFixed(2)}s"></i>`;
+      }
+      fxEl.className = "fx-" + w.fx;
+      fxEl.innerHTML = dots;
+      document.getElementById("world-dot").style.background = worldGrad(w);
+      document.getElementById("world-dot").innerHTML = ICONS[w.id];
+      document.getElementById("world-name").textContent = w.name;
+      document.getElementById("world-mult").textContent = `×${w.mult}`;
+      [skyEl, sceneEl, fxEl].forEach((el) => {
+        el.classList.remove("world-enter");
+        void el.offsetWidth; // restart the fade-in
+        el.classList.add("world-enter");
+      });
+    }
+
     function skinIconStyle(s) {
       return `background: radial-gradient(circle at 35% 30%, ${s.c[0]}, ${s.c[1]} 35%, ${s.c[2]} 75%, ${s.c[3]}); ` +
              `box-shadow: 0 0 0 3px ${s.rim} inset; color: ${s.ink};`;
@@ -304,6 +437,20 @@
 
     const iconTile = (id, grad) =>
       `<span class="icon" style="background: linear-gradient(135deg, ${grad[0]}, ${grad[1]})">${ICONS[id]}</span>`;
+    const LOCK = ICONS.lock.replace("<svg", '<svg class="cur"');
+
+    function worldItem(w, i) {
+      const prev = WORLDS[i - 1];
+      const item = { act: `world:${w.id}`, lead: iconTile(w.id, w.grad), name: w.name, desc: `Доход ×${w.mult}`, cur: "coin" };
+      if (state.world === w.id) return { ...item, cls: "equipped", disabled: true, price: "Вы здесь" };
+      if (state.worlds.includes(w.id)) return { ...item, price: "Перейти" };
+      if (prev && !state.worlds.includes(prev.id))
+        return { ...item, disabled: true, price: LOCK, desc: `${item.desc} · сначала открой «${prev.name}»` };
+      if (state.rebirths < w.rebirths)
+        return { ...item, disabled: true, price: `${LOCK} ${w.rebirths}`,
+                 desc: `${item.desc} · нужно перерождений: ${w.rebirths} (есть ${state.rebirths})` };
+      return { ...item, price: `${COIN} ${fmt(w.cost)}`, cost: w.cost };
+    }
 
     function renderList() {
       rebirthArmed = false;
@@ -326,11 +473,13 @@
             cost: owned ? null : s.cost, cur: "coin",
           });
         }).join("");
+      } else if (tab === "worlds") {
+        listEl.innerHTML = WORLDS.map((w, i) => itemHTML(worldItem(w, i))).join("");
       } else {
         listEl.innerHTML = `
           <div class="card">
             <div class="rb-row"><span>Перерождений: <b id="rb-count"></b></span><span>${GEM} <b id="rb-gems"></b></span></div>
-            <div class="desc">Сбрасывает монеты и улучшения (скины остаются) и даёт кристаллы за всё, что заработано в этом забеге.
+            <div class="desc">Сбрасывает монеты и улучшения (скины и миры остаются) и даёт кристаллы за всё, что заработано в этом забеге.
               Кристаллы тратятся на постоянные улучшения ниже. Заработано в забеге: <b id="rb-earned"></b></div>
             <button class="rebirth-btn" id="rb-btn" data-act="rebirth"></button>
           </div>
@@ -461,6 +610,24 @@
       flush();
     }
 
+    function useWorld(id) {
+      const i = WORLDS.findIndex((w) => w.id === id);
+      const w = WORLDS[i];
+      if (!w) return;
+      if (!state.worlds.includes(w.id)) {
+        if (i > 0 && !state.worlds.includes(WORLDS[i - 1].id)) return;
+        if (state.rebirths < w.rebirths || state.score < w.cost) return;
+        state.score -= w.cost;
+        state.worlds.push(w.id);
+      }
+      state.world = w.id;
+      haptic("success");
+      applyWorld();
+      renderStats();
+      renderList();
+      flush();
+    }
+
     function pressCoin(x, y) {
       if (!ready) return;
       const gain = perClick();
@@ -501,14 +668,17 @@
       if (kind === "up") buyUpgrade(id);
       else if (kind === "perm") buyPerm(id);
       else if (kind === "rebirth") rebirth();
+      else if (kind === "world") useWorld(id);
       else useSkin(id);
     });
 
-    tabs.forEach((t) => t.addEventListener("click", () => {
-      tab = t.dataset.tab;
-      tabs.forEach((x) => x.classList.toggle("active", x === t));
+    function setTab(name) {
+      tab = name;
+      tabs.forEach((x) => x.classList.toggle("active", x.dataset.tab === name));
       renderList();
-    }));
+    }
+    tabs.forEach((t) => t.addEventListener("click", () => setTab(t.dataset.tab)));
+    document.getElementById("world-pill").addEventListener("click", () => setTab("worlds"));
 
     setInterval(() => {
       const gain = perSec();
@@ -528,12 +698,14 @@
     }
 
     applySkin();
+    applyWorld();
     renderStats();
     renderList();
     load().then((s) => {
       state = s;
       ready = true;
       applySkin();
+      if (state.world !== "meadow") applyWorld();
       renderStats();
       renderList();
     });
