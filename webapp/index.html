@@ -10,7 +10,8 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700;800&family=Unbounded:wght@700;800&display=swap">
   <style>
     :root {
-      /* Layout: stage on top (world pill, score, stat chips, coin on a glowing halo), tabbed sheet below.
+      /* Layout: phone = header (league, world, gems) / score / coin / bottom nav, shop screens slide in above the nav.
+         Desktop = stage on the left, nav + shop as a sidebar on the right.
          Surfaces are tints of the Telegram text colour, so light and dark themes both work. */
       --bg: var(--tg-theme-bg-color, #101a20);
       --text: var(--tg-theme-text-color, #f2f7f6);
@@ -21,6 +22,10 @@
       --sheet: var(--bg);
       --accent: #ffc83d;
       --accent-ink: #ffd96e;
+      --good: #3ddc97;
+      --bad: #ff6b81;
+      --side: clamp(380px, 38vw, 520px);
+      --nav-h: 66px;
       --font-display: "Unbounded", "Arial Black", "Segoe UI", system-ui, sans-serif;
       --font-body: "Onest", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
@@ -29,7 +34,7 @@
         --card: color-mix(in srgb, var(--text) 7%, transparent);
         --card-2: color-mix(in srgb, var(--text) 13%, transparent);
         --line: color-mix(in srgb, var(--text) 14%, transparent);
-        --sheet: color-mix(in srgb, var(--bg) 84%, transparent);
+        --sheet: color-mix(in srgb, var(--bg) 86%, transparent);
         --accent-ink: color-mix(in srgb, var(--accent) 55%, var(--text));
       }
     }
@@ -45,30 +50,51 @@
       position: relative; z-index: 1;
       height: 100%;
       display: flex; flex-direction: column; align-items: center;
-      padding: 10px 0 0;
     }
+    main > * { width: 100%; max-width: 640px; }
     #sky { position: fixed; inset: 0; pointer-events: none; }
     .world-enter { animation: world-in .6s ease-out; }
     @keyframes world-in { from { opacity: 0; } to { opacity: 1; } }
 
-    .score-box { text-align: center; padding: 0 16px; }
+    /* header: league progress, current world, gems */
+    .hud { display: flex; align-items: center; gap: 8px; padding: 10px 12px 0; }
+    .league {
+      flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px;
+      padding: 5px 12px 5px 5px; border-radius: 16px; background: var(--card); border: 1px solid var(--line);
+    }
+    .emblem {
+      position: relative; flex: none; width: 36px; height: 36px; border-radius: 12px; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--c1, #b4bec4), var(--c2, #6b7782));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 -3px 6px rgba(0,0,0,.2), 0 3px 8px rgba(0,0,0,.25);
+    }
+    .emblem svg { position: absolute; width: 28px; height: 28px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
+    .emblem b { position: relative; font-family: var(--font-display); font-size: 11px; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+    .lg-info { flex: 1; min-width: 0; }
+    .lg-name { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 800; }
+    .lg-name span { color: var(--hint); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .meter { display: block; height: 6px; margin-top: 5px; border-radius: 3px; background: var(--card-2); overflow: hidden; }
+    .meter b { display: block; width: 0; height: 100%; border-radius: 3px; transition: width .3s; background: linear-gradient(90deg, var(--c1, var(--accent)), var(--c2, #ff9d2e)); }
     .world-pill {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 3px 12px 3px 3px; border: 1px solid var(--line); border-radius: 999px;
+      display: inline-flex; align-items: center; gap: 6px; flex: none;
+      padding: 4px 11px 4px 4px; border: 1px solid var(--line); border-radius: 999px;
       background: var(--card); color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer;
     }
-    .world-pill .dot {
-      width: 24px; height: 24px; border-radius: 50%; color: #fff;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .world-pill .dot svg { width: 14px; height: 14px; }
+    .world-pill .dot { width: 26px; height: 26px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; }
+    .world-pill .dot svg { width: 15px; height: 15px; }
     .world-pill b { font-family: var(--font-display); font-size: 12px; color: var(--accent-ink); }
-    .label { margin-top: 8px; color: var(--hint); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .16em; }
+    #world-name { display: none; }
+    .gems-chip { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 9px 12px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+    /* score */
+    .score-box { text-align: center; padding: 8px 16px 0; }
+    .score-line { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .score-line > svg { width: clamp(26px, 8vw, 38px); height: clamp(26px, 8vw, 38px); flex: none; filter: drop-shadow(0 2px 6px rgba(255, 190, 0, .5)); }
     #score {
       font-family: var(--font-display); font-weight: 800; line-height: 1.15;
       font-size: clamp(28px, 10vw, 44px); font-variant-numeric: tabular-nums;
     }
-    #score[data-long] { font-size: clamp(22px, 7.6vw, 32px); }
+    #score[data-long] { font-size: clamp(22px, 7.4vw, 32px); }
     .stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 6px; }
     .chip {
       display: inline-flex; align-items: center; gap: 5px;
@@ -77,8 +103,14 @@
     }
     .chip b { color: var(--text); font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
     .chip svg { width: 14px; height: 14px; }
+    .chip b.pos::before { content: "+"; }
+    .buff { background: rgba(255, 200, 61, .16); box-shadow: inset 0 0 0 1px rgba(255, 200, 61, .5); color: var(--accent-ink); }
+    .buff[hidden] { display: none; }
+    .buff svg { color: var(--accent); }
+    .buff b { color: var(--accent-ink); }
 
-    .coin-wrap { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; width: 100%; }
+    /* stage */
+    .coin-wrap { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; max-width: none; }
     .coin-holder { position: relative; z-index: 1; text-align: center; padding-top: 8px; }
     .coin-stage { position: relative; display: inline-block; --glow: 255, 190, 0; }
     .halo {
@@ -99,8 +131,20 @@
       mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
     }
     #scene svg { display: block; width: 100%; height: 100%; }
+    #coin {
+      position: relative;
+      width: min(62vw, 38vh, 300px); aspect-ratio: 1; border: none; border-radius: 50%; padding: 0;
+      cursor: pointer; touch-action: manipulation;
+      transition: transform .12s ease-out;
+      font-family: var(--font-display);
+      font-size: min(26vw, 16vh, 130px); font-weight: 800;
+    }
+    #coin.pressed { transform: scale(.92); }
+    #coin.holo { animation: holo 6s linear infinite; }
+    @keyframes holo { to { filter: hue-rotate(360deg); } }
+    .kbd-hint { display: none; color: var(--hint); font-size: 12px; margin-top: 10px; }
 
-    /* World particles. Each <i> gets --s (size), --d (duration), --dl (negative delay) inline. */
+    /* world particles: each <i> gets --s (size), --d (duration), --dl (negative delay) inline */
     #fx { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
     #fx i { position: absolute; width: var(--s); height: var(--s); border-radius: 50%; }
     .fx-firefly i { background: #d9f99d; box-shadow: 0 0 8px #84cc16; animation: hover var(--d) ease-in-out var(--dl) infinite; }
@@ -116,64 +160,82 @@
     @keyframes twinkle { 0%, 100% { opacity: .15; transform: scale(.5); } 50% { opacity: 1; transform: scale(1); } }
     @keyframes hover { 0%, 100% { opacity: .2; transform: translate(0, 0); } 50% { opacity: 1; transform: translate(14px, -20px); } }
 
-    #coin {
-      position: relative;
-      width: min(46vw, 27vh, 240px); aspect-ratio: 1; border: none; border-radius: 50%; padding: 0;
-      cursor: pointer; touch-action: manipulation;
-      transition: transform .08s ease-out;
-      font-family: var(--font-display);
-      font-size: min(22vw, 14vh, 108px); font-weight: 800;
-    }
-    #coin.pressed { transform: scale(.92); }
-    #coin.holo { animation: holo 6s linear infinite; }
-    @keyframes holo { to { filter: hue-rotate(360deg); } }
+    /* floating numbers, sparks, golden coin, toast */
     .plus {
       position: fixed; z-index: 10; pointer-events: none;
       font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--accent);
       text-shadow: 0 2px 6px rgba(0,0,0,.5);
       animation: float .8s ease-out forwards;
     }
+    .plus.crit { font-size: 30px; color: #ff6aa8; }
     @keyframes float {
       from { opacity: 1; transform: translate(-50%, -50%); }
       to   { opacity: 0; transform: translate(-50%, -150px); }
     }
-    .kbd-hint { display: none; color: var(--hint); font-size: 12px; margin-top: 10px; }
-    @media (hover: hover) { .kbd-hint { display: block; } }
+    .spark { position: fixed; z-index: 8; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; box-shadow: 0 0 8px currentColor; }
+    .golden {
+      position: fixed; z-index: 9; left: -64px; top: var(--y); width: 54px; height: 54px; padding: 0; border: none; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation;
+      background: radial-gradient(circle at 35% 30%, #fff6a8, #ffd23f 35%, #f0a500 75%, #b8740a);
+      box-shadow: inset 0 0 0 4px #d99000, 0 0 22px 6px rgba(255, 200, 0, .6);
+      animation: cross 9s linear forwards, bob 1s ease-in-out infinite alternate;
+    }
+    .golden::after { content: "$"; font-family: var(--font-display); font-weight: 800; font-size: 24px; color: #b06a00; }
+    @keyframes cross { to { left: 100vw; } }
+    @keyframes bob { from { transform: translateY(-14px) rotate(-8deg); } to { transform: translateY(14px) rotate(8deg); } }
+    #toast {
+      position: fixed; z-index: 20; left: 50%; bottom: calc(var(--nav-h) + 14px + env(safe-area-inset-bottom)); max-width: 90%; text-align: center;
+      padding: 9px 15px; border-radius: 14px; background: var(--text); color: var(--bg);
+      font-size: 13px; font-weight: 700; pointer-events: none;
+      opacity: 0; transform: translate(-50%, 8px); transition: opacity .2s, transform .2s;
+    }
+    #toast.show { opacity: 1; transform: translate(-50%, 0); }
     @media (prefers-reduced-motion: reduce) {
       #fx { display: none; }
       .halo, .ring, #coin.holo { animation: none; }
+      .golden { animation: cross 14s linear forwards; }
     }
 
+    /* shop screen (phone: replaces the coin while a section is open) */
     .panel {
-      width: 100%; max-width: 520px;
+      display: none; flex: 1; min-height: 0; flex-direction: column; gap: 10px;
+      margin-top: 10px; padding: 14px 12px 8px;
       background: var(--sheet); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
       border-top: 1px solid var(--line); border-radius: 22px 22px 0 0;
-      padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
-      display: flex; flex-direction: column; gap: 10px;
-      max-height: 46vh;
     }
-    .tabs { display: flex; gap: 3px; padding: 3px; border-radius: 14px; background: var(--card); }
-    .tab {
-      position: relative; flex: 0 0 auto; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 5px;
-      padding: 8px 9px; border: none; border-radius: 11px;
-      background: transparent; color: var(--hint); font-size: 12px; font-weight: 700; cursor: pointer;
-      transition: background .15s, color .15s;
-    }
-    .tab.active { flex: 1 1 auto; padding: 8px 10px; background: var(--text); color: var(--bg); }
-    .tab svg { width: 18px; height: 18px; flex: none; display: block; }
-    .tl { display: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tab.active .tl { display: block; }
-    .badge { display: none; position: absolute; top: 3px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #ff4f6d; box-shadow: 0 0 0 2px var(--bg); }
-    .tab.has-badge:not(.active) .badge { display: block; }
-    .list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
+    main.open .panel { display: flex; }
+    main.open .coin-wrap { display: none; }
+    .sheet-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 0 4px; }
+    #sheet-title { margin: 0; font-family: var(--font-display); font-size: 18px; font-weight: 800; }
+    #sheet-sub { color: var(--hint); font-size: 12px; font-weight: 500; text-align: right; }
+    .list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: var(--card-2) transparent; }
 
+    /* bottom navigation */
+    .tabs {
+      flex: none; display: flex; gap: 2px; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+      background: var(--sheet); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+      border-top: 1px solid var(--line);
+    }
+    .tab {
+      position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 8px 0 7px; border: none; border-radius: 14px; background: transparent; color: var(--hint);
+      font-size: clamp(9.5px, 2.9vw, 11px); font-weight: 700; cursor: pointer;
+      transition: color .15s, background .15s;
+    }
+    .tab svg { width: 22px; height: 22px; display: block; }
+    .tl { max-width: 100%; overflow: hidden; white-space: nowrap; }
+    .tab.active { color: var(--text); background: var(--card-2); }
+    .tab.active svg { color: var(--accent-ink); filter: drop-shadow(0 0 6px rgba(255, 200, 61, .55)); }
+    .badge { display: none; position: absolute; top: 5px; left: calc(50% + 7px); width: 9px; height: 9px; border-radius: 50%; background: #ff4f6d; box-shadow: 0 0 0 2px var(--bg); }
+    .tab.has-badge:not(.active) .badge { display: block; }
+
+    /* list rows */
     .item {
       display: flex; align-items: center; gap: 12px; width: 100%;
       padding: 10px 12px; border: 1px solid transparent; border-radius: 16px; text-align: left;
       background: var(--card); color: var(--text); font: inherit; cursor: pointer;
       transition: transform .1s ease-out;
     }
-    .item:not(:disabled):active, .tile:not(:disabled):active { transform: scale(.975); }
     .item:disabled, .tile:disabled { opacity: .5; cursor: default; }
     .item.equipped, .item.maxed, .tile.equipped { opacity: 1; }
     .item.equipped, .tile.equipped { border-color: var(--accent); background: rgba(255, 200, 61, .1); }
@@ -196,10 +258,14 @@
     .item:disabled .price, .tile:disabled .price { background: var(--card-2); box-shadow: none; color: var(--hint); }
     .item:not(:disabled) .price.free, .tile:not(:disabled) .price.free { background: var(--card-2); box-shadow: none; color: var(--text); }
     .item.equipped .price, .tile.equipped .price { color: var(--accent-ink); }
-
-    /* skin shop: tiles grouped by rarity */
-    .section { display: flex; align-items: center; gap: 7px; color: var(--hint); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; padding: 6px 2px 0; }
+    .section { color: var(--hint); font-size: 13px; font-weight: 700; padding: 8px 4px 0; display: flex; align-items: center; gap: 7px; }
     .section .rar { width: 8px; height: 8px; border-radius: 50%; background: var(--rar); box-shadow: 0 0 8px var(--rar); }
+    .more { color: var(--hint); font-size: 12px; text-align: center; padding: 6px 12px 2px; }
+    .bar { display: block; height: 5px; margin: 6px 0 2px; border-radius: 3px; background: var(--card-2); overflow: hidden; }
+    .bar b { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), #ff9d2e); }
+    .pg { font-size: 11px; }
+
+    /* skin tiles */
     .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
     .tile {
       position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px;
@@ -217,9 +283,22 @@
     .t-bonus { color: var(--hint); font-size: 11px; margin-bottom: 4px; }
     .tile .price { font-size: 12px; padding: 3px 9px; }
 
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-    .rb-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--hint); }
-    .rb-row b { font-family: var(--font-display); font-size: 16px; color: var(--text); }
+    /* prestige */
+    .pcard {
+      display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 18px; border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(124, 92, 255, .22), rgba(255, 79, 154, .16));
+    }
+    .p-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
+    .p-gain { display: flex; flex-direction: column; gap: 2px; }
+    .p-label { color: var(--hint); font-size: 12px; }
+    .p-gain b { display: flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: 28px; line-height: 1.1; }
+    .p-gain .cur { width: 22px; height: 22px; }
+    .p-stat { color: var(--hint); font-size: 12px; text-align: right; line-height: 1.5; }
+    .p-stat b { color: var(--text); font-weight: 800; }
+    .keep-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--hint); }
+    .pill { padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--text); background: var(--card); }
+    .pill.keep { box-shadow: inset 0 0 0 1px var(--good); }
+    .pill.lose { box-shadow: inset 0 0 0 1px var(--bad); }
     .rebirth-btn {
       border: none; border-radius: 14px; padding: 13px; font: inherit; font-weight: 800; font-size: 15px; cursor: pointer;
       color: #fff; background: linear-gradient(135deg, #7c5cff, #ff4f9a);
@@ -227,123 +306,118 @@
     }
     .rebirth-btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
     .rebirth-btn.armed { background: linear-gradient(135deg, #ef4444, #f97316); }
-    .buff { background: rgba(255, 200, 61, .16); box-shadow: inset 0 0 0 1px rgba(255, 200, 61, .5); color: var(--accent-ink); margin-top: 6px; }
-    .buff[hidden] { display: none; }
-    .buff svg { color: var(--accent); }
-    .buff b { color: var(--accent-ink); }
-    #toast {
-      position: absolute; z-index: 5; bottom: 10px; left: 50%; max-width: 90%; text-align: center;
-      padding: 8px 14px; border-radius: 14px; background: var(--text); color: var(--bg);
-      font-size: 13px; font-weight: 700; pointer-events: none;
-      opacity: 0; transform: translate(-50%, 8px); transition: opacity .2s, transform .2s;
-    }
-    #toast.show { opacity: 1; transform: translate(-50%, 0); }
-    .plus.crit { font-size: 30px; color: #ff6aa8; }
-    .golden {
-      position: fixed; z-index: 9; left: -64px; top: var(--y); width: 54px; height: 54px; padding: 0; border: none; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation;
-      background: radial-gradient(circle at 35% 30%, #fff6a8, #ffd23f 35%, #f0a500 75%, #b8740a);
-      box-shadow: inset 0 0 0 4px #d99000, 0 0 22px 6px rgba(255, 200, 0, .6);
-      animation: cross 9s linear forwards, bob 1s ease-in-out infinite alternate;
-    }
-    .golden::after { content: "$"; font-family: var(--font-display); font-weight: 800; font-size: 24px; color: #b06a00; }
-    @keyframes cross { to { left: 100vw; } }
-    @keyframes bob { from { transform: translateY(-14px) rotate(-8deg); } to { transform: translateY(14px) rotate(8deg); } }
-    @media (prefers-reduced-motion: reduce) { .golden { animation: cross 14s linear forwards; } }
-    .bar { display: block; height: 5px; margin: 6px 0 2px; border-radius: 3px; background: var(--card-2); overflow: hidden; }
-    .bar b { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), #ff9d2e); }
-    .pg { font-size: 11px; }
+
     /* keyboard focus */
     button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .tab:focus-visible { outline-offset: -2px; }
-    .list { scrollbar-width: thin; scrollbar-color: var(--card-2) transparent; }
 
     /* mouse: hover feedback */
     @media (hover: hover) {
+      .kbd-hint { display: block; }
       .item:not(:disabled):hover, .tile:not(:disabled):hover { background: var(--card-2); transform: translateY(-1px); }
       .item:not(:disabled):active, .tile:not(:disabled):active { transform: scale(.975); }
-      .tab:not(.active):hover { color: var(--text); background: var(--card-2); }
+      .tab:not(.active):hover { color: var(--text); background: var(--card); }
       .world-pill:hover { background: var(--card-2); }
       #coin:hover { transform: scale(1.03); }
       #coin.pressed, #coin.pressed:hover { transform: scale(.92); }
     }
 
-    /* desktop and landscape: stage on the left, shop as a full-height sidebar on the right */
+    /* desktop and landscape: stage on the left, nav + shop as a sidebar on the right */
     @media (min-width: 760px) and (min-aspect-ratio: 1/1) {
       main {
-        --side: clamp(380px, 38vw, 520px);
-        display: grid; grid-template-columns: minmax(0, 1fr) var(--side); grid-template-rows: auto minmax(0, 1fr);
-        align-items: stretch; padding: 0;
+        display: grid; grid-template-columns: minmax(0, 1fr) var(--side); grid-template-rows: auto auto minmax(0, 1fr);
+        grid-template-areas: "hud nav" "score panel" "stage panel";
+        align-items: stretch; justify-items: stretch;
       }
-      .score-box { grid-column: 1; grid-row: 1; padding-top: 22px; }
-      .world-pill { font-size: 14px; }
-      .label { font-size: 13px; }
+      main > * { max-width: none; }
+      .hud { grid-area: hud; justify-content: center; padding: 16px 20px 0; }
+      .league { flex: 0 1 340px; }
+      #world-name { display: inline; }
+      .score-box { grid-area: score; padding-top: 12px; }
       #score { font-size: clamp(36px, 7.5vh, 68px); }
       #score[data-long] { font-size: clamp(28px, 5.6vh, 50px); }
+      .score-line > svg { width: clamp(34px, 6vh, 52px); height: clamp(34px, 6vh, 52px); }
       .stats { gap: 8px; margin-top: 10px; }
       .chip { font-size: 13px; padding: 5px 12px 5px 10px; }
       .chip b { font-size: 14px; }
       .chip svg { width: 16px; height: 16px; }
-      .coin-wrap { grid-column: 1; grid-row: 2; width: auto; }
+      .coin-wrap { grid-area: stage; }
+      main.open .coin-wrap { display: flex; }
       #scene { width: min(100%, 980px); height: 38%; }
       #coin { width: min(34vw, 40vh, 400px); font-size: min(14vw, 17vh, 170px); }
       .kbd-hint { font-size: 13px; margin-top: 16px; }
       .plus { font-size: 28px; }
       .plus.crit { font-size: 38px; }
-      .panel {
-        grid-column: 2; grid-row: 1 / span 2; width: auto; max-width: none; max-height: none; height: 100%;
-        border-top: none; border-left: 1px solid var(--line); border-radius: 0;
-        padding: 16px 16px 16px; gap: 12px;
+      .tabs {
+        grid-area: nav; align-items: stretch; padding: 10px 14px;
+        border-top: none; border-left: 1px solid var(--line); border-bottom: 1px solid var(--line);
       }
-      .list { flex: 1; min-height: 0; gap: 10px; padding-right: 2px; }
-      .tab { font-size: 13px; padding: 10px 11px; }
-      .tab.active { padding: 10px 12px; }
+      .tab { font-size: 12px; padding: 9px 0 8px; }
+      .tab[data-tab="home"] { display: none; }
+      .badge { left: calc(50% + 9px); }
+      .panel, main.open .panel {
+        grid-area: panel; display: flex; margin-top: 0; padding: 16px;
+        border-top: none; border-left: 1px solid var(--line); border-radius: 0;
+      }
+      #sheet-title { font-size: 20px; }
+      .list { gap: 10px; padding-right: 2px; }
       .item { padding: 12px 14px; }
       .name { font-size: 16px; }
       .desc { font-size: 14px; }
       .grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
       .tile { padding: 14px 6px 10px; }
+      #toast { left: calc((100vw - var(--side)) / 2); bottom: 28px; }
     }
   </style>
 </head>
 <body>
   <div id="sky"></div>
-  <main>
-    <div class="score-box">
+  <div id="toast" role="status"></div>
+  <main id="main">
+    <header class="hud">
+      <div class="league" id="league">
+        <span class="emblem" id="emblem"></span>
+        <div class="lg-info">
+          <div class="lg-name"><span id="lg-name" style="color:var(--text);font-size:13px;font-weight:800"></span><span id="lg-pct"></span></div>
+          <i class="meter"><b id="lg-bar"></b></i>
+        </div>
+      </div>
       <button class="world-pill" id="world-pill" aria-label="Миры">
         <span class="dot" id="world-dot"></span><span id="world-name"></span><b id="world-mult"></b>
       </button>
-      <div class="label">Монеты</div>
-      <div id="score">0</div>
+      <span class="gems-chip"><span id="gem-icon"></span><b id="gems">0</b></span>
+    </header>
+    <div class="score-box">
+      <div class="score-line"><span id="score-ic"></span><div id="score">0</div></div>
       <div class="stats">
-        <span class="chip"><span id="ic-click"></span><b id="per-click">1</b> за клик</span>
-        <span class="chip"><span id="ic-sec"></span><b id="per-sec">0</b> в секунду</span>
-        <span class="chip"><span id="gem-icon"></span><b id="gems">0</b></span>
+        <span class="chip"><span id="ic-click"></span><b id="per-click" class="pos">1</b> за клик</span>
+        <span class="chip"><span id="ic-sec"></span><b id="per-sec" class="pos">0</b> в секунду</span>
+        <span class="chip buff" id="buff" hidden></span>
       </div>
-      <span class="chip buff" id="buff" hidden></span>
     </div>
     <div class="coin-wrap">
       <div id="scene"></div>
-      <div id="toast" role="status"></div>
       <div id="fx"></div>
       <div class="coin-holder">
         <div class="coin-stage" id="stage">
           <div class="halo"></div><div class="ring"></div>
           <button id="coin" aria-label="Кликнуть по монетке"></button>
         </div>
-        <div class="kbd-hint">Пробел — клик · 1–5 — вкладки</div>
+        <div class="kbd-hint">Пробел — клик · цифры — разделы</div>
       </div>
     </div>
     <section class="panel">
-      <div class="tabs">
-        <button class="tab active" data-tab="upgrades" aria-label="Улучшения"><span class="ti"></span><span class="tl">Улучшения</span></button>
-        <button class="tab" data-tab="skins" aria-label="Скины"><span class="ti"></span><span class="tl">Скины</span></button>
-        <button class="tab" data-tab="worlds" aria-label="Миры"><span class="ti"></span><span class="tl">Миры</span></button>
-        <button class="tab" data-tab="rebirth" aria-label="Перерождение"><span class="ti"></span><span class="tl">Перерождение</span></button>
-        <button class="tab" data-tab="rewards" aria-label="Награды"><span class="ti"></span><span class="tl">Награды</span><i class="badge"></i></button>
-      </div>
+      <div class="sheet-head"><h2 id="sheet-title"></h2><span id="sheet-sub"></span></div>
       <div class="list" id="list"></div>
     </section>
+    <nav class="tabs" aria-label="Разделы">
+      <button class="tab active" data-tab="home" aria-label="Монета"><span class="ti"></span><span class="tl">Тап</span></button>
+      <button class="tab" data-tab="upgrades" aria-label="Прокачка"><span class="ti"></span><span class="tl">Прокачка</span></button>
+      <button class="tab" data-tab="skins" aria-label="Скины"><span class="ti"></span><span class="tl">Скины</span></button>
+      <button class="tab" data-tab="worlds" aria-label="Миры"><span class="ti"></span><span class="tl">Миры</span></button>
+      <button class="tab" data-tab="rebirth" aria-label="Перерождение"><span class="ti"></span><span class="tl">Престиж</span></button>
+      <button class="tab" data-tab="rewards" aria-label="Награды"><span class="ti"></span><span class="tl">Награды</span><i class="badge"></i></button>
+    </nav>
   </main>
 
   <script>
@@ -372,15 +446,58 @@
       gift:     svg('<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M12 9v12M3 14h18M12 9C10 9 7.5 8 7.5 6.2S10.5 3.5 12 9c1.5-5.5 4.5-4.5 4.5-2.8S14 9 12 9z"/>'),
       bolt:     svg('<path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor"/>'),
       lock:     svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
+      tap:      svg('<circle cx="12" cy="12" r="9"/><path d="M14.8 9.2C14.3 8.3 13.3 8 12 8c-1.6 0-2.7.7-2.7 1.8 0 2.6 5.4 1.3 5.4 4 0 1.1-1.1 1.9-2.7 1.9-1.4 0-2.5-.4-3.1-1.4M12 6.5V8M12 16v1.5"/>'),
+      up:       svg('<path d="M12 19V6M6 11l6-6 6 6M6 21h12"/>'),
+      shield:   svg('<path d="M12 2.5l8 3v6.5c0 5-3.4 8.2-8 9.5-4.6-1.3-8-4.5-8-9.5V5.5z" fill="currentColor" fill-opacity=".3"/>'),
+      fingers:  svg('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>'),
+      critp:    svg('<path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.6 6.7 19.6l1.1-6L3.4 9.4l6-.8z" fill="currentColor"/>'),
+      luck:     svg('<circle cx="9" cy="9" r="3.5"/><circle cx="15" cy="9" r="3.5"/><circle cx="9" cy="15" r="3.5"/><circle cx="15" cy="15" r="3.5"/><path d="M12 12l6 9"/>'),
+      mine:     svg('<path d="M3 20l6-10 4 6 3-4 5 8z" fill="currentColor"/>'),
+      factory:  svg('<path d="M3 20V9l6 4V9l6 4V5h4v15z" fill="currentColor"/>'),
+      bank:     svg('<path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20.5h18"/>'),
+      portal:   svg('<ellipse cx="12" cy="12" rx="5" ry="9"/><ellipse cx="12" cy="12" rx="1.8" ry="4.5"/>'),
+      reactor:  svg('<circle cx="12" cy="12" r="1.8" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/>'),
+      heritage: svg('<path d="M12 2.5l8 3v6.5c0 5-3.4 8.2-8 9.5-4.6-1.3-8-4.5-8-9.5V5.5z"/><path d="M9 12l2 2 4-4"/>'),
+      manager:  svg('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>'),
+      night:    svg('<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" fill="currentColor"/>'),
     };
+    ICONS.crit = ICONS.bolt;
+    ICONS.farm = ICONS.meadow;
+    ICONS.fever = ICONS.auto;
+    ICONS.cpower = ICONS.power;
     const COIN = '<svg class="cur" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ffd23f" stroke="#d99000" stroke-width="1.4"/><circle cx="8" cy="8" r="3.6" fill="none" stroke="#d99000" stroke-width="1.2"/></svg>';
     const GEM = '<svg class="cur" viewBox="0 0 16 16"><path d="M4 2h8l3 4-7 8-7-8z" fill="#7fe3ff" stroke="#2590c4" stroke-width="1.2" stroke-linejoin="round"/><path d="M1 6h14M6 2L5 6l3 8 3-8-1-4" fill="none" stroke="#2590c4" stroke-width="1"/></svg>';
 
+    // Coin upgrades are reset by a rebirth (a share of the levels is kept). `inc` = base income per second per level.
+    // Upgrades other than `always` show up once the lifetime total reaches 40% of their first price.
+    const gen = (id, name, inc, base, grad) => ({
+      id, group: "Доход", name, inc, base, growth: id === "auto" ? 1.6 : 1.5, grad, always: id === "auto",
+      desc: (l) => `+${fmt(inc)} в секунду за уровень · сейчас +${fmt(inc * l * multiplier())}/с`,
+    });
     const UPGRADES = [
-      { id: "power", name: "Сила клика", base: 10,  growth: 1.5, grad: ["#ffa24a", "#ff5a36"], desc: "+1 монета за клик" },
-      { id: "auto",  name: "Автокликер", base: 50,  growth: 1.6, grad: ["#3ddbe6", "#3b82f6"], desc: "+1 монета в секунду" },
-      { id: "mult",  name: "Множитель",  base: 200, growth: 1.8, grad: ["#c58bff", "#7c3aed"], desc: "+25% ко всему доходу" },
+      { id: "power", group: "Клик", always: true, name: "Сила клика", base: 10, growth: 1.5, grad: ["#ffa24a", "#ff5a36"], desc: () => "+1 монета за клик" },
+      { id: "fingers", group: "Клик", name: "Золотой палец", base: 2500, growth: 1.9, grad: ["#ffe27a", "#f0a500"],
+        desc: (l) => `Клик +1% от дохода в секунду · сейчас +${l}%` },
+      { id: "crit", group: "Клик", name: "Меткость", base: 1200, growth: 1.55, max: 25, grad: ["#ff8a8a", "#e11d48"],
+        desc: (l) => `Шанс крита ${8 + l}%${l < 25 ? ` → ${9 + l}%` : ""}` },
+      { id: "critp", group: "Клик", name: "Сила крита", base: 4000, growth: 1.7, max: 20, grad: ["#ff9ed2", "#c026d3"],
+        desc: (l) => `Крит ×${5 + l * 0.5}${l < 20 ? ` → ×${5 + (l + 1) * 0.5}` : ""}` },
+      gen("auto", "Автокликер", 1, 50, ["#3ddbe6", "#3b82f6"]),
+      gen("mine", "Шахта", 6, 600, ["#a8b4c0", "#566574"]),
+      gen("farm", "Ферма", 40, 5000, ["#8ae68a", "#2e9e3e"]),
+      gen("factory", "Фабрика", 280, 60000, ["#ffb36b", "#d9531e"]),
+      gen("bank", "Банк", 2000, 8e5, ["#7ee0b5", "#0f8f6a"]),
+      gen("portal", "Портал", 15000, 1.2e7, ["#b69cff", "#5b34d6"]),
+      gen("reactor", "Реактор", 120000, 2e8, ["#6ee7ff", "#0a6fb8"]),
+      { id: "mult", group: "Усиления", always: true, name: "Множитель", base: 200, growth: 1.8, grad: ["#c58bff", "#7c3aed"],
+        desc: (l) => `+25% ко всему доходу · сейчас +${25 * l}%` },
+      { id: "luck", group: "Усиления", name: "Золотой магнит", base: 900, growth: 1.7, max: 10, grad: ["#ffe27a", "#d49a00"],
+        desc: (l) => `Золотые монеты появляются чаще на ${6 * l}%` },
+      { id: "fever", group: "Усиления", name: "Долгая лихорадка", base: 1500, growth: 1.7, max: 10, grad: ["#ffc46b", "#e8590c"],
+        desc: (l) => `Лихорадка длится ${15 + 3 * l} с${l < 10 ? ` → ${18 + 3 * l} с` : ""}` },
     ];
+    const GENS = UPGRADES.filter((u) => u.inc);
+    const GROUPS = ["Клик", "Доход", "Усиления"];
 
     // Permanent upgrades bought with gems; they survive rebirths.
     const PERMS = [
@@ -388,12 +505,32 @@
         desc: (l) => `+50% к доходу · сейчас +${50 * l}%` },
       { id: "start",    name: "Стартовый капитал", base: 2, growth: 2, grad: ["#3ee0a8", "#059669"],
         desc: (l) => `Старт с ${fmt(200 * (l + 1))} монет (сейчас ${fmt(200 * l)})` },
+      { id: "heritage", name: "Наследие",          base: 2, growth: 1.8, max: 10, grad: ["#8ee6c0", "#0f9d78"],
+        desc: (l) => `После перерождения остаётся ${Math.min(60, 10 + 5 * l)}% уровней${l < 10 ? ` → ${Math.min(60, 15 + 5 * l)}%` : ""}` },
+      { id: "manager",  name: "Менеджер",          base: 20, growth: 1, max: 1, grad: ["#7fb2ff", "#3558d8"],
+        desc: (l) => l ? "Сам покупает доходные улучшения" : "Сам покупает самое дешёвое доходное улучшение" },
+      { id: "cpower",   name: "Мощь кликов",       base: 2, growth: 2, grad: ["#ffa24a", "#ff5a36"],
+        desc: (l) => `+25% к доходу с кликов · сейчас +${25 * l}%` },
+      { id: "night",    name: "Ночная смена",      base: 3, growth: 2, max: 5, grad: ["#8a8cff", "#3d3fc4"],
+        desc: (l) => `Офлайн-доход ${50 + 10 * l}% и до ${3 + l} ч${l < 5 ? ` → ${60 + 10 * l}% и ${4 + l} ч` : ""}` },
       { id: "discount", name: "Торговец",          base: 3, growth: 2, max: 10, grad: ["#f78fc0", "#db2777"],
         desc: (l) => `−5% к цене улучшений · сейчас −${5 * l}%` },
       { id: "gain",     name: "Кристальный дар",   base: 5, growth: 2, grad: ["#6cb4ff", "#6366f1"],
         desc: (l) => `+25% кристаллов · сейчас +${25 * l}%` },
     ];
     const REBIRTH_DIVISOR = 2000; // coins earned in a run for the first gem
+
+    // Leagues follow lifetime coins, like ranks in other tap games.
+    const LEAGUES = [
+      { n: "Новичок", at: 0,    c: ["#b4bec4", "#6b7782"] },
+      { n: "Бронза",  at: 5e3,  c: ["#e8a068", "#9a5420"] },
+      { n: "Серебро", at: 1e5,  c: ["#eef2f6", "#8e99a5"] },
+      { n: "Золото",  at: 2e6,  c: ["#ffd23f", "#d48a00"] },
+      { n: "Платина", at: 5e7,  c: ["#8ef0f0", "#2f9aa0"] },
+      { n: "Алмаз",   at: 2e9,  c: ["#8fd8ff", "#2a6fe0"] },
+      { n: "Легенда", at: 1e11, c: ["#d89bff", "#7a2fe0"] },
+      { n: "Миф",     at: 5e12, c: ["#ff8aa8", "#d81f4a"] },
+    ];
 
     // Worlds are opened in order with coins, need a number of rebirths, survive rebirths,
     // and multiply all income while you are in them. Scenery paths use a 400×120 viewBox.
@@ -471,7 +608,6 @@
     ];
 
     const CRIT_CHANCE = 0.08, CRIT_MULT = 5;
-    const OFFLINE_CAP = 3 * 3600, OFFLINE_RATE = 0.5; // seconds of idle income paid out, share of normal rate
 
     // Achievements pay gems once. val() reads lifetime counters, so rebirths never lose progress.
     const ACH_GRAD = {
@@ -486,6 +622,8 @@
       ["coins1m", "gold", "Миллионер", "Заработай 1 млн монет за всё время", 1e6, 3, () => state.total],
       ["coins1b", "gold", "Магнат", "Заработай 1 млрд монет за всё время", 1e9, 8, () => state.total],
       ["coins1t", "gold", "Монетный дракон", "Заработай 1 трлн монет за всё время", 1e12, 20, () => state.total],
+      ["league3", "gold", "Золотая лига", "Достигни лиги «Золото»", 3, 5, () => leagueInfo().i],
+      ["league6", "gold", "Живая легенда", "Достигни лиги «Легенда»", 6, 15, () => leagueInfo().i],
       ["rb1", "cycle", "Второй шанс", "Переродись 1 раз", 1, 2, () => state.rebirths],
       ["rb5", "cycle", "Колесо сансары", "Переродись 5 раз", 5, 5, () => state.rebirths],
       ["rb15", "cycle", "Бессмертный", "Переродись 15 раз", 15, 12, () => state.rebirths],
@@ -498,36 +636,42 @@
       ["gold10", "mult", "Охотник за золотом", "Поймай 10 золотых монет", 10, 4, () => state.golden],
     ].map(([id, icon, name, desc, target, gems, val]) => ({ id, icon, name, desc, target, gems, val, grad: ACH_GRAD[icon] }));
 
+    const mainEl = document.getElementById("main");
     const scoreEl = document.getElementById("score");
     const perClickEl = document.getElementById("per-click");
     const perSecEl = document.getElementById("per-sec");
     const gemsEl = document.getElementById("gems");
     document.getElementById("gem-icon").innerHTML = GEM;
+    document.getElementById("score-ic").innerHTML = COIN;
     document.getElementById("ic-click").innerHTML = ICONS.power;
     document.getElementById("ic-sec").innerHTML = ICONS.auto;
     const stageEl = document.getElementById("stage");
     const buffEl = document.getElementById("buff");
     const toastEl = document.getElementById("toast");
-    const TAB_ICONS = { upgrades: "power", skins: "skin", worlds: "space", rebirth: "cycle", rewards: "trophy" };
-    const TAB_ORDER = Object.keys(TAB_ICONS);
-    document.querySelectorAll(".tab").forEach((t, i) => {
-      t.querySelector(".ti").innerHTML = ICONS[TAB_ICONS[t.dataset.tab]];
-      t.title = `${t.getAttribute("aria-label")} (${i + 1})`;
-    });
+    const emblemEl = document.getElementById("emblem");
+    const leagueEl = document.getElementById("league");
+    const TAB_ICONS = { home: "tap", upgrades: "up", skins: "skin", worlds: "space", rebirth: "cycle", rewards: "trophy" };
+    const TAB_TITLES = { upgrades: "Прокачка", skins: "Скины", worlds: "Миры", rebirth: "Перерождение", rewards: "Награды" };
     const coin = document.getElementById("coin");
     const listEl = document.getElementById("list");
     const tabs = document.querySelectorAll(".tab");
     const skyEl = document.getElementById("sky");
     const sceneEl = document.getElementById("scene");
     const fxEl = document.getElementById("fx");
+    const wide = window.matchMedia("(min-width: 760px) and (min-aspect-ratio: 1/1)");
+    const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    tabs.forEach((t) => {
+      t.querySelector(".ti").innerHTML = ICONS[TAB_ICONS[t.dataset.tab]];
+      t.title = t.getAttribute("aria-label");
+    });
 
     const defaultState = () => ({
       score: 0,
-      lv: { power: 0, auto: 0, mult: 0 },
+      lv: Object.fromEntries(UPGRADES.map((u) => [u.id, 0])),
       gems: 0,
       rebirths: 0,
       earned: 0,
-      perm: { gold: 0, start: 0, discount: 0, gain: 0 },
+      perm: Object.fromEntries(PERMS.map((u) => [u.id, 0])),
       owned: ["classic"],
       skin: "classic",
       worlds: ["meadow"],
@@ -540,7 +684,7 @@
       daily: { last: "", streak: 0 },
     });
     let state = defaultState();
-    let tab = "upgrades";
+    let tab = "home";
     let ready = false;
     let saveTimer = null;
     let rebirthArmed = false;
@@ -550,11 +694,13 @@
     let nextGolden = Date.now() + 40000 + Math.random() * 40000;
     let toastTimer = null;
     let rewardSig = "";
+    let shownLeague = -1;
 
     const compact = new Intl.NumberFormat("ru-RU", { notation: "compact", maximumFractionDigits: 2 });
     const fmt = (n) => (n >= 1e9 ? compact.format(Math.floor(n)) : Math.floor(n).toLocaleString("ru-RU"));
     const skinById = (id) => SKINS.find((s) => s.id === id) || SKINS[0];
     const worldById = (id) => WORLDS.find((w) => w.id === id) || WORLDS[0];
+    const isMax = (u) => u.max && state.lv[u.id] >= u.max;
     const upgradeCost = (u) =>
       Math.max(1, Math.floor(u.base * Math.pow(u.growth, state.lv[u.id]) * (1 - 0.05 * state.perm.discount)));
     const permCost = (u) => Math.floor(u.base * Math.pow(u.growth, state.perm[u.id]));
@@ -562,12 +708,29 @@
       (1 + 0.25 * state.lv.mult) * (1 + 0.5 * state.perm.gold) * worldById(state.world).mult;
     const gemBoost = () => 1 + 0.25 * state.perm.gain;
     const rebirthGain = () => Math.floor(Math.sqrt(state.earned / REBIRTH_DIVISOR) * gemBoost());
+    const earnedForGems = (g) => REBIRTH_DIVISOR * Math.pow(g / gemBoost(), 2); // coins needed in a run to reach g gems
+    const keepShare = () => Math.min(0.6, 0.1 + 0.05 * state.perm.heritage);    // share of upgrade levels kept by a rebirth
     const startCoins = () => 200 * state.perm.start;
     function addCoins(n) { state.score += n; state.earned += n; state.total += n; }
     const buffActive = () => Date.now() < buff.until;
+    const baseIncome = () => GENS.reduce((sum, u) => sum + u.inc * state.lv[u.id], 0);
+    const perSec = () => Math.round(baseIncome() * multiplier());
     const perClick = () =>
-      Math.round((1 + state.lv.power + skinById(state.skin).bonus) * multiplier() * (buffActive() ? buff.mult : 1));
-    const perSec = () => Math.round(state.lv.auto * multiplier());
+      Math.round((1 + state.lv.power + skinById(state.skin).bonus + state.lv.fingers * 0.01 * baseIncome()) *
+        multiplier() * (1 + 0.25 * state.perm.cpower) * (buffActive() ? buff.mult : 1));
+    const critChance = () => CRIT_CHANCE + 0.01 * state.lv.crit;
+    const critMult = () => CRIT_MULT + 0.5 * state.lv.critp;
+    const goldenGap = () => (45000 + Math.random() * 75000) * (1 - 0.06 * state.lv.luck);
+    const feverMs = () => 15000 + 3000 * state.lv.fever;
+    const offlineRate = () => 0.5 + 0.1 * state.perm.night;
+    const offlineCap = () => (3 + state.perm.night) * 3600;
+
+    function leagueInfo() {
+      let i = 0;
+      while (i < LEAGUES.length - 1 && state.total >= LEAGUES[i + 1].at) i++;
+      const cur = LEAGUES[i], next = LEAGUES[i + 1];
+      return { i, cur, next, pct: next ? (state.total - cur.at) / (next.at - cur.at) : 1 };
+    }
 
     // Telegram CloudStorage keeps progress per user across devices;
     // localStorage is the fallback when opened outside Telegram.
@@ -590,22 +753,19 @@
       if (raw) {
         try {
           const s = JSON.parse(raw);
+          const whole = (v) => Math.max(0, Math.floor(Number(v) || 0));
           next.score = Number(s.score) || 0;
-          next.gems = Math.max(0, Math.floor(Number(s.gems) || 0));
-          next.rebirths = Math.max(0, Math.floor(Number(s.rebirths) || 0));
+          next.gems = whole(s.gems);
+          next.rebirths = whole(s.rebirths);
           next.earned = Math.max(Number(s.earned) || 0, next.score);
-          for (const k of Object.keys(next.lv)) next.lv[k] = Math.max(0, Math.floor(Number(s.lv && s.lv[k]) || 0));
-          for (const k of Object.keys(next.perm)) {
-            const max = PERMS.find((x) => x.id === k).max || Infinity;
-            next.perm[k] = Math.min(max, Math.max(0, Math.floor(Number(s.perm && s.perm[k]) || 0)));
-          }
+          for (const u of UPGRADES) next.lv[u.id] = Math.min(u.max || Infinity, whole(s.lv && s.lv[u.id]));
+          for (const u of PERMS) next.perm[u.id] = Math.min(u.max || Infinity, whole(s.perm && s.perm[u.id]));
           const owned = Array.isArray(s.owned) ? s.owned.filter((id) => SKINS.some((x) => x.id === id)) : [];
           next.owned = Array.from(new Set(["classic", ...owned]));
           next.skin = next.owned.includes(s.skin) ? s.skin : "classic";
           const worlds = Array.isArray(s.worlds) ? s.worlds.filter((id) => WORLDS.some((x) => x.id === id)) : [];
           next.worlds = Array.from(new Set(["meadow", ...worlds]));
           next.world = next.worlds.includes(s.world) ? s.world : "meadow";
-          const whole = (v) => Math.max(0, Math.floor(Number(v) || 0));
           next.clicks = whole(s.clicks);
           next.golden = whole(s.golden);
           next.total = Math.max(Number(s.total) || 0, next.earned);
@@ -730,15 +890,62 @@
         </button>`;
     }
 
+    const upgradeVisible = (u) => u.always || state.lv[u.id] > 0 || state.total >= u.base * 0.4;
+
+    function upgradeItem(u) {
+      const l = state.lv[u.id];
+      const max = isMax(u);
+      return itemHTML({
+        act: `up:${u.id}`, cls: max ? "maxed" : "", disabled: max, lead: iconTile(u.id, u.grad),
+        name: `${u.name} <span class="lv">ур. ${l}${u.max ? ` / ${u.max}` : ""}</span>`, desc: u.desc(l),
+        price: max ? "МАКС" : `${COIN} ${fmt(upgradeCost(u))}`, cost: max ? null : upgradeCost(u), cur: "coin",
+      });
+    }
+
+    function rebirthCard() {
+      const pct = Math.round(keepShare() * 100);
+      return `
+        <div class="pcard">
+          <div class="p-top">
+            <div class="p-gain"><span class="p-label">Награда за перерождение</span><b>+<span id="rb-gain"></span>${GEM}</b></div>
+            <div class="p-stat">Кристаллов: <b id="rb-gems"></b><br>Перерождений: <b id="rb-count"></b></div>
+          </div>
+          <i class="meter"><b id="rb-bar" style="--c1:#7c5cff;--c2:#ff4f9a"></b></i>
+          <div class="desc" id="rb-next"></div>
+          <div class="keep-row">Останется:
+            <span class="pill keep">Скины</span><span class="pill keep">Миры</span><span class="pill keep">Кристаллы</span>
+            <span class="pill keep">Награды</span><span class="pill keep">Постоянные улучшения</span>
+            <span class="pill keep">${pct}% уровней улучшений</span></div>
+          <div class="keep-row">Сбросится:
+            <span class="pill lose">Монеты</span><span class="pill lose">${100 - pct}% уровней улучшений</span></div>
+          <button class="rebirth-btn" id="rb-btn" data-act="rebirth"></button>
+        </div>`;
+    }
+
+    function sheetSub() {
+      if (tab === "upgrades") return `Множитель дохода ×${multiplier().toFixed(2).replace(/\.?0+$/, "")}`;
+      if (tab === "skins") return `${state.owned.length} из ${SKINS.length} собрано`;
+      if (tab === "worlds") return `${state.worlds.length} из ${WORLDS.length} открыто`;
+      if (tab === "rebirth") return `Перерождений: ${fmt(state.rebirths)}`;
+      if (tab === "rewards") return `${state.claimed.length} из ${ACHS.length} достижений`;
+      return "";
+    }
+
     function renderList() {
       rebirthArmed = false;
       clearTimeout(armTimer);
+      document.getElementById("sheet-title").textContent = TAB_TITLES[tab] || "";
+      document.getElementById("sheet-sub").textContent = sheetSub();
+      if (tab === "home") {
+        listEl.innerHTML = "";
+        return;
+      }
       if (tab === "upgrades") {
-        listEl.innerHTML = UPGRADES.map((u) => itemHTML({
-          act: `up:${u.id}`, lead: iconTile(u.id, u.grad),
-          name: `${u.name} <span class="lv">ур. ${state.lv[u.id]}</span>`, desc: u.desc,
-          price: `${COIN} ${fmt(upgradeCost(u))}`, cost: upgradeCost(u), cur: "coin",
-        })).join("");
+        const hidden = UPGRADES.some((u) => !upgradeVisible(u));
+        listEl.innerHTML = GROUPS.map((g) => {
+          const items = UPGRADES.filter((u) => u.group === g && upgradeVisible(u));
+          return items.length ? `<div class="section">${g}</div>${items.map(upgradeItem).join("")}` : "";
+        }).join("") + (hidden ? '<div class="more">Новые улучшения откроются, когда заработаешь больше.</div>' : "");
       } else if (tab === "skins") {
         listEl.innerHTML = RARITY.map((r, i) => {
           const group = SKINS.filter((x) => x.r === i);
@@ -768,23 +975,16 @@
           });
         }).join("");
       } else {
-        listEl.innerHTML = `
-          <div class="card">
-            <div class="rb-row"><span>Перерождений: <b id="rb-count"></b></span><span>${GEM} <b id="rb-gems"></b></span></div>
-            <div class="desc">Сбрасывает монеты и улучшения (скины и миры остаются) и даёт кристаллы за всё, что заработано в этом забеге.
-              Кристаллы тратятся на постоянные улучшения ниже. Заработано в забеге: <b id="rb-earned"></b></div>
-            <button class="rebirth-btn" id="rb-btn" data-act="rebirth"></button>
-          </div>
-          <div class="section">Постоянные улучшения</div>` + PERMS.map((u) => {
-            const lvl = state.perm[u.id];
-            const maxed = lvl >= (u.max || Infinity);
-            return itemHTML({
-              act: `perm:${u.id}`, cls: maxed ? "maxed" : "", disabled: maxed, lead: iconTile(u.id, u.grad),
-              name: `${u.name} <span class="lv">ур. ${lvl}</span>`, desc: u.desc(lvl),
-              price: maxed ? "МАКС" : `${GEM} ${fmt(permCost(u))}`,
-              cost: maxed ? null : permCost(u), cur: "gem",
-            });
-          }).join("");
+        listEl.innerHTML = rebirthCard() + '<div class="section">Постоянные улучшения за кристаллы</div>' + PERMS.map((u) => {
+          const lvl = state.perm[u.id];
+          const maxed = lvl >= (u.max || Infinity);
+          return itemHTML({
+            act: `perm:${u.id}`, cls: maxed ? "maxed" : "", disabled: maxed, lead: iconTile(u.id, u.grad),
+            name: `${u.name} <span class="lv">ур. ${lvl}${u.max ? ` / ${u.max}` : ""}</span>`, desc: u.desc(lvl),
+            price: maxed ? "МАКС" : `${GEM} ${fmt(permCost(u))}`,
+            cost: maxed ? null : permCost(u), cur: "gem",
+          });
+        }).join("");
       }
       updateRebirthCard();
       refreshAfford();
@@ -801,19 +1001,36 @@
       const btn = document.getElementById("rb-btn");
       if (!btn) return;
       const g = rebirthGain();
+      const from = earnedForGems(g), to = earnedForGems(g + 1);
+      document.getElementById("rb-gain").textContent = fmt(g);
       document.getElementById("rb-count").textContent = fmt(state.rebirths);
       document.getElementById("rb-gems").textContent = fmt(state.gems);
-      document.getElementById("rb-earned").textContent = fmt(state.earned);
+      document.getElementById("rb-bar").style.width = Math.min(100, Math.max(0, (state.earned - from) / (to - from) * 100)) + "%";
+      document.getElementById("rb-next").textContent =
+        `Заработано в этом забеге: ${fmt(state.earned)}. До ${fmt(g + 1)} ${g + 1 === 1 ? "кристалла" : "кристаллов"} осталось ${fmt(Math.ceil(to - state.earned))} монет.`;
       btn.disabled = g < 1;
       btn.classList.toggle("armed", rebirthArmed && g >= 1);
       if (g < 1) {
-        const need = Math.ceil(REBIRTH_DIVISOR / (gemBoost() * gemBoost()) - state.earned);
-        btn.textContent = `Нужно заработать ещё ${fmt(need)} монет`;
+        btn.textContent = `Нужно заработать ещё ${fmt(Math.ceil(earnedForGems(1) - state.earned))} монет`;
       } else if (rebirthArmed) {
         btn.textContent = `Точно? Нажми ещё раз (+${fmt(g)} кристаллов)`;
       } else {
         btn.innerHTML = `Переродиться: +${fmt(g)} ${GEM}`;
       }
+    }
+
+    function renderLeague() {
+      const L = leagueInfo();
+      if (L.i !== shownLeague) {
+        if (ready && shownLeague >= 0 && L.i > shownLeague) { toast(`Новая лига: ${L.cur.n}`); haptic("success"); }
+        shownLeague = L.i;
+        leagueEl.style.setProperty("--c1", L.cur.c[0]);
+        leagueEl.style.setProperty("--c2", L.cur.c[1]);
+        emblemEl.innerHTML = `${ICONS.shield}<b>${L.i + 1}</b>`;
+        document.getElementById("lg-name").textContent = L.cur.n;
+      }
+      document.getElementById("lg-pct").textContent = L.next ? `${Math.floor(L.pct * 100)}%` : "Максимум";
+      document.getElementById("lg-bar").style.width = (L.pct * 100).toFixed(1) + "%";
     }
 
     function renderStats() {
@@ -825,18 +1042,21 @@
       const left = Math.ceil((buff.until - Date.now()) / 1000);
       buffEl.hidden = left <= 0;
       if (left > 0) buffEl.innerHTML = `${ICONS.bolt}<b>×${buff.mult}</b> клики · ${left} с`;
+      renderLeague();
       refreshAfford();
       updateRebirthCard();
       const sig = ready ? claimable().join(",") : "";
       document.querySelector('.tab[data-tab="rewards"]').classList.toggle("has-badge", sig !== "");
       if (sig !== rewardSig) {
         rewardSig = sig;
-        if (tab === "rewards") {
-          const top = listEl.scrollTop;
-          renderList();
-          listEl.scrollTop = top;
-        }
+        if (tab === "rewards") keepScroll(renderList);
       }
+    }
+
+    function keepScroll(fn) {
+      const top = listEl.scrollTop;
+      fn();
+      listEl.scrollTop = top;
     }
 
     function haptic(kind) {
@@ -856,15 +1076,36 @@
       el.addEventListener("animationend", () => el.remove());
     }
 
+    // a handful of sparks in the colour of the equipped skin
+    function burst(x, y, crit) {
+      if (calm.matches || !coin.animate || document.querySelectorAll(".spark").length > 60) return;
+      const rgb = skinById(state.skin).glow;
+      for (let i = 0; i < (crit ? 10 : 4); i++) {
+        const el = document.createElement("i");
+        el.className = "spark";
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+        el.style.background = el.style.color = `rgb(${rgb})`;
+        document.body.appendChild(el);
+        const a = Math.random() * Math.PI * 2;
+        const d = 28 + Math.random() * (crit ? 90 : 50);
+        el.animate([
+          { transform: "translate(-50%, -50%) scale(1)", opacity: 1 },
+          { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) scale(.2)`, opacity: 0 },
+        ], { duration: 450 + Math.random() * 250, easing: "cubic-bezier(.2,.7,.3,1)" }).onfinish = () => el.remove();
+      }
+    }
+
     function buyUpgrade(id) {
       const u = UPGRADES.find((x) => x.id === id);
+      if (!u || isMax(u)) return;
       const cost = upgradeCost(u);
-      if (!u || state.score < cost) return;
+      if (state.score < cost) return;
       state.score -= cost;
       state.lv[id] += 1;
       haptic("success");
       renderStats();
-      renderList();
+      keepScroll(renderList);
       flush();
     }
 
@@ -877,8 +1118,26 @@
       state.perm[id] += 1;
       haptic("success");
       renderStats();
-      renderList();
+      keepScroll(renderList);
       flush();
+    }
+
+    // The manager buys the cheapest affordable income upgrade, a few per second at most.
+    function autoBuy() {
+      if (!state.perm.manager) return false;
+      let bought = false;
+      for (let n = 0; n < 5; n++) {
+        let best = null, bestCost = Infinity;
+        for (const u of GENS) {
+          const c = upgradeCost(u);
+          if (!isMax(u) && c <= state.score && c < bestCost) { best = u; bestCost = c; }
+        }
+        if (!best) break;
+        state.score -= bestCost;
+        state.lv[best.id] += 1;
+        bought = true;
+      }
+      return bought;
     }
 
     function rebirth() {
@@ -890,12 +1149,14 @@
         updateRebirthCard();
         return;
       }
+      const keep = keepShare();
       state.gems += g;
       state.rebirths += 1;
       state.score = startCoins();
       state.earned = 0;
-      state.lv = { power: 0, auto: 0, mult: 0 };
+      for (const id of Object.keys(state.lv)) state.lv[id] = Math.floor(state.lv[id] * keep);
       haptic("success");
+      toast(`Перерождение: +${fmt(g)} кристаллов, осталось ${Math.round(keep * 100)}% уровней`);
       applySkin();
       renderStats();
       renderList();
@@ -913,7 +1174,7 @@
       haptic("success");
       applySkin();
       renderStats();
-      renderList();
+      keepScroll(renderList);
       flush();
     }
 
@@ -946,7 +1207,7 @@
       toast(`«${a.name}»: +${a.gems} кристаллов`);
       haptic("success");
       renderStats();
-      renderList();
+      keepScroll(renderList);
       flush();
     }
 
@@ -959,11 +1220,11 @@
       toast(`Подарок дня: +${fmt(d.coins)} монет${d.gems ? ` и ${d.gems} кристалла` : ""}`);
       haptic("success");
       renderStats();
-      renderList();
+      keepScroll(renderList);
       flush();
     }
 
-    // A golden coin drifts across the screen now and then: tap it for a lump sum or a 15 s click boost.
+    // A golden coin drifts across the screen now and then: tap it for a lump sum or a click boost.
     function spawnGolden() {
       if (goldenEl) return;
       const el = document.createElement("button");
@@ -989,8 +1250,8 @@
         showPlus(x, y, lump, true);
         toast(`Золотая монета: куш +${fmt(lump)}`);
       } else {
-        buff = { until: Date.now() + 15000, mult: 7 };
-        toast("Золотая лихорадка: клики ×7 на 15 секунд");
+        buff = { until: Date.now() + feverMs(), mult: 7 };
+        toast(`Золотая лихорадка: клики ×7 на ${feverMs() / 1000} секунд`);
       }
       haptic("success");
       renderStats();
@@ -1011,47 +1272,59 @@
       haptic("success");
       applyWorld();
       renderStats();
-      renderList();
+      keepScroll(renderList);
       flush();
     }
 
     function pressCoin(x, y) {
       if (!ready) return;
-      const crit = Math.random() < CRIT_CHANCE;
-      const gain = perClick() * (crit ? CRIT_MULT : 1);
+      const crit = Math.random() < critChance();
+      const gain = perClick() * (crit ? critMult() : 1);
       addCoins(gain);
       state.clicks += 1;
       renderStats();
       save();
       showPlus(x, y, gain, crit);
+      burst(x, y, crit);
       coin.classList.add("pressed");
       haptic(crit ? "crit" : undefined);
     }
 
+    // The coin leans towards the finger, like in other tap games.
+    function release() {
+      coin.classList.remove("pressed");
+      coin.style.transform = "";
+    }
     coin.addEventListener("pointerdown", (e) => {
       e.preventDefault();
+      const r = coin.getBoundingClientRect();
+      const dx = Math.max(-1, Math.min(1, (e.clientX - r.left - r.width / 2) / (r.width / 2)));
+      const dy = Math.max(-1, Math.min(1, (e.clientY - r.top - r.height / 2) / (r.height / 2)));
+      coin.style.transform = `perspective(520px) rotateX(${(-dy * 14).toFixed(1)}deg) rotateY(${(dx * 14).toFixed(1)}deg) scale(.95)`;
       pressCoin(e.clientX, e.clientY);
     });
-    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
-      coin.addEventListener(ev, () => coin.classList.remove("pressed")));
+    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => coin.addEventListener(ev, release));
 
-    // Space clicks the coin. preventDefault stops page scroll and keeps Space
+    const visibleTabs = () => [...tabs].filter((t) => t.offsetParent !== null);
+
+    // Space clicks the coin, digits open sections. preventDefault stops page scroll and keeps Space
     // from also "pressing" whichever shop button happens to have focus.
     document.addEventListener("keydown", (e) => {
-      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key >= "1" && e.key <= "5") {
-        setTab(TAB_ORDER[e.key - 1]);
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key >= "1" && e.key <= "9") {
+        const t = visibleTabs()[e.key - 1];
+        if (t) setTab(t.dataset.tab);
         return;
       }
       if (e.code !== "Space") return;
       e.preventDefault();
-      if (e.repeat) return;
+      if (e.repeat || !coin.offsetParent) return;
       const r = coin.getBoundingClientRect();
       pressCoin(r.left + r.width / 2 + (Math.random() - 0.5) * r.width * 0.5, r.top + r.height * 0.3);
     });
     document.addEventListener("keyup", (e) => {
       if (e.code !== "Space") return;
       e.preventDefault();
-      coin.classList.remove("pressed");
+      release();
     });
 
     listEl.addEventListener("click", (e) => {
@@ -1068,21 +1341,25 @@
     });
 
     function setTab(name) {
+      if (name === "home" && wide.matches) name = "upgrades"; // the sidebar always shows a section
       tab = name;
       listEl.scrollTop = 0;
+      mainEl.classList.toggle("open", name !== "home");
       tabs.forEach((x) => x.classList.toggle("active", x.dataset.tab === name));
       renderList();
     }
     tabs.forEach((t) => t.addEventListener("click", () => setTab(t.dataset.tab)));
     document.getElementById("world-pill").addEventListener("click", () => setTab("worlds"));
+    wide.addEventListener("change", () => setTab(tab));
 
     setInterval(() => {
       if (!ready) return;
       const gain = perSec();
       if (gain) { addCoins(gain); save(); }
+      if (autoBuy() && tab === "upgrades") keepScroll(renderList);
       if (!goldenEl && !document.hidden && Date.now() >= nextGolden) {
         spawnGolden();
-        nextGolden = Date.now() + 45000 + Math.random() * 75000;
+        nextGolden = Date.now() + goldenGap();
       }
       renderStats();
     }, 1000);
@@ -1099,13 +1376,14 @@
     applySkin();
     applyWorld();
     renderStats();
-    renderList();
+    setTab(wide.matches ? "upgrades" : "home");
     load().then((s) => {
       state = s;
       ready = true;
-      const away = Math.min((Date.now() - state.lastSeen) / 1000, OFFLINE_CAP);
+      shownLeague = -1;
+      const away = Math.min((Date.now() - state.lastSeen) / 1000, offlineCap());
       if (state.lastSeen && away >= 60 && perSec() > 0) {
-        const gone = Math.floor(perSec() * away * OFFLINE_RATE);
+        const gone = Math.floor(perSec() * away * offlineRate());
         addCoins(gone);
         toast(`Пока тебя не было: +${fmt(gone)} монет`);
         flush();
