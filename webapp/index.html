@@ -120,7 +120,7 @@
       animation: breathe 3.2s ease-in-out infinite;
     }
     .ring {
-      position: absolute; inset: -6%; border-radius: 50%; pointer-events: none;
+      position: absolute; inset: -8%; border-radius: var(--shape, 50%); pointer-events: none;
       border: 2px dashed rgba(var(--glow), .5); animation: spin 50s linear infinite;
     }
     @keyframes breathe { 0%, 100% { transform: scale(.94); opacity: .75; } 50% { transform: scale(1.04); opacity: 1; } }
@@ -143,6 +143,17 @@
     #coin.pressed { transform: scale(.92); }
     #coin.holo { animation: holo 6s linear infinite; }
     @keyframes holo { to { filter: hue-rotate(360deg); } }
+    #coin.pulse { animation: glint 1.8s ease-in-out infinite; }
+    @keyframes glint { 50% { filter: brightness(1.3) saturate(1.25); } }
+    #coin .g { display: inline-block; }
+    #coin.spin .g { animation: gflip 3.6s ease-in-out infinite; }
+    @keyframes gflip { 0%, 55% { transform: rotateY(0); } 100% { transform: rotateY(360deg); } }
+    #coin::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; }
+    #coin.shine::after {
+      opacity: 1; background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, .6) 50%, transparent 62%) -150% 0 / 250% 100% no-repeat;
+      animation: sweep 3s ease-in-out infinite;
+    }
+    @keyframes sweep { to { background-position: 250% 0; } }
     .kbd-hint { display: none; color: var(--hint); font-size: 12px; margin-top: 10px; }
 
     /* world particles: each <i> gets --s (size), --d (duration), --dl (negative delay) inline */
@@ -154,6 +165,16 @@
     .fx-ember i { background: #ffb347; box-shadow: 0 0 6px #ff5a00; animation: rise var(--d) ease-in var(--dl) infinite, sway 1.2s ease-in-out infinite alternate; }
     .fx-bubble i { border: 1.5px solid rgba(34, 211, 238, .8); animation: rise var(--d) linear var(--dl) infinite, sway 2s ease-in-out infinite alternate; }
     .fx-star i { background: #ddd6fe; box-shadow: 0 0 6px #a78bfa; animation: twinkle var(--d) ease-in-out var(--dl) infinite; }
+    .fx-leaf i, .fx-petal i { width: calc(var(--s) * 2); height: calc(var(--s) * 2); border-radius: 0 100% 0 100%; animation: fall var(--d) linear var(--dl) infinite, sway 2.2s ease-in-out infinite alternate; }
+    .fx-leaf i { background: #8fd14f; }
+    .fx-leaf i:nth-child(3n) { background: #e8a33d; }
+    .fx-petal i { background: #ffc2dd; }
+    .fx-petal i:nth-child(3n) { background: #fff; }
+    .fx-spore i { background: #c5f06a; box-shadow: 0 0 8px #8ab82a; animation: rise var(--d) ease-in var(--dl) infinite, sway 3s ease-in-out infinite alternate; }
+    .fx-rain i { width: 1.5px; height: calc(var(--s) * 6); border-radius: 1px; background: linear-gradient(#4ff0ff, transparent); animation: fall var(--d) linear var(--dl) infinite; }
+    .fx-crystal i { rotate: 45deg; border-radius: 2px; background: #c4f1ff; box-shadow: 0 0 8px #7ff0ff; animation: twinkle var(--d) ease-in-out var(--dl) infinite; }
+    .fx-swirl i { background: #c4b5fd; box-shadow: 0 0 8px #8b5cf6; animation: suck var(--d) ease-in var(--dl) infinite; }
+    @keyframes suck { 0% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 0; } 25% { opacity: 1; } 100% { transform: translate(0, 0) scale(.2); opacity: 0; } }
     @keyframes fall { from { top: -4%; } to { top: 104%; } }
     @keyframes rise { from { top: 104%; opacity: 1; } to { top: -4%; opacity: 0; } }
     @keyframes blow { from { left: -4%; } to { left: 104%; } }
@@ -193,7 +214,7 @@
     #toast.show { opacity: 1; transform: translate(-50%, 0); }
     @media (prefers-reduced-motion: reduce) {
       #fx { display: none; }
-      .halo, .ring, #coin.holo { animation: none; }
+      .halo, .ring, #coin.holo, #coin.pulse, #coin.spin .g, #coin.shine::after { animation: none; }
       .golden { animation: cross 14s linear forwards; }
     }
 
@@ -462,6 +483,14 @@
       manager:  svg('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>'),
       night:    svg('<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" fill="currentColor"/>'),
     };
+    Object.assign(ICONS, {
+      forest: svg('<path d="M12 3l5 7h-3l4 6H6l4-6H7z" fill="currentColor"/><path d="M12 16v5"/>'),
+      swamp:  svg('<path d="M8 21V9M16 21V6M12 21V11"/><ellipse cx="8" cy="7" rx="1.6" ry="3" fill="currentColor"/><ellipse cx="16" cy="4.5" rx="1.6" ry="3" fill="currentColor"/>'),
+      city:   svg('<path d="M3 21V10h5v11M8 21V4h6v17M14 21v-9h7v9M3 21h18"/>'),
+      cave:   svg('<path d="M4 21L9 8l4 13M11 21l5-10 5 10" fill="currentColor"/>'),
+      sky:    svg('<path d="M6 18a4 4 0 0 1 0-8 5 5 0 0 1 9.600-1A4.500 4.500 0 0 1 17 18z" fill="currentColor"/>'),
+      void:   svg('<circle cx="12" cy="12" r="4" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="3.500"/><ellipse cx="12" cy="12" rx="3.500" ry="10"/>'),
+    });
     ICONS.crit = ICONS.bolt;
     ICONS.farm = ICONS.meadow;
     ICONS.fever = ICONS.auto;
@@ -473,7 +502,7 @@
     // Upgrades other than `always` show up once the lifetime total reaches 40% of their first price.
     const gen = (id, name, inc, base, grad) => ({
       id, group: "Доход", name, inc, base, growth: id === "auto" ? 1.6 : 1.5, grad, always: id === "auto",
-      desc: (l) => `+${fmt(inc)} в секунду за уровень · сейчас +${fmt(inc * l * multiplier())}/с`,
+      desc: (l) => `+${fmt(inc)} в секунду за уровень · сейчас +${fmt(inc * l * incomeMult())}/с`,
     });
     const UPGRADES = [
       { id: "power", group: "Клик", always: true, name: "Сила клика", base: 10, growth: 1.5, grad: ["#ffa24a", "#ff5a36"], desc: () => "+1 монета за клик" },
@@ -533,38 +562,68 @@
       { n: "Миф",     at: 5e12, c: ["#ff8aa8", "#d81f4a"] },
     ];
 
-    // Worlds are opened in order with coins, need a number of rebirths, survive rebirths,
-    // and multiply all income while you are in them. Scenery paths use a 400×120 viewBox.
+    // Worlds are opened in order with coins, need a number of rebirths and survive rebirths. Each multiplies all income
+    // and adds one perk that works only while you are there. Scenery paths use a 400×120 viewBox.
     const WORLDS = [
-      { id: "meadow", name: "Луг", mult: 1, cost: 0, rebirths: 0, fx: "firefly",
+      { id: "meadow", name: "Луг", mult: 1, cost: 0, rebirths: 0, fx: "firefly", perkText: "Без особенностей",
         grad: ["#86efac", "#16a34a"], sky: "74,222,128", ground: "#22c55e",
         back: "M0 70C60 40 120 45 180 62S300 40 400 55V120H0Z",
         front: "M0 95C70 70 140 72 210 88S340 78 400 84V120H0Z" },
-      { id: "desert", name: "Пустыня", mult: 2, cost: 10000, rebirths: 1, fx: "sand",
+      { id: "forest", name: "Лес", mult: 1.5, cost: 3000, rebirths: 0, fx: "leaf", perk: { click: 0.1 }, perkText: "+10% к доходу с кликов",
+        grad: ["#4ade80", "#166534"], sky: "22,140,70", ground: "#166534",
+        back: "M0 120V86L25 50L50 86L75 42L105 88L135 52L165 90L200 40L235 90L270 50L300 88L335 46L370 88L400 60V120Z",
+        front: "M0 120V100C70 88 150 104 230 96S350 92 400 100V120Z" },
+      { id: "desert", name: "Пустыня", mult: 2, cost: 10000, rebirths: 1, fx: "sand", perk: { golden: 0.25 }, perkText: "Золотые монеты на 25% чаще",
         grad: ["#fde68a", "#f59e0b"], sky: "251,191,36", ground: "#d97706",
         back: "M60 120L120 52L180 120ZM150 120L198 72L246 120Z",
         front: "M0 92C60 70 120 74 190 94S320 78 400 88V120H0Z" },
-      { id: "glacier", name: "Ледник", mult: 4, cost: 200000, rebirths: 3, fx: "snow",
+      { id: "swamp", name: "Болото", mult: 3, cost: 60000, rebirths: 2, fx: "spore", perk: { income: 0.2 }, perkText: "+20% к доходу в секунду",
+        grad: ["#bef264", "#4d7c0f"], sky: "132,160,50", ground: "#4d6b1f",
+        back: "M0 120V92C40 86 60 98 100 92S170 84 220 94S330 100 400 90V120Z",
+        front: "M0 120V106C60 100 130 110 210 104S340 108 400 102V120Z",
+        extra: '<path d="M60 94V62M63 94V66M300 96V58M303 96V64M340 94V68" stroke="#3b4a1a" stroke-width="3" fill="none"/>' +
+               '<ellipse cx="61" cy="60" rx="3" ry="7" fill="#5b3a1a"/><ellipse cx="301" cy="56" rx="3" ry="7" fill="#5b3a1a"/>' },
+      { id: "glacier", name: "Ледник", mult: 4, cost: 200000, rebirths: 3, fx: "snow", perk: { crit: 0.05 }, perkText: "+5% к шансу крита",
         grad: ["#bae6fd", "#0284c7"], sky: "125,211,252", ground: "#38bdf8",
         back: "M0 120V70L45 35L80 62L130 18L185 66L230 40L280 72L330 28L375 58L400 48V120Z",
         front: "M0 120V92L60 70L110 95L170 76L240 100L300 80L360 98L400 86V120Z" },
-      { id: "volcano", name: "Вулкан", mult: 8, cost: 5e6, rebirths: 6, fx: "ember",
+      { id: "volcano", name: "Вулкан", mult: 8, cost: 5e6, rebirths: 6, fx: "ember", perk: { click: 0.25 }, perkText: "+25% к доходу с кликов",
         grad: ["#fca5a5", "#dc2626"], sky: "239,68,68", ground: "#991b1b",
         back: "M0 120V98L120 92L175 32H225L280 92L400 98V120Z",
         front: "M0 120V104C80 96 150 108 220 102S350 106 400 100V120Z",
         extra: '<ellipse cx="200" cy="33" rx="25" ry="5" fill="#ff7a1a" opacity=".9"/>' },
-      { id: "ocean", name: "Океан", mult: 16, cost: 1e8, rebirths: 10, fx: "bubble",
+      { id: "ocean", name: "Океан", mult: 16, cost: 1e8, rebirths: 10, fx: "bubble", perk: { offline: 0.25 }, perkText: "+25% к офлайн-доходу",
         grad: ["#67e8f9", "#0e7490"], sky: "34,211,238", ground: "#0891b2",
         back: "M0 70Q25 58 50 70T100 70T150 70T200 70T250 70T300 70T350 70T400 70V120H0Z",
         front: "M0 92Q25 80 50 92T100 92T150 92T200 92T250 92T300 92T350 92T400 92V120H0Z" },
-      { id: "space", name: "Космос", mult: 32, cost: 2e9, rebirths: 15, fx: "star",
+      { id: "space", name: "Космос", mult: 32, cost: 2e9, rebirths: 15, fx: "star", perk: { gems: 0.2 }, perkText: "+20% кристаллов за перерождение",
         grad: ["#c4b5fd", "#5b21b6"], sky: "139,92,246", ground: "#6d28d9",
         back: "M0 120V96Q200 58 400 96V120Z",
         front: "M0 120V110Q100 98 200 104T400 106V120Z",
         extra: '<circle cx="320" cy="32" r="13" fill="#a78bfa" opacity=".55"/>' +
                '<ellipse cx="320" cy="32" rx="25" ry="6" fill="none" stroke="#a78bfa" stroke-width="2" opacity=".6" transform="rotate(-15 320 32)"/>' },
+      { id: "city", name: "Киберсити", mult: 64, cost: 3e10, rebirths: 20, fx: "rain", perk: { discount: 0.1 }, perkText: "−10% к цене улучшений",
+        grad: ["#f0abfc", "#a21caf"], sky: "236,72,200", ground: "#4a1d6e",
+        back: "M0 120V70H30V50H55V80H75V40H105V90H125V60H160V30H190V85H215V55H250V75H275V35H305V80H330V58H360V45H385V90H400V120Z",
+        front: "M0 120V108H400V120Z",
+        extra: '<path d="M166 40h18M166 52h18M310 46h14M310 58h14M80 52h20M80 64h20" stroke="#4ff0ff" stroke-width="2" opacity=".9"/>' },
+      { id: "cave", name: "Кристальная пещера", mult: 100, cost: 3e11, rebirths: 26, fx: "crystal", perk: { critp: 2 }, perkText: "Крит сильнее на ×2",
+        grad: ["#a5b4fc", "#4338ca"], sky: "120,140,255", ground: "#312e81",
+        back: "M0 120L30 70L45 120ZM60 120L90 40L120 120ZM150 120L175 80L200 120ZM230 120L265 30L300 120ZM320 120L345 75L375 120Z",
+        front: "M0 120V104L50 96L120 108L200 100L290 110L360 98L400 104V120Z",
+        extra: '<path d="M90 40L98 70L90 100L82 70Z" fill="#c4f1ff" opacity=".55"/><path d="M265 30L274 64L265 98L256 64Z" fill="#ffc2f4" opacity=".55"/>' },
+      { id: "sky", name: "Небеса", mult: 160, cost: 3e12, rebirths: 34, fx: "petal", perk: { fever: 10000 }, perkText: "Лихорадка на 10 с дольше",
+        grad: ["#fbcfe8", "#db2777"], sky: "255,170,200", ground: "#f9a8d4",
+        back: "M0 120V96Q20 70 50 84Q70 56 105 80Q140 60 160 90Q190 72 220 92Q250 64 285 86Q320 70 345 92Q375 78 400 96V120Z",
+        front: "M0 120V108Q40 96 90 106T200 104T320 108T400 102V120Z",
+        extra: '<circle cx="80" cy="30" r="14" fill="#ffe58a" opacity=".85"/>' },
+      { id: "void", name: "Бездна", mult: 256, cost: 5e13, rebirths: 45, fx: "swirl", perk: { lump: 1 }, perkText: "Золотой куш вдвое больше",
+        grad: ["#c4b5fd", "#1e1b4b"], sky: "100,60,200", ground: "#1e1b4b",
+        back: "M0 120V100Q200 70 400 100V120Z",
+        front: "M0 120V112Q100 104 200 108T400 110V120Z",
+        extra: '<ellipse cx="200" cy="52" rx="42" ry="10" fill="none" stroke="#a78bfa" stroke-width="3" opacity=".75"/><circle cx="200" cy="52" r="17" fill="#05010f"/>' },
     ];
-    const FX_SPEED = { firefly: 5, sand: 3, snow: 7, ember: 4, bubble: 5, star: 2.5 }; // base seconds per cycle
+    const FX_SPEED = { firefly: 5, sand: 3, snow: 7, ember: 4, bubble: 5, star: 2.5, leaf: 6, spore: 7, rain: 1.2, crystal: 3, petal: 8, swirl: 4 }; // base seconds per cycle
 
     // r = rarity tier (index into RARITY). Ordered by price; bonus is added to the click before multipliers.
     const RARITY = [
@@ -606,7 +665,59 @@
         c: ["#ffffff", "#ffd6f5", "#b6e7ff", "#c8b6ff"], rim: "#9a8ad8", rim2: "#ffffff", glow: "200,160,255", ink: "#5a4a8a", hi: "#ffffff" },
       { id: "crown", name: "Корона", glyph: "♛", bonus: 20000, cost: 1e10, r: 4,
         c: ["#ff9aa8", "#d81f4a", "#8f0c2c", "#3d0414"], rim: "#ffc93d", rim2: "#fff1b0", glow: "255,201,61", ink: "#ffd75a", hi: "#3d0414" },
+      { id: "cookie", name: "Печенье", glyph: "☻", bonus: 2, cost: 400, r: 0, shape: "blob", pat: ["dots", "rgba(52,24,8,.7)"],
+        c: ["#f6d6a3", "#c98a4b", "#8f5726", "#4a2810"], rim: "#6b3d17", rim2: "#e0a869", glow: "201,138,75", ink: "#3b1e0b", hi: "#f6d6a3" },
+      { id: "pixel", name: "Пиксель", glyph: "▣", bonus: 3, cost: 700, r: 0, shape: "square", pat: ["checker", "rgba(20,30,80,.22)"],
+        c: ["#d9e4ff", "#8aa4e8", "#4d68b8", "#26356b"], rim: "#1b2754", rim2: "#a9bdf5", glow: "110,140,255", ink: "#17224d", hi: "#e7eeff" },
+      { id: "melon", name: "Арбуз", glyph: "❋", bonus: 6, cost: 2800, r: 1, pat: ["dots", "rgba(20,6,10,.75)"],
+        c: ["#ffd9d9", "#ff5f73", "#d8243f", "#8a1128"], rim: "#1f9a4b", rim2: "#a8f0b4", glow: "255,95,115", ink: "#4a0a14", hi: "#ffd9d9" },
+      { id: "donut", name: "Пончик", glyph: "◎", bonus: 8, cost: 3500, r: 1, pat: ["dots", "rgba(255,255,255,.7)"],
+        c: ["#ffe3f1", "#ff9fcf", "#e65ca0", "#8f2d62"], rim: "#b5703a", rim2: "#ffd3a0", glow: "255,159,207", ink: "#7a2150", hi: "#fff0f8" },
+      { id: "leaf", name: "Лист", glyph: "❦", bonus: 9, cost: 4200, r: 1, shape: "leaf", pat: ["stripes", "rgba(255,255,255,.14)"],
+        c: ["#d9ffb8", "#7fd44a", "#3fa327", "#1d5f12"], rim: "#1d6b14", rim2: "#a6ec7a", glow: "100,210,70", ink: "#134a0c", hi: "#e3ffc9" },
+      { id: "sun", name: "Солнце", glyph: "☀", bonus: 25, cost: 20000, r: 2, fx: "pulse", pat: ["rays", "rgba(255,255,255,.22)"],
+        c: ["#fff7c2", "#ffc93d", "#ff8a1f", "#c24a00"], rim: "#d86a00", rim2: "#ffe08a", glow: "255,170,40", ink: "#8a3000", hi: "#fff3b0" },
+      { id: "snow", name: "Снежинка", glyph: "❄", bonus: 40, cost: 40000, r: 2, fx: "shine", pat: ["waves", "rgba(255,255,255,.35)"],
+        c: ["#ffffff", "#c9ecff", "#7cc6ee", "#3a7fb0"], rim: "#4a9cd0", rim2: "#e6f7ff", glow: "150,215,255", ink: "#1f5f8a", hi: "#ffffff" },
+      { id: "yinyang", name: "Инь-Ян", glyph: "☯", bonus: 70, cost: 80000, r: 2, fx: "spin", pat: ["split", "#1a1a1f"],
+        c: ["#ffffff", "#f2f2f2", "#d9d9d9", "#a0a0a0"], rim: "#111111", rim2: "#ffffff", glow: "200,200,210", ink: "#8a8a96", hi: "#ffffff" },
+      { id: "chess", name: "Шахматы", glyph: "♞", bonus: 85, cost: 150000, r: 2, shape: "square", pat: ["checker", "rgba(30,15,0,.4)"],
+        c: ["#f2e4c9", "#d9b97a", "#a37a3a", "#5e3f14"], rim: "#2b1a08", rim2: "#f2e4c9", glow: "217,185,122", ink: "#2b1a08", hi: "#f2e4c9" },
+      { id: "pirate", name: "Пират", glyph: "☠", bonus: 150, cost: 600000, r: 3, shape: "squircle", pat: ["stripes", "rgba(0,0,0,.18)"],
+        c: ["#ffe9a8", "#d9a93a", "#8f6416", "#3d2807"], rim: "#2a1a05", rim2: "#f0cd6a", glow: "217,169,58", ink: "#2a1a05", hi: "#ffe9a8" },
+      { id: "matrix", name: "Матрица", glyph: "01", bonus: 300, cost: 3e6, r: 3, shape: "square", fx: "pulse", pat: ["grid", "rgba(25,255,106,.28)"],
+        c: ["#0c2a14", "#06180c", "#031007", "#010603"], rim: "#19ff6a", rim2: "#06240f", glow: "25,255,106", ink: "#19ff6a", hi: "#003d14" },
+      { id: "comet", name: "Комета", glyph: "☄", bonus: 550, cost: 1.2e7, r: 3, fx: "shine", pat: ["rays", "rgba(255,255,255,.2)"],
+        c: ["#fff0ff", "#ff9bf0", "#c13ad9", "#5a1273"], rim: "#8f1fb0", rim2: "#ffc6f8", glow: "255,120,240", ink: "#4a0c5e", hi: "#fff0ff" },
+      { id: "quantum", name: "Квант", glyph: "⚛", bonus: 2200, cost: 3e8, r: 4, fx: "spin", pat: ["rays", "rgba(255,255,255,.16)"],
+        c: ["#e8fff4", "#7dffc9", "#17c47e", "#0a5c3a"], rim: "#0a8a58", rim2: "#b8ffe3", glow: "60,255,170", ink: "#05402a", hi: "#e8fff4" },
+      { id: "eclipse", name: "Затмение", glyph: "◐", bonus: 5000, cost: 1.2e9, r: 4, fx: "pulse",
+        c: ["#2a2a35", "#14141c", "#08080c", "#000000"], rim: "#ffcf5a", rim2: "#fff0b8", glow: "255,200,80", ink: "#ffcf5a", hi: "#000000" },
+      { id: "void", name: "Бездна", glyph: "◉", bonus: 12000, cost: 6e9, r: 4, fx: "spin", pat: ["swirl", "rgba(139,92,246,.35)"],
+        c: ["#2b1b5c", "#160a38", "#0a0420", "#020008"], rim: "#8b5cf6", rim2: "#1b0f40", glow: "139,92,246", ink: "#c4b5fd", hi: "#0a0420" },
+      { id: "infinity", name: "Бесконечность", glyph: "∞", bonus: 40000, cost: 5e10, r: 4, fx: ["holo", "shine"], pat: ["rays", "rgba(255,255,255,.35)"],
+        c: ["#ffffff", "#fff1c9", "#ffd6f0", "#c9d8ff"], rim: "#e0b84a", rim2: "#ffffff", glow: "255,220,150", ink: "#a67c00", hi: "#ffffff" },
     ];
+
+    // Skins differ in shape, surface pattern and animation, not only in colour.
+    const SHAPES = { circle: "50%", squircle: "30%", square: "16%", blob: "58% 42% 52% 48% / 50% 56% 44% 50%", leaf: "50% 8% 50% 8%" };
+    const PATTERNS = { // sizes in %, so the same pattern works on the big coin and on the small shop icon
+      dots:    (c) => `radial-gradient(circle, ${c} 14%, transparent 16%) 0 0 / 11% 11%`,
+      stripes: (c) => `linear-gradient(135deg, ${c} 25%, transparent 25% 50%, ${c} 50% 75%, transparent 75%) 0 0 / 16% 16%`,
+      rays:    (c) => `repeating-conic-gradient(${c} 0 8deg, transparent 8deg 16deg)`,
+      checker: (c) => `conic-gradient(${c} 25%, transparent 0 50%, ${c} 0 75%, transparent 0) 0 0 / 22% 22%`,
+      grid:    (c) => `linear-gradient(${c} 1px, transparent 1px) 0 0 / 12% 12%, linear-gradient(90deg, ${c} 1px, transparent 1px) 0 0 / 12% 12%`,
+      waves:   (c) => `radial-gradient(circle at 50% 100%, transparent 36%, ${c} 38% 46%, transparent 48%) 0 0 / 20% 14%`,
+      split:   (c) => `linear-gradient(90deg, transparent 50%, ${c} 50%)`,
+      swirl:   (c) => `conic-gradient(${c}, transparent 25%, ${c} 50%, transparent 75%, ${c})`,
+    };
+    const FX_CLASSES = ["holo", "pulse", "shine", "spin"];
+    const skinFace = (s) => {
+      const base = `radial-gradient(circle at 35% 30%, ${s.c[0]} 0%, ${s.c[1]} 30%, ${s.c[2]} 70%, ${s.c[3]} 100%)`;
+      return s.pat ? `${PATTERNS[s.pat[0]](s.pat[1])}, ${base}` : base;
+    };
+    const skinShape = (s) => SHAPES[s.shape || "circle"];
+
 
     const CRIT_CHANCE = 0.08, CRIT_MULT = 5;
 
@@ -630,8 +741,10 @@
       ["rb15", "cycle", "Бессмертный", "Переродись 15 раз", 15, 12, () => state.rebirths],
       ["skins5", "skin", "Модник", "Собери 5 скинов", 5, 3, () => state.owned.length],
       ["skins10", "skin", "Коллекционер", "Собери 10 скинов", 10, 6, () => state.owned.length],
+      ["skins20", "skin", "Гардероб", "Собери 20 скинов", 20, 8, () => state.owned.length],
       ["skinsAll", "skin", "Музей монет", "Собери все скины", SKINS.length, 15, () => state.owned.length],
       ["worlds3", "space", "Путешественник", "Открой 3 мира", 3, 3, () => state.worlds.length],
+      ["worlds6", "space", "Исследователь", "Открой 6 миров", 6, 6, () => state.worlds.length],
       ["worldsAll", "space", "Покоритель миров", "Открой все миры", WORLDS.length, 10, () => state.worlds.length],
       ["gold1", "mult", "Золотая удача", "Поймай золотую монету", 1, 1, () => state.golden],
       ["gold10", "mult", "Охотник за золотом", "Поймай 10 золотых монет", 10, 4, () => state.golden],
@@ -702,12 +815,13 @@
     const skinById = (id) => SKINS.find((s) => s.id === id) || SKINS[0];
     const worldById = (id) => WORLDS.find((w) => w.id === id) || WORLDS[0];
     const isMax = (u) => u.max && state.lv[u.id] >= u.max;
+    const perk = (k) => (worldById(state.world).perk || {})[k] || 0; // perk of the world you are in
     const upgradeCost = (u) =>
-      Math.max(1, Math.floor(u.base * Math.pow(u.growth, state.lv[u.id]) * (1 - 0.05 * state.perm.discount)));
+      Math.max(1, Math.floor(u.base * Math.pow(u.growth, state.lv[u.id]) * Math.max(0.2, 1 - 0.05 * state.perm.discount - perk("discount"))));
     const permCost = (u) => Math.floor(u.base * Math.pow(u.growth, state.perm[u.id]));
     const multiplier = () =>
       (1 + 0.25 * state.lv.mult) * (1 + 0.5 * state.perm.gold) * worldById(state.world).mult;
-    const gemBoost = () => 1 + 0.25 * state.perm.gain;
+    const gemBoost = () => 1 + 0.25 * state.perm.gain + perk("gems");
     const rebirthGain = () => Math.floor(Math.sqrt(state.earned / REBIRTH_DIVISOR) * gemBoost());
     const earnedForGems = (g) => REBIRTH_DIVISOR * Math.pow(g / gemBoost(), 2); // coins needed in a run to reach g gems
     const keepShare = () => Math.min(0.6, 0.1 + 0.05 * state.perm.heritage);    // share of upgrade levels kept by a rebirth
@@ -715,15 +829,16 @@
     function addCoins(n) { state.score += n; state.earned += n; state.total += n; }
     const buffActive = () => Date.now() < buff.until;
     const baseIncome = () => GENS.reduce((sum, u) => sum + u.inc * state.lv[u.id], 0);
-    const perSec = () => Math.round(baseIncome() * multiplier());
+    const incomeMult = () => multiplier() * (1 + perk("income"));
+    const perSec = () => Math.round(baseIncome() * incomeMult());
     const perClick = () =>
       Math.round((1 + state.lv.power + skinById(state.skin).bonus + state.lv.fingers * 0.01 * baseIncome()) *
-        multiplier() * (1 + 0.25 * state.perm.cpower) * (buffActive() ? buff.mult : 1));
-    const critChance = () => CRIT_CHANCE + 0.01 * state.lv.crit;
-    const critMult = () => CRIT_MULT + 0.5 * state.lv.critp;
-    const goldenGap = () => (45000 + Math.random() * 75000) * (1 - 0.06 * state.lv.luck);
-    const feverMs = () => 15000 + 3000 * state.lv.fever;
-    const offlineRate = () => 0.5 + 0.1 * state.perm.night;
+        multiplier() * (1 + 0.25 * state.perm.cpower + perk("click")) * (buffActive() ? buff.mult : 1));
+    const critChance = () => CRIT_CHANCE + 0.01 * state.lv.crit + perk("crit");
+    const critMult = () => CRIT_MULT + 0.5 * state.lv.critp + perk("critp");
+    const goldenGap = () => (45000 + Math.random() * 75000) * (1 - 0.06 * state.lv.luck) * (1 - perk("golden"));
+    const feverMs = () => 15000 + 3000 * state.lv.fever + perk("fever");
+    const offlineRate = () => 0.5 + 0.1 * state.perm.night + perk("offline");
     const offlineCap = () => (3 + state.perm.night) * 3600;
 
     function leagueInfo() {
@@ -804,13 +919,16 @@
 
     function applySkin() {
       const s = skinById(state.skin);
-      coin.textContent = s.glyph;
-      coin.style.background = `radial-gradient(circle at 35% 30%, ${s.c[0]} 0%, ${s.c[1]} 30%, ${s.c[2]} 70%, ${s.c[3]} 100%)`;
+      coin.innerHTML = `<span class="g">${s.glyph}</span>`;
+      coin.style.background = skinFace(s);
+      coin.style.borderRadius = skinShape(s);
       coin.style.boxShadow = `0 0 0 10px ${s.rim} inset, 0 0 0 14px ${s.rim2} inset, 0 12px 40px rgba(${s.glow}, .35)`;
       coin.style.color = s.ink;
       coin.style.textShadow = `0 2px 0 ${s.hi}`;
       stageEl.style.setProperty("--glow", s.glow);
-      coin.classList.toggle("holo", s.fx === "holo");
+      stageEl.style.setProperty("--shape", skinShape(s));
+      const fx = [].concat(s.fx || []);
+      FX_CLASSES.forEach((c) => coin.classList.toggle(c, fx.includes(c)));
     }
 
     const worldGrad = (w) => `linear-gradient(135deg, ${w.grad[0]}, ${w.grad[1]})`;
@@ -827,8 +945,13 @@
       let dots = "";
       for (let i = 0; i < 18; i++) {
         const d = FX_SPEED[w.fx] * (1 + Math.random());
-        dots += `<i style="left:${(Math.random() * 100).toFixed(1)}%; top:${(Math.random() * 100).toFixed(1)}%; ` +
-                `--s:${(2 + Math.random() * 4).toFixed(1)}px; --d:${d.toFixed(2)}s; --dl:-${(Math.random() * d).toFixed(2)}s"></i>`;
+        const vars = `--s:${(2 + Math.random() * 4).toFixed(1)}px; --d:${d.toFixed(2)}s; --dl:-${(Math.random() * d).toFixed(2)}s`;
+        if (w.fx === "swirl") {
+          const a = Math.random() * Math.PI * 2, r = 90 + Math.random() * 150;
+          dots += `<i style="left:50%; top:50%; --tx:${(Math.cos(a) * r).toFixed(0)}px; --ty:${(Math.sin(a) * r * 0.6).toFixed(0)}px; ${vars}"></i>`;
+        } else {
+          dots += `<i style="left:${(Math.random() * 100).toFixed(1)}%; top:${(Math.random() * 100).toFixed(1)}%; ${vars}"></i>`;
+        }
       }
       fxEl.className = "fx-" + w.fx;
       fxEl.innerHTML = dots;
@@ -844,7 +967,7 @@
     }
 
     function skinIconStyle(s) {
-      return `background: radial-gradient(circle at 35% 30%, ${s.c[0]}, ${s.c[1]} 35%, ${s.c[2]} 75%, ${s.c[3]}); ` +
+      return `background: ${skinFace(s)}; border-radius: ${skinShape(s)}; ` +
              `box-shadow: 0 0 0 3px ${s.rim} inset; color: ${s.ink};`;
     }
 
@@ -867,14 +990,14 @@
 
     function worldItem(w, i) {
       const prev = WORLDS[i - 1];
-      const item = { act: `world:${w.id}`, lead: iconTile(w.id, w.grad), name: w.name, desc: `Доход ×${w.mult}`, cur: "coin" };
+      const item = { act: `world:${w.id}`, lead: iconTile(w.id, w.grad), name: w.name, desc: `Доход ×${w.mult} · ${w.perkText}`, cur: "coin" };
       if (state.world === w.id) return { ...item, cls: "equipped", disabled: true, price: "Вы здесь" };
       if (state.worlds.includes(w.id)) return { ...item, price: "Перейти" };
       if (prev && !state.worlds.includes(prev.id))
-        return { ...item, disabled: true, price: LOCK, desc: `${item.desc} · сначала открой «${prev.name}»` };
+        return { ...item, disabled: true, price: LOCK, desc: `${item.desc}. Сначала открой «${prev.name}»` };
       if (state.rebirths < w.rebirths)
         return { ...item, disabled: true, price: `${LOCK} ${w.rebirths}`,
-                 desc: `${item.desc} · нужно перерождений: ${w.rebirths} (есть ${state.rebirths})` };
+                 desc: `${item.desc}. Нужно перерождений: ${w.rebirths} (есть ${state.rebirths})` };
       return { ...item, price: `${COIN} ${fmt(w.cost)}`, cost: w.cost };
     }
 
@@ -949,7 +1072,7 @@
         }).join("") + (hidden ? '<div class="more">Новые улучшения откроются, когда заработаешь больше.</div>' : "");
       } else if (tab === "skins") {
         listEl.innerHTML = RARITY.map((r, i) => {
-          const group = SKINS.filter((x) => x.r === i);
+          const group = SKINS.filter((x) => x.r === i).sort((x, y) => x.cost - y.cost);
           return group.length
             ? `<div class="section" style="--rar:${r.c}"><i class="rar"></i>${r.n}</div>
                <div class="grid">${group.map(skinTile).join("")}</div>`
@@ -1246,7 +1369,7 @@
       goldenEl = null;
       state.golden += 1;
       if (Math.random() < 0.5) {
-        const lump = Math.round(Math.max(perSec() * 300, perClick() * 100));
+        const lump = Math.round(Math.max(perSec() * 300, perClick() * 100) * (1 + perk("lump")));
         addCoins(lump);
         showPlus(x, y, lump, true);
         toast(`Золотая монета: куш +${fmt(lump)}`);
