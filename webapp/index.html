@@ -154,11 +154,17 @@
     }
     .tabs { display: flex; gap: 3px; padding: 3px; border-radius: 14px; background: var(--card); }
     .tab {
-      flex: 1 1 auto; min-width: 0; padding: 8px 2px; border: none; border-radius: 11px; white-space: nowrap;
-      background: transparent; color: var(--hint); font-size: 13px; font-weight: 700; cursor: pointer;
+      position: relative; flex: 0 0 auto; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 5px;
+      padding: 8px 9px; border: none; border-radius: 11px;
+      background: transparent; color: var(--hint); font-size: 12px; font-weight: 700; cursor: pointer;
       transition: background .15s, color .15s;
     }
-    .tab.active { background: var(--text); color: var(--bg); }
+    .tab.active { flex: 1 1 auto; padding: 8px 10px; background: var(--text); color: var(--bg); }
+    .tab svg { width: 18px; height: 18px; flex: none; display: block; }
+    .tl { display: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tab.active .tl { display: block; }
+    .badge { display: none; position: absolute; top: 3px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #ff4f6d; box-shadow: 0 0 0 2px var(--bg); }
+    .tab.has-badge:not(.active) .badge { display: block; }
     .list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
 
     .item {
@@ -221,6 +227,83 @@
     }
     .rebirth-btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
     .rebirth-btn.armed { background: linear-gradient(135deg, #ef4444, #f97316); }
+    .buff { background: rgba(255, 200, 61, .16); box-shadow: inset 0 0 0 1px rgba(255, 200, 61, .5); color: var(--accent-ink); margin-top: 6px; }
+    .buff[hidden] { display: none; }
+    .buff svg { color: var(--accent); }
+    .buff b { color: var(--accent-ink); }
+    #toast {
+      position: absolute; z-index: 5; bottom: 10px; left: 50%; max-width: 90%; text-align: center;
+      padding: 8px 14px; border-radius: 14px; background: var(--text); color: var(--bg);
+      font-size: 13px; font-weight: 700; pointer-events: none;
+      opacity: 0; transform: translate(-50%, 8px); transition: opacity .2s, transform .2s;
+    }
+    #toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .plus.crit { font-size: 30px; color: #ff6aa8; }
+    .golden {
+      position: fixed; z-index: 9; left: -64px; top: var(--y); width: 54px; height: 54px; padding: 0; border: none; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation;
+      background: radial-gradient(circle at 35% 30%, #fff6a8, #ffd23f 35%, #f0a500 75%, #b8740a);
+      box-shadow: inset 0 0 0 4px #d99000, 0 0 22px 6px rgba(255, 200, 0, .6);
+      animation: cross 9s linear forwards, bob 1s ease-in-out infinite alternate;
+    }
+    .golden::after { content: "$"; font-family: var(--font-display); font-weight: 800; font-size: 24px; color: #b06a00; }
+    @keyframes cross { to { left: 100vw; } }
+    @keyframes bob { from { transform: translateY(-14px) rotate(-8deg); } to { transform: translateY(14px) rotate(8deg); } }
+    @media (prefers-reduced-motion: reduce) { .golden { animation: cross 14s linear forwards; } }
+    .bar { display: block; height: 5px; margin: 6px 0 2px; border-radius: 3px; background: var(--card-2); overflow: hidden; }
+    .bar b { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), #ff9d2e); }
+    .pg { font-size: 11px; }
+    /* keyboard focus */
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .tab:focus-visible { outline-offset: -2px; }
+    .list { scrollbar-width: thin; scrollbar-color: var(--card-2) transparent; }
+
+    /* mouse: hover feedback */
+    @media (hover: hover) {
+      .item:not(:disabled):hover, .tile:not(:disabled):hover { background: var(--card-2); transform: translateY(-1px); }
+      .item:not(:disabled):active, .tile:not(:disabled):active { transform: scale(.975); }
+      .tab:not(.active):hover { color: var(--text); background: var(--card-2); }
+      .world-pill:hover { background: var(--card-2); }
+      #coin:hover { transform: scale(1.03); }
+      #coin.pressed, #coin.pressed:hover { transform: scale(.92); }
+    }
+
+    /* desktop and landscape: stage on the left, shop as a full-height sidebar on the right */
+    @media (min-width: 760px) and (min-aspect-ratio: 1/1) {
+      main {
+        --side: clamp(380px, 38vw, 520px);
+        display: grid; grid-template-columns: minmax(0, 1fr) var(--side); grid-template-rows: auto minmax(0, 1fr);
+        align-items: stretch; padding: 0;
+      }
+      .score-box { grid-column: 1; grid-row: 1; padding-top: 22px; }
+      .world-pill { font-size: 14px; }
+      .label { font-size: 13px; }
+      #score { font-size: clamp(36px, 7.5vh, 68px); }
+      #score[data-long] { font-size: clamp(28px, 5.6vh, 50px); }
+      .stats { gap: 8px; margin-top: 10px; }
+      .chip { font-size: 13px; padding: 5px 12px 5px 10px; }
+      .chip b { font-size: 14px; }
+      .chip svg { width: 16px; height: 16px; }
+      .coin-wrap { grid-column: 1; grid-row: 2; width: auto; }
+      #scene { width: min(100%, 980px); height: 38%; }
+      #coin { width: min(34vw, 40vh, 400px); font-size: min(14vw, 17vh, 170px); }
+      .kbd-hint { font-size: 13px; margin-top: 16px; }
+      .plus { font-size: 28px; }
+      .plus.crit { font-size: 38px; }
+      .panel {
+        grid-column: 2; grid-row: 1 / span 2; width: auto; max-width: none; max-height: none; height: 100%;
+        border-top: none; border-left: 1px solid var(--line); border-radius: 0;
+        padding: 16px 16px 16px; gap: 12px;
+      }
+      .list { flex: 1; min-height: 0; gap: 10px; padding-right: 2px; }
+      .tab { font-size: 13px; padding: 10px 11px; }
+      .tab.active { padding: 10px 12px; }
+      .item { padding: 12px 14px; }
+      .name { font-size: 16px; }
+      .desc { font-size: 14px; }
+      .grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
+      .tile { padding: 14px 6px 10px; }
+    }
   </style>
 </head>
 <body>
@@ -237,24 +320,27 @@
         <span class="chip"><span id="ic-sec"></span><b id="per-sec">0</b> в секунду</span>
         <span class="chip"><span id="gem-icon"></span><b id="gems">0</b></span>
       </div>
+      <span class="chip buff" id="buff" hidden></span>
     </div>
     <div class="coin-wrap">
       <div id="scene"></div>
+      <div id="toast" role="status"></div>
       <div id="fx"></div>
       <div class="coin-holder">
         <div class="coin-stage" id="stage">
           <div class="halo"></div><div class="ring"></div>
           <button id="coin" aria-label="Кликнуть по монетке"></button>
         </div>
-        <div class="kbd-hint">или нажимай Пробел</div>
+        <div class="kbd-hint">Пробел — клик · 1–5 — вкладки</div>
       </div>
     </div>
     <section class="panel">
       <div class="tabs">
-        <button class="tab active" data-tab="upgrades">Улучшения</button>
-        <button class="tab" data-tab="skins">Скины</button>
-        <button class="tab" data-tab="worlds">Миры</button>
-        <button class="tab" data-tab="rebirth">Перерождение</button>
+        <button class="tab active" data-tab="upgrades" aria-label="Улучшения"><span class="ti"></span><span class="tl">Улучшения</span></button>
+        <button class="tab" data-tab="skins" aria-label="Скины"><span class="ti"></span><span class="tl">Скины</span></button>
+        <button class="tab" data-tab="worlds" aria-label="Миры"><span class="ti"></span><span class="tl">Миры</span></button>
+        <button class="tab" data-tab="rebirth" aria-label="Перерождение"><span class="ti"></span><span class="tl">Перерождение</span></button>
+        <button class="tab" data-tab="rewards" aria-label="Награды"><span class="ti"></span><span class="tl">Награды</span><i class="badge"></i></button>
       </div>
       <div class="list" id="list"></div>
     </section>
@@ -280,6 +366,11 @@
       volcano:  svg('<path d="M2 21l6-10h8l6 10z" fill="currentColor"/><path d="M10 8l-1-3M14 8l1-3M12 7V3"/>'),
       ocean:    svg('<path d="M2 7c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2M2 12c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2M2 17c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/>'),
       space:    svg('<circle cx="12" cy="12" r="5" fill="currentColor"/><ellipse cx="12" cy="12" rx="10.5" ry="3.5" transform="rotate(-20 12 12)"/>'),
+      skin:     svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/>'),
+      cycle:    svg('<path d="M20 11a8 8 0 0 0-14-4.5L4 9M4 4v5h5M4 13a8 8 0 0 0 14 4.5l2-2.5M20 20v-5h-5"/>'),
+      trophy:   svg('<path d="M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 14v4M8 21h8M10 18h4"/>'),
+      gift:     svg('<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M12 9v12M3 14h18M12 9C10 9 7.5 8 7.5 6.2S10.5 3.5 12 9c1.5-5.5 4.5-4.5 4.5-2.8S14 9 12 9z"/>'),
+      bolt:     svg('<path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor"/>'),
       lock:     svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
     };
     const COIN = '<svg class="cur" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ffd23f" stroke="#d99000" stroke-width="1.4"/><circle cx="8" cy="8" r="3.6" fill="none" stroke="#d99000" stroke-width="1.2"/></svg>';
@@ -379,6 +470,34 @@
         c: ["#ff9aa8", "#d81f4a", "#8f0c2c", "#3d0414"], rim: "#ffc93d", rim2: "#fff1b0", glow: "255,201,61", ink: "#ffd75a", hi: "#3d0414" },
     ];
 
+    const CRIT_CHANCE = 0.08, CRIT_MULT = 5;
+    const OFFLINE_CAP = 3 * 3600, OFFLINE_RATE = 0.5; // seconds of idle income paid out, share of normal rate
+
+    // Achievements pay gems once. val() reads lifetime counters, so rebirths never lose progress.
+    const ACH_GRAD = {
+      power: ["#ffa24a", "#ff5a36"], gold: ["#ffd23f", "#f59e0b"], cycle: ["#c58bff", "#7c3aed"],
+      skin: ["#f78fc0", "#db2777"], space: ["#3ddbe6", "#3b82f6"], mult: ["#ffe27a", "#f0a500"],
+    };
+    const ACHS = [
+      ["clicks100", "power", "Разминка", "Сделай 100 кликов", 100, 1, () => state.clicks],
+      ["clicks1k", "power", "Мозоли", "Сделай 1 000 кликов", 1e3, 2, () => state.clicks],
+      ["clicks10k", "power", "Железные пальцы", "Сделай 10 000 кликов", 1e4, 5, () => state.clicks],
+      ["coins10k", "gold", "Копилка", "Заработай 10 000 монет за всё время", 1e4, 1, () => state.total],
+      ["coins1m", "gold", "Миллионер", "Заработай 1 млн монет за всё время", 1e6, 3, () => state.total],
+      ["coins1b", "gold", "Магнат", "Заработай 1 млрд монет за всё время", 1e9, 8, () => state.total],
+      ["coins1t", "gold", "Монетный дракон", "Заработай 1 трлн монет за всё время", 1e12, 20, () => state.total],
+      ["rb1", "cycle", "Второй шанс", "Переродись 1 раз", 1, 2, () => state.rebirths],
+      ["rb5", "cycle", "Колесо сансары", "Переродись 5 раз", 5, 5, () => state.rebirths],
+      ["rb15", "cycle", "Бессмертный", "Переродись 15 раз", 15, 12, () => state.rebirths],
+      ["skins5", "skin", "Модник", "Собери 5 скинов", 5, 3, () => state.owned.length],
+      ["skins10", "skin", "Коллекционер", "Собери 10 скинов", 10, 6, () => state.owned.length],
+      ["skinsAll", "skin", "Музей монет", "Собери все скины", SKINS.length, 15, () => state.owned.length],
+      ["worlds3", "space", "Путешественник", "Открой 3 мира", 3, 3, () => state.worlds.length],
+      ["worldsAll", "space", "Покоритель миров", "Открой все миры", WORLDS.length, 10, () => state.worlds.length],
+      ["gold1", "mult", "Золотая удача", "Поймай золотую монету", 1, 1, () => state.golden],
+      ["gold10", "mult", "Охотник за золотом", "Поймай 10 золотых монет", 10, 4, () => state.golden],
+    ].map(([id, icon, name, desc, target, gems, val]) => ({ id, icon, name, desc, target, gems, val, grad: ACH_GRAD[icon] }));
+
     const scoreEl = document.getElementById("score");
     const perClickEl = document.getElementById("per-click");
     const perSecEl = document.getElementById("per-sec");
@@ -387,6 +506,14 @@
     document.getElementById("ic-click").innerHTML = ICONS.power;
     document.getElementById("ic-sec").innerHTML = ICONS.auto;
     const stageEl = document.getElementById("stage");
+    const buffEl = document.getElementById("buff");
+    const toastEl = document.getElementById("toast");
+    const TAB_ICONS = { upgrades: "power", skins: "skin", worlds: "space", rebirth: "cycle", rewards: "trophy" };
+    const TAB_ORDER = Object.keys(TAB_ICONS);
+    document.querySelectorAll(".tab").forEach((t, i) => {
+      t.querySelector(".ti").innerHTML = ICONS[TAB_ICONS[t.dataset.tab]];
+      t.title = `${t.getAttribute("aria-label")} (${i + 1})`;
+    });
     const coin = document.getElementById("coin");
     const listEl = document.getElementById("list");
     const tabs = document.querySelectorAll(".tab");
@@ -405,6 +532,12 @@
       skin: "classic",
       worlds: ["meadow"],
       world: "meadow",
+      clicks: 0,
+      total: 0,
+      golden: 0,
+      claimed: [],
+      lastSeen: 0,
+      daily: { last: "", streak: 0 },
     });
     let state = defaultState();
     let tab = "upgrades";
@@ -412,6 +545,11 @@
     let saveTimer = null;
     let rebirthArmed = false;
     let armTimer = null;
+    let buff = { until: 0, mult: 1 }; // temporary click multiplier from golden coins; not saved
+    let goldenEl = null;
+    let nextGolden = Date.now() + 40000 + Math.random() * 40000;
+    let toastTimer = null;
+    let rewardSig = "";
 
     const compact = new Intl.NumberFormat("ru-RU", { notation: "compact", maximumFractionDigits: 2 });
     const fmt = (n) => (n >= 1e9 ? compact.format(Math.floor(n)) : Math.floor(n).toLocaleString("ru-RU"));
@@ -425,8 +563,10 @@
     const gemBoost = () => 1 + 0.25 * state.perm.gain;
     const rebirthGain = () => Math.floor(Math.sqrt(state.earned / REBIRTH_DIVISOR) * gemBoost());
     const startCoins = () => 200 * state.perm.start;
-    function addCoins(n) { state.score += n; state.earned += n; }
-    const perClick = () => Math.round((1 + state.lv.power + skinById(state.skin).bonus) * multiplier());
+    function addCoins(n) { state.score += n; state.earned += n; state.total += n; }
+    const buffActive = () => Date.now() < buff.until;
+    const perClick = () =>
+      Math.round((1 + state.lv.power + skinById(state.skin).bonus) * multiplier() * (buffActive() ? buff.mult : 1));
     const perSec = () => Math.round(state.lv.auto * multiplier());
 
     // Telegram CloudStorage keeps progress per user across devices;
@@ -465,16 +605,26 @@
           const worlds = Array.isArray(s.worlds) ? s.worlds.filter((id) => WORLDS.some((x) => x.id === id)) : [];
           next.worlds = Array.from(new Set(["meadow", ...worlds]));
           next.world = next.worlds.includes(s.world) ? s.world : "meadow";
+          const whole = (v) => Math.max(0, Math.floor(Number(v) || 0));
+          next.clicks = whole(s.clicks);
+          next.golden = whole(s.golden);
+          next.total = Math.max(Number(s.total) || 0, next.earned);
+          next.claimed = Array.isArray(s.claimed) ? s.claimed.filter((id) => ACHS.some((a) => a.id === id)) : [];
+          next.lastSeen = Number(s.lastSeen) || 0;
+          const d = s.daily || {};
+          next.daily = { last: typeof d.last === "string" ? d.last : "", streak: whole(d.streak) };
         } catch {}
       } else {
         // progress from the first version (score only)
         next.score = Number(await readKey(LEGACY_KEY)) || 0;
         next.earned = next.score;
+        next.total = next.score;
       }
       return next;
     }
 
     function writeNow() {
+      state.lastSeen = Date.now();
       const json = JSON.stringify(state);
       if (cloud) cloud.setItem(STORAGE_KEY, json);
       else try { localStorage.setItem(STORAGE_KEY, json); } catch {}
@@ -537,7 +687,7 @@
              `box-shadow: 0 0 0 3px ${s.rim} inset; color: ${s.ink};`;
     }
 
-    function itemHTML({ act, name, desc, price, cost, cur, disabled, cls, lead }) {
+    function itemHTML({ act, name, desc, price, cost, cur, disabled, cls, lead, cta }) {
       return `
         <button class="item${cls ? " " + cls : ""}" data-act="${act}"
                 ${cost != null ? `data-cost="${cost}" data-cur="${cur}"` : ""} ${disabled ? "disabled" : ""}>
@@ -546,7 +696,7 @@
             <div class="name">${name}</div>
             <div class="desc">${desc}</div>
           </span>
-          <span class="price${cost == null ? " free" : ""}">${price}</span>
+          <span class="price${cost == null && !cta ? " free" : ""}">${price}</span>
         </button>`;
     }
 
@@ -599,6 +749,24 @@
         }).join("");
       } else if (tab === "worlds") {
         listEl.innerHTML = WORLDS.map((w, i) => itemHTML(worldItem(w, i))).join("");
+      } else if (tab === "rewards") {
+        const d = dailyInfo();
+        const status = (a) => (state.claimed.includes(a.id) ? 2 : a.val() >= a.target ? 0 : 1);
+        const rank = [...ACHS].sort((x, y) => status(x) - status(y) || y.val() / y.target - x.val() / x.target);
+        listEl.innerHTML = itemHTML({
+          act: "daily", cta: true, disabled: !d.claimable, lead: iconTile("gift", ACH_GRAD.mult),
+          name: `Ежедневный подарок <span class="lv">серия ${d.streak}</span>`,
+          desc: `+${fmt(d.coins)} монет${d.gems ? ` и ${d.gems} кристалла` : ""} · каждый 7-й день +3 кристалла`,
+          price: d.claimable ? "Забрать" : "Завтра",
+        }) + `<div class="section">Достижения · ${state.claimed.length} из ${ACHS.length}</div>` + rank.map((a) => {
+          const v = Math.min(a.val(), a.target);
+          const st = status(a);
+          return itemHTML({
+            act: `ach:${a.id}`, cta: st === 0, disabled: st !== 0, lead: iconTile(a.icon, a.grad), name: a.name,
+            desc: `${a.desc}<i class="bar"><b style="width:${(v / a.target * 100).toFixed(1)}%"></b></i><span class="pg">${fmt(v)} / ${fmt(a.target)}</span>`,
+            price: st === 2 ? "Получено" : `${GEM} ${st === 0 ? "+" : ""}${a.gems}`,
+          });
+        }).join("");
       } else {
         listEl.innerHTML = `
           <div class="card">
@@ -654,19 +822,33 @@
       perClickEl.textContent = fmt(perClick());
       perSecEl.textContent = fmt(perSec());
       gemsEl.textContent = fmt(state.gems);
+      const left = Math.ceil((buff.until - Date.now()) / 1000);
+      buffEl.hidden = left <= 0;
+      if (left > 0) buffEl.innerHTML = `${ICONS.bolt}<b>×${buff.mult}</b> клики · ${left} с`;
       refreshAfford();
       updateRebirthCard();
+      const sig = ready ? claimable().join(",") : "";
+      document.querySelector('.tab[data-tab="rewards"]').classList.toggle("has-badge", sig !== "");
+      if (sig !== rewardSig) {
+        rewardSig = sig;
+        if (tab === "rewards") {
+          const top = listEl.scrollTop;
+          renderList();
+          listEl.scrollTop = top;
+        }
+      }
     }
 
     function haptic(kind) {
       if (!tg || !tg.HapticFeedback) return;
       if (kind === "success") tg.HapticFeedback.notificationOccurred("success");
+      else if (kind === "crit") tg.HapticFeedback.impactOccurred("heavy");
       else tg.HapticFeedback.impactOccurred("light");
     }
 
-    function showPlus(x, y, amount) {
+    function showPlus(x, y, amount, crit) {
       const el = document.createElement("div");
-      el.className = "plus";
+      el.className = crit ? "plus crit" : "plus";
       el.textContent = "+" + fmt(amount);
       el.style.left = x + "px";
       el.style.top = y + "px";
@@ -735,6 +917,86 @@
       flush();
     }
 
+    const dayKey = (t = Date.now()) => new Date(t).toLocaleDateString("sv");
+    function dailyInfo() {
+      const claimable = state.daily.last !== dayKey();
+      const streak = !claimable ? state.daily.streak
+        : state.daily.last === dayKey(Date.now() - 864e5) ? state.daily.streak + 1 : 1;
+      const coins = Math.round(Math.max(500, perSec() * 900) * Math.min(streak, 7));
+      return { claimable, streak, coins, gems: streak % 7 === 0 ? 3 : 0 };
+    }
+    // ids of rewards that can be collected right now
+    const claimable = () => [
+      ...(dailyInfo().claimable ? ["daily"] : []),
+      ...ACHS.filter((a) => !state.claimed.includes(a.id) && a.val() >= a.target).map((a) => a.id),
+    ];
+
+    function toast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove("show"), 3200);
+    }
+
+    function claimAch(id) {
+      const a = ACHS.find((x) => x.id === id);
+      if (!a || state.claimed.includes(id) || a.val() < a.target) return;
+      state.claimed.push(id);
+      state.gems += a.gems;
+      toast(`«${a.name}»: +${a.gems} кристаллов`);
+      haptic("success");
+      renderStats();
+      renderList();
+      flush();
+    }
+
+    function claimDaily() {
+      const d = dailyInfo();
+      if (!d.claimable) return;
+      state.daily = { last: dayKey(), streak: d.streak };
+      addCoins(d.coins);
+      state.gems += d.gems;
+      toast(`Подарок дня: +${fmt(d.coins)} монет${d.gems ? ` и ${d.gems} кристалла` : ""}`);
+      haptic("success");
+      renderStats();
+      renderList();
+      flush();
+    }
+
+    // A golden coin drifts across the screen now and then: tap it for a lump sum or a 15 s click boost.
+    function spawnGolden() {
+      if (goldenEl) return;
+      const el = document.createElement("button");
+      el.className = "golden";
+      el.setAttribute("aria-label", "Золотая монета");
+      el.style.setProperty("--y", 14 + Math.random() * 40 + "%");
+      el.addEventListener("animationend", (e) => {
+        if (e.animationName === "cross") { el.remove(); goldenEl = null; }
+      });
+      el.addEventListener("pointerdown", (e) => { e.preventDefault(); catchGolden(e.clientX, e.clientY); });
+      document.body.appendChild(el);
+      goldenEl = el;
+    }
+
+    function catchGolden(x, y) {
+      if (!goldenEl) return;
+      goldenEl.remove();
+      goldenEl = null;
+      state.golden += 1;
+      if (Math.random() < 0.5) {
+        const lump = Math.round(Math.max(perSec() * 300, perClick() * 100));
+        addCoins(lump);
+        showPlus(x, y, lump, true);
+        toast(`Золотая монета: куш +${fmt(lump)}`);
+      } else {
+        buff = { until: Date.now() + 15000, mult: 7 };
+        toast("Золотая лихорадка: клики ×7 на 15 секунд");
+      }
+      haptic("success");
+      renderStats();
+      flush();
+    }
+
     function useWorld(id) {
       const i = WORLDS.findIndex((w) => w.id === id);
       const w = WORLDS[i];
@@ -755,13 +1017,15 @@
 
     function pressCoin(x, y) {
       if (!ready) return;
-      const gain = perClick();
+      const crit = Math.random() < CRIT_CHANCE;
+      const gain = perClick() * (crit ? CRIT_MULT : 1);
       addCoins(gain);
+      state.clicks += 1;
       renderStats();
       save();
-      showPlus(x, y, gain);
+      showPlus(x, y, gain, crit);
       coin.classList.add("pressed");
-      haptic();
+      haptic(crit ? "crit" : undefined);
     }
 
     coin.addEventListener("pointerdown", (e) => {
@@ -774,6 +1038,10 @@
     // Space clicks the coin. preventDefault stops page scroll and keeps Space
     // from also "pressing" whichever shop button happens to have focus.
     document.addEventListener("keydown", (e) => {
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key >= "1" && e.key <= "5") {
+        setTab(TAB_ORDER[e.key - 1]);
+        return;
+      }
       if (e.code !== "Space") return;
       e.preventDefault();
       if (e.repeat) return;
@@ -794,6 +1062,8 @@
       else if (kind === "perm") buyPerm(id);
       else if (kind === "rebirth") rebirth();
       else if (kind === "world") useWorld(id);
+      else if (kind === "ach") claimAch(id);
+      else if (kind === "daily") claimDaily();
       else useSkin(id);
     });
 
@@ -807,11 +1077,14 @@
     document.getElementById("world-pill").addEventListener("click", () => setTab("worlds"));
 
     setInterval(() => {
+      if (!ready) return;
       const gain = perSec();
-      if (!ready || !gain) return;
-      addCoins(gain);
+      if (gain) { addCoins(gain); save(); }
+      if (!goldenEl && !document.hidden && Date.now() >= nextGolden) {
+        spawnGolden();
+        nextGolden = Date.now() + 45000 + Math.random() * 75000;
+      }
       renderStats();
-      save();
     }, 1000);
 
     document.addEventListener("visibilitychange", () => { if (document.hidden) flush(); });
@@ -830,6 +1103,13 @@
     load().then((s) => {
       state = s;
       ready = true;
+      const away = Math.min((Date.now() - state.lastSeen) / 1000, OFFLINE_CAP);
+      if (state.lastSeen && away >= 60 && perSec() > 0) {
+        const gone = Math.floor(perSec() * away * OFFLINE_RATE);
+        addCoins(gone);
+        toast(`Пока тебя не было: +${fmt(gone)} монет`);
+        flush();
+      }
       applySkin();
       if (state.world !== "meadow") applyWorld();
       renderStats();
