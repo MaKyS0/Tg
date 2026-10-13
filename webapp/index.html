@@ -331,7 +331,9 @@
     }
     .t-name { font-weight: 700; font-size: 13px; }
     .t-bonus { color: var(--hint); font-size: 11px; margin-bottom: 4px; }
-    .tile .price { font-size: 12px; padding: 3px 9px; }
+    .tile .price { font-size: 11px; padding: 3px 6px; gap: 2px; max-width: 100%; }
+    .tile .price .cur { width: 12px; height: 12px; }
+    .t-name.long { font-size: 11px; }
 
     /* wheel of fortune */
     .wheel-card { display: flex; align-items: center; gap: 16px; padding: 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
@@ -703,6 +705,7 @@
     const RARITY = [
       { n: "Обычные", c: "#9aa7ad" }, { n: "Редкие", c: "#4cc3ff" }, { n: "Эпические", c: "#b779ff" },
       { n: "Легендарные", c: "#ffb02e" }, { n: "Мифические", c: "#ff5a8a" },
+      { n: "Божественные", c: "#2ee6a8" }, { n: "Космические", c: "#ffe45c" }, { n: "Абсолютные", c: "#e040fb" },
     ];
     const SKINS = [
       { id: "classic", name: "Классика", glyph: "$", bonus: 0, cost: 0, r: 0,
@@ -787,6 +790,26 @@
         c: ["#ffffff", "#ffffff", "#ffffff", "#ffffff"], rim: "#ffffff", rim2: "#ffe0ff", glow: "255,180,230", ink: "#ffffff", hi: "rgba(0,0,0,.35)" },
       { id: "phoenix", name: "Феникс", glyph: "⚜", bonus: 90000, cost: 2.5e11, r: 4, fx: ["flame", "orbit"], pat: ["rays", "rgba(255,240,150,.3)"],
         c: ["#fff0b0", "#ff9a2e", "#d81f2a", "#5a0a12"], rim: "#ffc93d", rim2: "#fff1b0", glow: "255,130,30", ink: "#fff1b0", hi: "#5a0a12" },
+      { id: "dawn", name: "Рассвет", glyph: "☼", bonus: 160000, cost: 1e12, r: 5, fx: ["shine", "orbit"], pat: ["rays", "rgba(255,255,255,.3)"],
+        c: ["#fffbe6", "#ffd1a8", "#ff8fb0", "#b23a7a"], rim: "#ff9ec4", rim2: "#ffe9b0", glow: "255,170,190", ink: "#7a1f55", hi: "#fff5d6" },
+      { id: "halo", name: "Нимб", glyph: "☉", bonus: 320000, cost: 4e12, r: 5, fx: ["pulse", "shine"], pat: ["waves", "rgba(255,255,255,.4)"],
+        c: ["#ffffff", "#fff6d0", "#ffe28a", "#d9a52b"], rim: "#fff3b0", rim2: "#ffffff", glow: "255,235,150", ink: "#a87400", hi: "#ffffff" },
+      { id: "lotus", name: "Лотос", glyph: "❁", bonus: 650000, cost: 1.5e13, r: 5, shape: "blob", fx: "orbit", pat: ["rays", "rgba(255,255,255,.28)"],
+        c: ["#fff0fa", "#ffb3e6", "#e05cc0", "#8a1f76"], rim: "#ff7fd6", rim2: "#ffe0f7", glow: "255,130,220", ink: "#6b1259", hi: "#fff0fa" },
+      { id: "pulsar", name: "Пульсар", glyph: "✷", bonus: 1400000, cost: 6e13, r: 6, fx: ["pulse", "spin"], pat: ["rays", "rgba(180,230,255,.35)"],
+        c: ["#ffffff", "#a8e6ff", "#3a7bff", "#101e66"], rim: "#6fd3ff", rim2: "#e6f8ff", glow: "110,200,255", ink: "#0a1a66", hi: "#e6f8ff" },
+      { id: "nebula", name: "Туманность", glyph: "❂", bonus: 3200000, cost: 3e14, r: 6, shape: "blob", fx: ["spin", "shine"], pat: ["swirl", "rgba(255,120,220,.4)"],
+        c: ["#f5d9ff", "#a35bff", "#4a1fb8", "#12062e"], rim: "#d17bff", rim2: "#3a1480", glow: "190,100,255", ink: "#f6e0ff", hi: "#12062e" },
+      { id: "horizon", name: "Горизонт", glyph: "◍", bonus: 7000000, cost: 1.5e15, r: 6, fx: ["orbit", "spin"], pat: ["swirl", "rgba(255,140,40,.45)"],
+        c: ["#2a1a10", "#120a06", "#060302", "#000000"], rim: "#ff9a2e", rim2: "#ffd9a0", glow: "255,150,50", ink: "#ffb35c", hi: "#000000" },
+      { id: "chronos", name: "Хронос", glyph: "☸", bonus: 16000000, cost: 8e15, r: 7, fx: ["spin", "shine"], pat: ["rays", "rgba(255,255,255,.2)"],
+        c: ["#e0fff8", "#6af0d0", "#14a58a", "#064a40"], rim: "#ffd45a", rim2: "#fff3c0", glow: "90,240,200", ink: "#03352d", hi: "#e0fff8" },
+      { id: "chaos", name: "Хаос", glyph: "❖", bonus: 40000000, cost: 4e16, r: 7, shape: "squircle", fx: ["holo", "glitch"], pat: ["checker", "rgba(255,255,255,.18)"],
+        c: ["#ffe3ff", "#ff4de0", "#5a2bff", "#0a0420"], rim: "#00fff0", rim2: "#ff2bd6", glow: "255,77,224", ink: "#ffffff", hi: "#3a0a5e" },
+      { id: "omniverse", name: "Омниверс", glyph: "⁂", bonus: 100000000, cost: 2e17, r: 7, fx: ["holo", "orbit", "shine"], pat: ["rays", "rgba(255,255,255,.3)"],
+        c: ["#ffffff", "#ffe9a0", "#ffa6d9", "#a6b8ff"], rim: "#ffffff", rim2: "#ffd0f2", glow: "255,230,170", ink: "#6b3f9e", hi: "#ffffff" },
+      { id: "omega", name: "Омега", glyph: "Ω", bonus: 300000000, cost: 1e18, r: 7, fx: ["pulse", "orbit", "shine"], pat: ["rays", "rgba(255,215,90,.22)"],
+        c: ["#3a2f10", "#17120a", "#0a0803", "#000000"], rim: "#ffd75a", rim2: "#fff2b8", glow: "255,215,90", ink: "#ffd75a", hi: "#000000" },
     ];
 
     // Skins differ in shape, surface pattern and animation, not only in colour.
@@ -971,8 +994,12 @@
     let wheelAngle = 0;
     let shownLeague = -1;
 
-    const compact = new Intl.NumberFormat("ru-RU", { notation: "compact", maximumFractionDigits: 2 });
-    const fmt = (n) => (n >= 1e9 ? compact.format(Math.floor(n)) : Math.floor(n).toLocaleString("ru-RU"));
+    const UNITS = ["", "тыс", "млн", "млрд", "трлн", "квадр", "квинт", "секст", "септ"];
+    const short = (n) => {
+      const i = Math.min(UNITS.length - 1, Math.floor(Math.log10(Math.floor(n)) / 3));
+      return `${(Math.floor(n) / Math.pow(1000, i)).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ${UNITS[i]}`;
+    };
+    const fmt = (n) => (n >= 1e9 ? short(n) : Math.floor(n).toLocaleString("ru-RU"));
     const skinById = (id) => SKINS.find((s) => s.id === id) || SKINS[0];
     const worldById = (id) => WORLDS.find((w) => w.id === id) || WORLDS[0];
     const isMax = (u) => u.max && state.lv[u.id] >= u.max;
@@ -1184,9 +1211,9 @@
         <button class="tile${equipped ? " equipped" : ""}" data-act="skin:${s.id}" style="--rar:${RARITY[s.r].c}"
                 ${owned ? "" : `data-cost="${s.cost}" data-cur="coin"`} ${equipped ? "disabled" : ""}>
           <span class="skin-icon" style="${skinIconStyle(s)}">${s.glyph}</span>
-          <span class="t-name">${s.name}</span>
-          <span class="t-bonus">${s.bonus ? `+${fmt(s.bonus)} к клику` : "Без бонуса"}</span>
-          <span class="price${owned ? " free" : ""}">${equipped ? "Надето" : owned ? "Надеть" : `${COIN} ${fmt(s.cost)}`}</span>
+          <span class="t-name${s.name.length > 10 ? " long" : ""}">${s.name}</span>
+          <span class="t-bonus">${s.bonus ? `+${s.bonus >= 1e6 ? short(s.bonus) : fmt(s.bonus)} к клику` : "Без бонуса"}</span>
+          <span class="price${owned ? " free" : ""}">${equipped ? "Надето" : owned ? "Надеть" : `${COIN} ${s.cost >= 1e6 ? short(s.cost) : fmt(s.cost)}`}</span>
         </button>`;
     }
 
