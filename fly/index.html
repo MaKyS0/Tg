@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Живая муха</title>
-<meta name="description" content="3D-муха с настоящим мозгом: подсеть коннектома FlyWire считается прямо в браузере. Дай ей задачу — мозг решит, есть или улетать.">
+<meta name="description" content="Свободный мир с 3D-мухой: мозг (подсеть коннектома FlyWire) считается в браузере. Муха сама ищет еду, спит ночью, боится мухобойки — или выполняет твои задачи.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='12' cy='16' r='7' fill='%23b3201f'/%3E%3Cellipse cx='22' cy='17' rx='7' ry='5' fill='%23383d42'/%3E%3C/svg%3E">
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
 <style>
@@ -39,8 +39,19 @@
   .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
   #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 16px; color: var(--muted); z-index: 5; background: var(--bg); }
   label { color: var(--muted); font-size: 12px; display: flex; gap: 6px; align-items: center; }
+  #hud { left: 50%; top: 10px; transform: translateX(-50%); padding: 8px 14px; text-align: center; max-width: calc(100vw - 24px); }
+  .bars { display: flex; gap: 14px; align-items: center; justify-content: center; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .bar { display: inline-block; vertical-align: middle; width: 70px; height: 8px; margin-left: 6px; border-radius: 6px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .bar b { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #7dff9f, #ffd36b 60%, #ff6b6b); background-size: 70px 100%; transition: width .2s; }
+  #stats { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .two { display: flex; gap: 8px; align-items: center; }
+  .seg { display: flex; gap: 4px; } .seg.wrap { flex-wrap: wrap; } .seg button { padding: 6px 8px; font-size: 12.5px; }
+  button.on { background: rgba(125,255,159,.2); border-color: rgba(125,255,159,.6); }
+  .think { color: var(--text); font-size: 13px; padding: 6px 8px; background: rgba(255,255,255,.06); border-radius: 8px; }
+  .cap { color: var(--muted); font-size: 11.5px; margin-bottom: -4px; }
   @media (max-width: 720px) {
-    #left { top: 8px; left: 8px; width: calc(100vw - 16px); max-height: 46vh; padding: 10px; }
+    #left { top: 64px; left: 8px; width: calc(100vw - 16px); max-height: 50vh; padding: 10px; overflow: auto; }
+    #hud { top: 6px; padding: 6px 8px; } .bar { width: 44px; } #stats { display: none; }
     #log { display: none; }
     #right { right: 8px; bottom: 8px; width: 150px; padding: 6px; }
     #right .row, #right .legend, #right #rate, #right .hint { display: none; }
@@ -51,17 +62,35 @@
 <div id="loading">Загружаю мозг мухи…</div>
 <canvas id="scene"></canvas>
 
+<div id="hud" class="box">
+  <div class="bars">
+    <span>голод<i class="bar"><b id="b-hunger"></b></i></span>
+    <span>жажда<i class="bar"><b id="b-thirst"></b></i></span>
+    <span>усталость<i class="bar"><b id="b-tired"></b></i></span>
+    <span id="clock">☀ день</span>
+  </div>
+  <div id="stats"></div>
+</div>
+
 <div id="left" class="box">
   <div>
     <h1>Живая муха</h1>
-    <p class="sub">3D-модель + настоящий мозг: подсеть коннектома FlyWire считается в браузере.</p>
+    <p class="sub">Свободный мир + настоящий мозг: подсеть коннектома FlyWire считается в браузере.</p>
   </div>
-  <div id="tasks"></div>
-  <form id="form"><input id="cmd" placeholder="Дай задачу: «найди сахар»…" autocomplete="off"><button>Go</button></form>
+  <div class="two"><button id="free" class="on">Свобода: ВКЛ</button>
+    <div id="speed" class="seg"><button data-v="1" class="on">1×</button><button data-v="3">3×</button><button data-v="8">8×</button></div></div>
+  <div id="think" class="think">Осматривается</div>
   <div class="row"><span>Состояние:</span><span id="status">…</span></div>
   <div class="row"><span id="stim">стимул: нет</span></div>
+  <div class="cap">Приказать:</div>
+  <div id="tasks"></div>
+  <form id="form"><input id="cmd" placeholder="«найди сахар», «свобода», «мухобойка»…" autocomplete="off"><button>Go</button></form>
+  <div class="cap">Клик по полу:</div>
+  <div id="tools" class="seg wrap">
+    <button data-tool="goto" class="on">📍 точка</button><button data-tool="sugar">🍬 сахар</button><button data-tool="water">💧 вода</button>
+    <button data-tool="bitter">🌿 горькое</button><button data-tool="mix">🍎 фрукт</button><button data-tool="swat">💥 мухобойка</button>
+  </div>
   <div id="log"></div>
-  <p class="hint">Клик по полу — лететь в точку. Мышь/палец — вращать камеру, колесо — зум.</p>
   <label><input type="checkbox" id="follow" checked> камера следует за мухой</label>
 </div>
 
