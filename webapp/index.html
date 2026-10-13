@@ -5,48 +5,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Coin Clicker</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700;800&family=Unbounded:wght@700;800&display=swap">
   <style>
     :root {
-      --bg: var(--tg-theme-bg-color, #17212b);
-      --text: var(--tg-theme-text-color, #ffffff);
-      --hint: var(--tg-theme-hint-color, #8a9aa9);
+      /* Layout: stage on top (world pill, score, stat chips, coin on a glowing halo), tabbed sheet below.
+         Surfaces are tints of the Telegram text colour, so light and dark themes both work. */
+      --bg: var(--tg-theme-bg-color, #101a20);
+      --text: var(--tg-theme-text-color, #f2f7f6);
+      --hint: var(--tg-theme-hint-color, #8aa0a8);
       --card: rgba(255, 255, 255, .07);
-      --accent: #ffd23f;
+      --card-2: rgba(255, 255, 255, .13);
+      --line: rgba(255, 255, 255, .14);
+      --sheet: var(--bg);
+      --accent: #ffc83d;
+      --accent-ink: #ffd96e;
+      --font-display: "Unbounded", "Arial Black", "Segoe UI", system-ui, sans-serif;
+      --font-body: "Onest", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    @supports (color: color-mix(in srgb, red, blue)) {
+      :root {
+        --card: color-mix(in srgb, var(--text) 7%, transparent);
+        --card-2: color-mix(in srgb, var(--text) 13%, transparent);
+        --line: color-mix(in srgb, var(--text) 14%, transparent);
+        --sheet: color-mix(in srgb, var(--bg) 84%, transparent);
+        --accent-ink: color-mix(in srgb, var(--accent) 55%, var(--text));
+      }
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
       margin: 0; height: 100%;
       background: var(--bg); color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: var(--font-body);
       user-select: none; -webkit-user-select: none; overflow: hidden;
     }
+    button { font-family: inherit; }
     main {
       position: relative; z-index: 1;
       height: 100%;
       display: flex; flex-direction: column; align-items: center;
-      padding: 12px 0 0;
+      padding: 10px 0 0;
     }
     #sky { position: fixed; inset: 0; pointer-events: none; }
     .world-enter { animation: world-in .6s ease-out; }
     @keyframes world-in { from { opacity: 0; } to { opacity: 1; } }
+
     .score-box { text-align: center; padding: 0 16px; }
     .world-pill {
-      display: inline-flex; align-items: center; gap: 6px; margin-bottom: 2px;
-      padding: 3px 10px 3px 3px; border: none; border-radius: 999px;
-      background: var(--card); color: var(--text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 3px 12px 3px 3px; border: 1px solid var(--line); border-radius: 999px;
+      background: var(--card); color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer;
     }
     .world-pill .dot {
-      width: 22px; height: 22px; border-radius: 50%; color: #fff;
+      width: 24px; height: 24px; border-radius: 50%; color: #fff;
       display: flex; align-items: center; justify-content: center;
     }
     .world-pill .dot svg { width: 14px; height: 14px; }
-    .world-pill b { color: var(--accent); }
-    .label { color: var(--hint); font-size: 14px; text-transform: uppercase; letter-spacing: .1em; }
-    #score { font-size: 48px; font-weight: 800; font-variant-numeric: tabular-nums; }
-    .stats { color: var(--hint); font-size: 14px; }
-    .stats b { color: var(--text); }
+    .world-pill b { font-family: var(--font-display); font-size: 12px; color: var(--accent-ink); }
+    .label { margin-top: 8px; color: var(--hint); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .16em; }
+    #score {
+      font-family: var(--font-display); font-weight: 800; line-height: 1.15;
+      font-size: clamp(28px, 10vw, 44px); font-variant-numeric: tabular-nums;
+    }
+    #score[data-long] { font-size: clamp(22px, 7.6vw, 32px); }
+    .stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 6px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px 4px 8px; border-radius: 999px; background: var(--card);
+      color: var(--hint); font-size: 12px; font-weight: 500;
+    }
+    .chip b { color: var(--text); font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .chip svg { width: 14px; height: 14px; }
+
     .coin-wrap { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; width: 100%; }
-    .coin-holder { position: relative; z-index: 1; text-align: center; }
+    .coin-holder { position: relative; z-index: 1; text-align: center; padding-top: 8px; }
+    .coin-stage { position: relative; display: inline-block; --glow: 255, 190, 0; }
+    .halo {
+      position: absolute; inset: -26%; border-radius: 50%; pointer-events: none;
+      background: radial-gradient(circle, rgba(var(--glow), .34) 0%, transparent 62%);
+      animation: breathe 3.2s ease-in-out infinite;
+    }
+    .ring {
+      position: absolute; inset: -6%; border-radius: 50%; pointer-events: none;
+      border: 2px dashed rgba(var(--glow), .5); animation: spin 50s linear infinite;
+    }
+    @keyframes breathe { 0%, 100% { transform: scale(.94); opacity: .75; } 50% { transform: scale(1.04); opacity: 1; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
     #scene {
       position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
       width: min(100%, 640px); height: 42%; pointer-events: none;
@@ -70,77 +115,112 @@
     @keyframes sway { from { transform: translateX(-6px); } to { transform: translateX(6px); } }
     @keyframes twinkle { 0%, 100% { opacity: .15; transform: scale(.5); } 50% { opacity: 1; transform: scale(1); } }
     @keyframes hover { 0%, 100% { opacity: .2; transform: translate(0, 0); } 50% { opacity: 1; transform: translate(14px, -20px); } }
-    @media (prefers-reduced-motion: reduce) { #fx { display: none; } }
+
     #coin {
       position: relative;
-      width: min(52vw, 34vh, 260px); aspect-ratio: 1; border: none; border-radius: 50%; padding: 0;
+      width: min(46vw, 27vh, 240px); aspect-ratio: 1; border: none; border-radius: 50%; padding: 0;
       cursor: pointer; touch-action: manipulation;
       transition: transform .08s ease-out;
-      font-size: min(24vw, 16vh, 120px); font-weight: 900;
+      font-family: var(--font-display);
+      font-size: min(22vw, 14vh, 108px); font-weight: 800;
     }
     #coin.pressed { transform: scale(.92); }
+    #coin.holo { animation: holo 6s linear infinite; }
+    @keyframes holo { to { filter: hue-rotate(360deg); } }
     .plus {
       position: fixed; z-index: 10; pointer-events: none;
-      font-size: 28px; font-weight: 800; color: var(--accent);
-      text-shadow: 0 2px 4px rgba(0,0,0,.4);
+      font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--accent);
+      text-shadow: 0 2px 6px rgba(0,0,0,.5);
       animation: float .8s ease-out forwards;
     }
     @keyframes float {
       from { opacity: 1; transform: translate(-50%, -50%); }
       to   { opacity: 0; transform: translate(-50%, -150px); }
     }
+    .kbd-hint { display: none; color: var(--hint); font-size: 12px; margin-top: 10px; }
+    @media (hover: hover) { .kbd-hint { display: block; } }
+    @media (prefers-reduced-motion: reduce) {
+      #fx { display: none; }
+      .halo, .ring, #coin.holo { animation: none; }
+    }
 
     .panel {
       width: 100%; max-width: 520px;
-      background: var(--card); border-radius: 18px 18px 0 0;
+      background: var(--sheet); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+      border-top: 1px solid var(--line); border-radius: 22px 22px 0 0;
       padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
-      display: flex; flex-direction: column; gap: 8px;
+      display: flex; flex-direction: column; gap: 10px;
       max-height: 46vh;
     }
-    .tabs { display: flex; gap: 4px; }
+    .tabs { display: flex; gap: 3px; padding: 3px; border-radius: 14px; background: var(--card); }
     .tab {
-      flex: 1 1 auto; padding: 9px 4px; border: none; border-radius: 10px; white-space: nowrap;
+      flex: 1 1 auto; min-width: 0; padding: 8px 2px; border: none; border-radius: 11px; white-space: nowrap;
       background: transparent; color: var(--hint); font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: background .15s, color .15s;
     }
-    .tab.active { background: var(--card); color: var(--text); }
+    .tab.active { background: var(--text); color: var(--bg); }
     .list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
+
     .item {
       display: flex; align-items: center; gap: 12px; width: 100%;
-      padding: 10px 12px; border: none; border-radius: 12px; text-align: left;
+      padding: 10px 12px; border: 1px solid transparent; border-radius: 16px; text-align: left;
       background: var(--card); color: var(--text); font: inherit; cursor: pointer;
+      transition: transform .1s ease-out;
     }
-    .item:disabled { opacity: .45; cursor: default; }
-    .item.equipped { outline: 2px solid var(--accent); }
-    .item.equipped:disabled { opacity: 1; }
+    .item:not(:disabled):active, .tile:not(:disabled):active { transform: scale(.975); }
+    .item:disabled, .tile:disabled { opacity: .5; cursor: default; }
+    .item.equipped, .item.maxed, .tile.equipped { opacity: 1; }
+    .item.equipped, .tile.equipped { border-color: var(--accent); background: rgba(255, 200, 61, .1); }
     .icon {
       width: 42px; height: 42px; border-radius: 13px; flex: none; color: #fff;
       display: flex; align-items: center; justify-content: center;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.4), inset 0 -3px 6px rgba(0,0,0,.18), 0 3px 8px rgba(0,0,0,.25);
     }
     .icon svg { width: 24px; height: 24px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
-    .cur { width: 15px; height: 15px; vertical-align: -2px; }
-    .skin-icon {
-      width: 40px; height: 40px; border-radius: 50%; flex: none;
-      display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px;
-    }
+    .cur { width: 15px; height: 15px; vertical-align: -2px; flex: none; }
     .info { flex: 1; min-width: 0; }
-    .name { font-weight: 700; font-size: 16px; }
-    .desc { color: var(--hint); font-size: 13px; }
-    .price { font-weight: 800; color: var(--accent); white-space: nowrap; font-size: 15px; }
-    .price.free { color: var(--hint); }
-    .item.maxed:disabled { opacity: .7; }
-    .card { background: var(--card); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-    .rb-row { display: flex; justify-content: space-between; font-size: 15px; }
+    .name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .lv { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--card-2); color: var(--hint); }
+    .desc { color: var(--hint); font-size: 13px; margin-top: 1px; }
+    .price {
+      display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+      padding: 6px 11px; border-radius: 999px; font-weight: 800; font-size: 14px;
+      color: var(--accent-ink); background: rgba(255, 200, 61, .16); box-shadow: inset 0 0 0 1px rgba(255, 200, 61, .5);
+    }
+    .item:disabled .price, .tile:disabled .price { background: var(--card-2); box-shadow: none; color: var(--hint); }
+    .item:not(:disabled) .price.free, .tile:not(:disabled) .price.free { background: var(--card-2); box-shadow: none; color: var(--text); }
+    .item.equipped .price, .tile.equipped .price { color: var(--accent-ink); }
+
+    /* skin shop: tiles grouped by rarity */
+    .section { display: flex; align-items: center; gap: 7px; color: var(--hint); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; padding: 6px 2px 0; }
+    .section .rar { width: 8px; height: 8px; border-radius: 50%; background: var(--rar); box-shadow: 0 0 8px var(--rar); }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .tile {
+      position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 12px 6px 8px; border: 1px solid transparent; border-radius: 16px;
+      background: var(--card); color: var(--text); font: inherit; cursor: pointer; text-align: center;
+      transition: transform .1s ease-out;
+    }
+    .tile::after { content: ""; position: absolute; top: 8px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--rar); box-shadow: 0 0 7px var(--rar); }
+    .skin-icon {
+      width: 50px; height: 50px; border-radius: 50%; flex: none; margin-bottom: 3px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-weight: 800; font-size: 22px;
+    }
+    .t-name { font-weight: 700; font-size: 13px; }
+    .t-bonus { color: var(--hint); font-size: 11px; margin-bottom: 4px; }
+    .tile .price { font-size: 12px; padding: 3px 9px; }
+
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .rb-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--hint); }
+    .rb-row b { font-family: var(--font-display); font-size: 16px; color: var(--text); }
     .rebirth-btn {
-      border: none; border-radius: 12px; padding: 12px; font: inherit; font-weight: 800; font-size: 16px; cursor: pointer;
-      color: #fff; background: linear-gradient(135deg, #8b5cf6, #ec4899);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 12px rgba(139,92,246,.4);
+      border: none; border-radius: 14px; padding: 13px; font: inherit; font-weight: 800; font-size: 15px; cursor: pointer;
+      color: #fff; background: linear-gradient(135deg, #7c5cff, #ff4f9a);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 14px rgba(255, 79, 154, .35);
     }
     .rebirth-btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
     .rebirth-btn.armed { background: linear-gradient(135deg, #ef4444, #f97316); }
-    .section { color: var(--hint); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; padding: 4px 2px 0; }
-    .kbd-hint { display: none; color: var(--hint); font-size: 12px; margin-top: 8px; }
-    @media (hover: hover) { .kbd-hint { display: block; } }
   </style>
 </head>
 <body>
@@ -152,13 +232,20 @@
       </button>
       <div class="label">Монеты</div>
       <div id="score">0</div>
-      <div class="stats">За клик: <b id="per-click">1</b> · В секунду: <b id="per-sec">0</b> · <span id="gem-icon"></span> <b id="gems">0</b></div>
+      <div class="stats">
+        <span class="chip"><span id="ic-click"></span><b id="per-click">1</b> за клик</span>
+        <span class="chip"><span id="ic-sec"></span><b id="per-sec">0</b> в секунду</span>
+        <span class="chip"><span id="gem-icon"></span><b id="gems">0</b></span>
+      </div>
     </div>
     <div class="coin-wrap">
       <div id="scene"></div>
       <div id="fx"></div>
       <div class="coin-holder">
-        <button id="coin" aria-label="Кликнуть по монетке"></button>
+        <div class="coin-stage" id="stage">
+          <div class="halo"></div><div class="ring"></div>
+          <button id="coin" aria-label="Кликнуть по монетке"></button>
+        </div>
         <div class="kbd-hint">или нажимай Пробел</div>
       </div>
     </div>
@@ -250,23 +337,46 @@
     ];
     const FX_SPEED = { firefly: 5, sand: 3, snow: 7, ember: 4, bubble: 5, star: 2.5 }; // base seconds per cycle
 
+    // r = rarity tier (index into RARITY). Ordered by price; bonus is added to the click before multipliers.
+    const RARITY = [
+      { n: "Обычные", c: "#9aa7ad" }, { n: "Редкие", c: "#4cc3ff" }, { n: "Эпические", c: "#b779ff" },
+      { n: "Легендарные", c: "#ffb02e" }, { n: "Мифические", c: "#ff5a8a" },
+    ];
     const SKINS = [
-      { id: "classic", name: "Классика", glyph: "$", bonus: 0,  cost: 0,
+      { id: "classic", name: "Классика", glyph: "$", bonus: 0, cost: 0, r: 0,
         c: ["#fff6a8", "#ffd23f", "#f0a500", "#b8740a"], rim: "#d99000", rim2: "#ffdf6b", glow: "255,190,0", ink: "#b06a00", hi: "#ffe98a" },
-      { id: "silver", name: "Серебро", glyph: "★", bonus: 1, cost: 200,
+      { id: "silver", name: "Серебро", glyph: "★", bonus: 1, cost: 200, r: 0,
         c: ["#ffffff", "#e3e8ee", "#a8b2bd", "#6b7480"], rim: "#8e99a5", rim2: "#f2f5f8", glow: "200,215,230", ink: "#5b6571", hi: "#ffffff" },
-      { id: "emerald", name: "Изумруд", glyph: "◆", bonus: 3, cost: 1000,
+      { id: "bronze", name: "Бронза", glyph: "✪", bonus: 2, cost: 500, r: 0,
+        c: ["#ffe0c2", "#e0955a", "#a85a24", "#5e2e0e"], rim: "#8a4616", rim2: "#f0b283", glow: "224,140,70", ink: "#4a2208", hi: "#ffe9d2" },
+      { id: "emerald", name: "Изумруд", glyph: "◆", bonus: 3, cost: 1000, r: 1,
         c: ["#b9ffd9", "#3ddc84", "#14a85a", "#0a6b38"], rim: "#0f8f4a", rim2: "#7cf0b0", glow: "40,220,130", ink: "#07502a", hi: "#c8ffe2" },
-      { id: "ruby", name: "Рубин", glyph: "♥", bonus: 10, cost: 5000,
+      { id: "pearl", name: "Жемчуг", glyph: "○", bonus: 5, cost: 2000, r: 1,
+        c: ["#ffffff", "#fdeef4", "#e3c9d6", "#a98a9b"], rim: "#b79aaa", rim2: "#ffffff", glow: "255,220,235", ink: "#8a6b7c", hi: "#ffffff" },
+      { id: "ruby", name: "Рубин", glyph: "♥", bonus: 10, cost: 5000, r: 1,
         c: ["#ffc0c8", "#ff4d63", "#cc1634", "#7d0a1f"], rim: "#b0122c", rim2: "#ff8a9a", glow: "255,60,90", ink: "#5e0616", hi: "#ffd0d6" },
-      { id: "diamond", name: "Алмаз", glyph: "♦", bonus: 30, cost: 25000,
+      { id: "sapphire", name: "Сапфир", glyph: "✧", bonus: 18, cost: 12000, r: 2,
+        c: ["#cfe0ff", "#4f83f0", "#1f46b8", "#0d1f66"], rim: "#17358f", rim2: "#7ea6ff", glow: "70,110,240", ink: "#0c1c66", hi: "#a9c4ff" },
+      { id: "diamond", name: "Алмаз", glyph: "♦", bonus: 30, cost: 25000, r: 2,
         c: ["#e8fbff", "#7fe3ff", "#2fa8e0", "#17679a"], rim: "#2590c4", rim2: "#b5f0ff", glow: "80,200,255", ink: "#0e4a73", hi: "#e8fbff" },
-      { id: "amethyst", name: "Аметист", glyph: "✦", bonus: 100, cost: 250000,
+      { id: "quartz", name: "Кварц", glyph: "❀", bonus: 50, cost: 60000, r: 2,
+        c: ["#ffe3f0", "#ff9cc7", "#e0559a", "#8a1f5c"], rim: "#b3317a", rim2: "#ffc2de", glow: "255,120,180", ink: "#6b123f", hi: "#ffe9f4" },
+      { id: "amethyst", name: "Аметист", glyph: "✦", bonus: 100, cost: 250000, r: 3,
         c: ["#f3e8ff", "#c084fc", "#9333ea", "#581c87"], rim: "#7e22ce", rim2: "#d8b4fe", glow: "168,85,247", ink: "#3b0764", hi: "#f3e8ff" },
-      { id: "magma", name: "Магма", glyph: "✹", bonus: 400, cost: 5e6,
+      { id: "platinum", name: "Платина", glyph: "⬢", bonus: 200, cost: 1e6, r: 3,
+        c: ["#eaffff", "#b8e6e6", "#5fa3a8", "#2a5c63"], rim: "#2f7078", rim2: "#c6f4f4", glow: "120,220,225", ink: "#1b4349", hi: "#f0ffff" },
+      { id: "magma", name: "Магма", glyph: "✹", bonus: 400, cost: 5e6, r: 3,
         c: ["#fff1c2", "#ff9d2e", "#e5420f", "#6b1405"], rim: "#b3300a", rim2: "#ffb35c", glow: "255,110,20", ink: "#4a0d02", hi: "#ffe0a3" },
-      { id: "galaxy", name: "Галактика", glyph: "☾", bonus: 1500, cost: 1e8,
+      { id: "neon", name: "Неон", glyph: "ϟ", bonus: 700, cost: 2e7, r: 3,
+        c: ["#1d2e2d", "#0f1d1c", "#08110f", "#030807"], rim: "#39ffb0", rim2: "#0a3d2e", glow: "57,255,176", ink: "#39ffb0", hi: "#004d33" },
+      { id: "galaxy", name: "Галактика", glyph: "☾", bonus: 1500, cost: 1e8, r: 4,
         c: ["#e0e7ff", "#818cf8", "#4338ca", "#1e1b4b"], rim: "#312e81", rim2: "#a5b4fc", glow: "99,102,241", ink: "#eef2ff", hi: "#1e1b4b" },
+      { id: "obsidian", name: "Обсидиан", glyph: "◈", bonus: 3000, cost: 5e8, r: 4,
+        c: ["#6d6780", "#3a3547", "#1d1a26", "#0a0810"], rim: "#8f88a6", rim2: "#2b2735", glow: "140,130,190", ink: "#d9d4ea", hi: "#0a0810" },
+      { id: "prism", name: "Призма", glyph: "✺", bonus: 8000, cost: 2e9, r: 4, fx: "holo",
+        c: ["#ffffff", "#ffd6f5", "#b6e7ff", "#c8b6ff"], rim: "#9a8ad8", rim2: "#ffffff", glow: "200,160,255", ink: "#5a4a8a", hi: "#ffffff" },
+      { id: "crown", name: "Корона", glyph: "♛", bonus: 20000, cost: 1e10, r: 4,
+        c: ["#ff9aa8", "#d81f4a", "#8f0c2c", "#3d0414"], rim: "#ffc93d", rim2: "#fff1b0", glow: "255,201,61", ink: "#ffd75a", hi: "#3d0414" },
     ];
 
     const scoreEl = document.getElementById("score");
@@ -274,6 +384,9 @@
     const perSecEl = document.getElementById("per-sec");
     const gemsEl = document.getElementById("gems");
     document.getElementById("gem-icon").innerHTML = GEM;
+    document.getElementById("ic-click").innerHTML = ICONS.power;
+    document.getElementById("ic-sec").innerHTML = ICONS.auto;
+    const stageEl = document.getElementById("stage");
     const coin = document.getElementById("coin");
     const listEl = document.getElementById("list");
     const tabs = document.querySelectorAll(".tab");
@@ -385,6 +498,8 @@
       coin.style.boxShadow = `0 0 0 10px ${s.rim} inset, 0 0 0 14px ${s.rim2} inset, 0 12px 40px rgba(${s.glow}, .35)`;
       coin.style.color = s.ink;
       coin.style.textShadow = `0 2px 0 ${s.hi}`;
+      stageEl.style.setProperty("--glow", s.glow);
+      coin.classList.toggle("holo", s.fx === "holo");
     }
 
     const worldGrad = (w) => `linear-gradient(135deg, ${w.grad[0]}, ${w.grad[1]})`;
@@ -452,26 +567,35 @@
       return { ...item, price: `${COIN} ${fmt(w.cost)}`, cost: w.cost };
     }
 
+    function skinTile(s) {
+      const owned = state.owned.includes(s.id);
+      const equipped = state.skin === s.id;
+      return `
+        <button class="tile${equipped ? " equipped" : ""}" data-act="skin:${s.id}" style="--rar:${RARITY[s.r].c}"
+                ${owned ? "" : `data-cost="${s.cost}" data-cur="coin"`} ${equipped ? "disabled" : ""}>
+          <span class="skin-icon" style="${skinIconStyle(s)}">${s.glyph}</span>
+          <span class="t-name">${s.name}</span>
+          <span class="t-bonus">${s.bonus ? `+${fmt(s.bonus)} к клику` : "Без бонуса"}</span>
+          <span class="price${owned ? " free" : ""}">${equipped ? "Надето" : owned ? "Надеть" : `${COIN} ${fmt(s.cost)}`}</span>
+        </button>`;
+    }
+
     function renderList() {
       rebirthArmed = false;
       clearTimeout(armTimer);
       if (tab === "upgrades") {
         listEl.innerHTML = UPGRADES.map((u) => itemHTML({
           act: `up:${u.id}`, lead: iconTile(u.id, u.grad),
-          name: `${u.name} · ур. ${state.lv[u.id]}`, desc: u.desc,
+          name: `${u.name} <span class="lv">ур. ${state.lv[u.id]}</span>`, desc: u.desc,
           price: `${COIN} ${fmt(upgradeCost(u))}`, cost: upgradeCost(u), cur: "coin",
         })).join("");
       } else if (tab === "skins") {
-        listEl.innerHTML = SKINS.map((s) => {
-          const owned = state.owned.includes(s.id);
-          const equipped = state.skin === s.id;
-          return itemHTML({
-            act: `skin:${s.id}`, cls: equipped ? "equipped" : "", disabled: equipped,
-            lead: `<span class="skin-icon" style="${skinIconStyle(s)}">${s.glyph}</span>`,
-            name: s.name, desc: s.bonus ? `+${s.bonus} к клику` : "Без бонуса",
-            price: equipped ? "Надето" : owned ? "Надеть" : `${COIN} ${fmt(s.cost)}`,
-            cost: owned ? null : s.cost, cur: "coin",
-          });
+        listEl.innerHTML = RARITY.map((r, i) => {
+          const group = SKINS.filter((x) => x.r === i);
+          return group.length
+            ? `<div class="section" style="--rar:${r.c}"><i class="rar"></i>${r.n}</div>
+               <div class="grid">${group.map(skinTile).join("")}</div>`
+            : "";
         }).join("");
       } else if (tab === "worlds") {
         listEl.innerHTML = WORLDS.map((w, i) => itemHTML(worldItem(w, i))).join("");
@@ -488,7 +612,7 @@
             const maxed = lvl >= (u.max || Infinity);
             return itemHTML({
               act: `perm:${u.id}`, cls: maxed ? "maxed" : "", disabled: maxed, lead: iconTile(u.id, u.grad),
-              name: `${u.name} · ур. ${lvl}`, desc: u.desc(lvl),
+              name: `${u.name} <span class="lv">ур. ${lvl}</span>`, desc: u.desc(lvl),
               price: maxed ? "МАКС" : `${GEM} ${fmt(permCost(u))}`,
               cost: maxed ? null : permCost(u), cur: "gem",
             });
@@ -526,6 +650,7 @@
 
     function renderStats() {
       scoreEl.textContent = fmt(state.score);
+      scoreEl.toggleAttribute("data-long", scoreEl.textContent.length > 9);
       perClickEl.textContent = fmt(perClick());
       perSecEl.textContent = fmt(perSec());
       gemsEl.textContent = fmt(state.gems);
@@ -674,6 +799,7 @@
 
     function setTab(name) {
       tab = name;
+      listEl.scrollTop = 0;
       tabs.forEach((x) => x.classList.toggle("active", x.dataset.tab === name));
       renderList();
     }
