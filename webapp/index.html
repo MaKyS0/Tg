@@ -1108,7 +1108,7 @@
         ["cloud", "Облако", "☁", 0, 205, 55, "blob", "pulse", 0], ["twinkle", "Искорка", "✦", 0, 48, 90, 0, "shine", "rays"] ] },
       1: { cost: [1200, 6500], bonus: [4, 11], list: [
         ["anchor", "Якорь", "⚓", 1, 210, 60, 0, 0, "waves"], ["hearts", "Червы", "♥", 1, 352, 75, "squircle", "pulse", 0],
-        ["diamonds", "Бубны", "♦", 1, 22, 85, "squircle", 0, "checker"], ["clubs", "Трефы", "♣", 1, 140, 55, "squircle", 0, "dots"],
+        ["diamonds", "Бубны", "♦", 1, 22, 85, "square", 0, "checker"], ["clubs", "Трефы", "♣", 1, 140, 55, "squircle", 0, "dots"],
         ["bolt", "Молния", "⚡", 1, 50, 90, 0, "glitch", "stripes"], ["jet", "Самолёт", "✈", 1, 198, 65, "leaf", 0, "grid"] ] },
       2: { cost: [15000, 220000], bonus: [20, 100], list: [
         ["moth", "Мотылёк", "❋", 2, 275, 65, "leaf", "holo", "rays"], ["gear", "Шестерня", "⚙", 2, 215, 18, 0, "spin", "grid"],
@@ -1141,7 +1141,7 @@
       2: [["thistle", "Чертополох", "❃", 2, 285, 50, "blob", 0, "dots"], ["fourleaf", "Счастье", "☘", 2, 125, 65, "leaf", "shine", 0],
           ["oyster", "Жемчужница", "❂", 2, 190, 40, "blob", "pulse", "waves"], ["beacon", "Маяк", "☀", 2, 45, 80, 0, "spin", "rays"], ["thorn", "Шип", "✶", 2, 350, 70, "squircle", 0, "stripes", 1]],
       3: [["wyvern", "Виверна", "♞", 3, 150, 70, "leaf", "flame", "swirl", 1], ["maelstrom", "Пучина", "❍", 3, 210, 80, "blob", "orbit", "waves", 1],
-          ["cinder", "Уголёк", "✹", 3, 15, 90, 0, "flame", "dots", 1], ["sphinx", "Сфинкс", "▣", 3, 42, 65, "squircle", "shine", "checker"], ["monsoon", "Муссон", "☂", 3, 195, 75, 0, "holo", "swirl"]],
+          ["cinder", "Уголёк", "✹", 3, 15, 90, 0, "flame", "dots", 1], ["sphinx", "Сфинкс", "▣", 3, 42, 65, "square", "shine", "checker"], ["monsoon", "Муссон", "☂", 3, 195, 75, 0, "holo", "swirl"]],
       4: [["nova", "Нова", "✺", 4, 55, 90, 0, ["pulse", "shine"], "rays"], ["lynx", "Рысь", "♘", 4, 28, 60, "leaf", ["shine", "orbit"], "stripes", 1],
           ["rime", "Иней", "❄", 4, 190, 80, "squircle", ["shine", "pulse"], "grid"], ["oracle", "Оракул", "☉", 4, 270, 70, 0, ["holo", "orbit"], "swirl", 1], ["tide", "Прилив", "≈", 4, 205, 85, "blob", ["pulse", "orbit"], "waves"]],
       5: [["empyrean", "Эмпирей", "☼", 5, 50, 70, 0, ["spin", "shine"], "rays"], ["cathedral", "Собор", "✠", 5, 215, 40, "squircle", ["pulse", "orbit"], "grid"],
@@ -1152,6 +1152,19 @@
     };
     for (const [t, l] of Object.entries(MORE_SKINS)) NEW_SKINS[t].list.push(...l);
     Object.assign(NEW_SKINS[7], { cost: [2.5e18, 4e20], bonus: [5e8, 9e9] });
+    // Tier 8 "incredible": twenty skins that cost far more than anything before (1e24 and up)
+    NEW_SKINS[8] = { cost: [1e24, 1.1e42], bonus: [2e10, 5e20], list: [
+      ["emperor", "Эфирный Император", "♔", 8, 275, 85, "squircle", ["pulse", "orbit", "shine"], "rays", 1], ["chronodrake", "Хроно-Дракон", "♞", 8, 160, 90, "leaf", ["flame", "orbit", "spin"], "swirl", 1],
+      ["leviathan", "Звёздный Левиафан", "❂", 8, 215, 90, "blob", ["holo", "orbit", "shine"], "waves", 1], ["worldtree", "Мировое Древо", "❃", 8, 130, 80, "blob", ["pulse", "shine", "orbit"], "rays", 1],
+      ["eyeofeternity", "Око Вечности", "◉", 8, 45, 95, 0, ["pulse", "spin", "shine"], "swirl", 1], ["creationcrown", "Корона Мироздания", "♚", 8, 50, 90, "squircle", ["holo", "shine", "orbit"], "checker", 1],
+      ["primordial", "Предвечный", "⁂", 8, 300, 70, 0, ["glitch", "orbit", "pulse"], "grid", 1], ["fatewheel", "Колесо Судьбы", "☸", 8, 20, 90, 0, ["spin", "shine", "pulse"], "rays", 1],
+      ["galaxyheart", "Сердце Галактики", "✺", 8, 330, 85, "blob", ["pulse", "orbit", "holo"], "swirl", 1], ["quantumphoenix", "Квантовый Феникс", "⚜", 8, 12, 95, "leaf", ["flame", "glitch", "orbit"], "rays", 1],
+      ["voidthrone", "Трон Пустоты", "♛", 8, 255, 60, "square", ["glitch", "pulse", "shine"], "checker", 1], ["godmeteor", "Метеор Богов", "☄", 8, 25, 90, "blob", ["flame", "orbit", "shine"], "dots", 1],
+      ["creatorface", "Лик Творца", "☉", 8, 55, 85, 0, ["pulse", "shine", "holo"], "rays", 1], ["zeropoint", "Нулевая Точка", "⊙", 8, 190, 95, 0, ["spin", "glitch", "orbit"], "grid", 1],
+      ["timealtar", "Алтарь Времён", "✠", 8, 35, 75, "squircle", ["pulse", "orbit", "spin"], "swirl", 1], ["multigate", "Врата Мультиверса", "◎", 8, 285, 90, 0, ["holo", "orbit", "spin"], "waves", 1],
+      ["beingseal", "Печать Бытия", "✹", 8, 150, 70, 0, ["spin", "shine", "orbit"], "rays", 1], ["universepulse", "Пульс Вселенной", "✵", 8, 340, 90, "blob", ["pulse", "holo", "orbit"], "swirl", 1],
+      ["skyforge", "Небесный Горн", "✸", 8, 18, 95, 0, ["flame", "pulse", "shine"], "dots", 1], ["lastdawn", "Последний Рассвет", "☼", 8, 48, 100, 0, ["pulse", "orbit", "shine", "holo"], "rays", 1],
+    ] };
     Object.assign(NEW_SKINS[6], { cost: [9e13, 3.2e15], bonus: [2e6, 9.2e6] });
     Object.assign(NEW_SKINS[5], { cost: [2.5e12, 2.8e13], bonus: [2e5, 8.2e5] });
     const OLD_SKINS = SKINS.slice();
@@ -1166,21 +1179,28 @@
       });
     }
     // Crystal tier: bought with gems (one more only comes from a promo code).
+    RARITY.push({ n: "Невероятные", c: "#ff3d71" });
     RARITY.push({ n: "Кристальные", c: "#7fe3ff" });
     [
-      ["topaz", "Топаз", "◈", 8, 38, 90, 0, "shine", "rays", 0, 12], ["beryl", "Берилл", "▣", 8, 150, 70, "squircle", "pulse", "checker", 0, 20],
-      ["opal", "Опал", "❖", 8, 200, 60, "blob", "holo", "swirl", 0, 30], ["garnet", "Гранат", "♦", 8, 350, 80, 0, "shine", "dots", 0, 45],
-      ["aquamarine", "Аквамарин", "❂", 8, 188, 80, "blob", ["pulse", "shine"], "waves", 0, 65], ["tourmaline", "Турмалин", "✥", 8, 320, 70, "leaf", "holo", "rays", 0, 90],
-      ["citrine", "Цитрин", "✸", 8, 46, 95, 0, ["spin", "shine"], "rays", 0, 130], ["tanzanite", "Танзанит", "❉", 8, 260, 70, 0, ["orbit", "pulse"], "swirl", 1, 180],
-      ["alexandrite", "Александрит", "✧", 8, 165, 60, "squircle", ["holo", "orbit"], "grid", 1, 250], ["morganite", "Морганит", "❁", 8, 340, 65, "blob", ["orbit", "shine"], "rays", 0, 350],
-      ["jadeite", "Жадеит", "◇", 8, 135, 75, 0, ["spin", "pulse", "shine"], "waves", 1, 500], ["labradorite", "Лабрадорит", "✪", 8, 215, 85, 0, ["holo", "orbit", "shine"], "swirl", 1, 750],
-      ["spinel", "Шпинель", "♥", 8, 355, 75, "squircle", "pulse", "dots", 0, 16], ["peridot", "Перидот", "❀", 8, 90, 70, "leaf", "shine", "waves", 0, 24],
-      ["rhodonite", "Родонит", "✦", 8, 340, 55, "blob", ["pulse", "shine"], "swirl", 0, 38], ["ametrine", "Аметрин", "❖", 8, 285, 75, 0, ["holo", "shine"], "rays", 0, 55],
-      ["heliodor", "Гелиодор", "☼", 8, 52, 90, 0, ["spin", "shine"], "rays", 0, 78], ["andalusite", "Андалузит", "◈", 8, 160, 70, "squircle", ["orbit", "holo"], "grid", 1, 110],
+      ["topaz", "Топаз", "◈", 9, 38, 90, 0, "shine", "rays", 0, 12], ["beryl", "Берилл", "▣", 9, 150, 70, "squircle", "pulse", "checker", 0, 20],
+      ["opal", "Опал", "❖", 9, 200, 60, "blob", "holo", "swirl", 0, 30], ["garnet", "Гранат", "♦", 9, 350, 80, 0, "shine", "dots", 0, 45],
+      ["aquamarine", "Аквамарин", "❂", 9, 188, 80, "blob", ["pulse", "shine"], "waves", 0, 65], ["tourmaline", "Турмалин", "✥", 9, 320, 70, "leaf", "holo", "rays", 0, 90],
+      ["citrine", "Цитрин", "✸", 9, 46, 95, 0, ["spin", "shine"], "rays", 0, 130], ["tanzanite", "Танзанит", "❉", 9, 260, 70, 0, ["orbit", "pulse"], "swirl", 1, 180],
+      ["alexandrite", "Александрит", "✧", 9, 165, 60, "squircle", ["holo", "orbit"], "grid", 1, 250], ["morganite", "Морганит", "❁", 9, 340, 65, "blob", ["orbit", "shine"], "rays", 0, 350],
+      ["jadeite", "Жадеит", "◇", 9, 135, 75, 0, ["spin", "pulse", "shine"], "waves", 1, 500], ["labradorite", "Лабрадорит", "✪", 9, 215, 85, 0, ["holo", "orbit", "shine"], "swirl", 1, 750],
+      ["spinel", "Шпинель", "♥", 9, 355, 75, "squircle", "pulse", "dots", 0, 16], ["peridot", "Перидот", "❀", 9, 90, 70, "leaf", "shine", "waves", 0, 24],
+      ["rhodonite", "Родонит", "✦", 9, 340, 55, "blob", ["pulse", "shine"], "swirl", 0, 38], ["ametrine", "Аметрин", "❖", 9, 285, 75, 0, ["holo", "shine"], "rays", 0, 55],
+      ["heliodor", "Гелиодор", "☼", 9, 52, 90, 0, ["spin", "shine"], "rays", 0, 78], ["andalusite", "Андалузит", "◈", 9, 160, 70, "squircle", ["orbit", "holo"], "grid", 1, 110],
     ].forEach((sp, i) => {
       SKINS.push({ ...makeSkin(sp.slice(0, 10), round2(1e4 * Math.pow(sp[10] / 12, 2.8)), { cost: sp[10] }), gem: sp[10] });
     });
-    SKINS.push({ ...makeSkin(["gift", "Подарок", "🎁", 8, 350, 75, "squircle", ["pulse", "shine"], "dots", 0], 50000, { cost: 1 }), promo: "TGCLICK" });
+    SKINS.push({ ...makeSkin(["gift", "Подарок", "🎁", 9, 350, 75, "squircle", ["pulse", "shine"], "dots", 0], 50000, { cost: 1 }), promo: "TGCLICK" });
+
+    // Half of the coin skins whose income bonus was only a small step above the previous one were removed (kept: the bigger jumps).
+    // SKIN_ORDER_V1 is the skin order of the saves made before that, which store owned skins as a bitmask.
+    const SKIN_ORDER_V1 = SKINS.filter((x) => x.r !== 8).map((x) => x.id);
+    const REMOVED_SKINS = new Set(["shell", "silver", "cloud", "cookie", "acorn", "bronze", "bell", "button", "pixel", "emerald", "hearts", "pearl", "clubs", "melon", "jet", "umbrella", "lantern", "compass", "leaf", "daisy", "clock", "kite", "lagoon", "coral", "shield", "moonlit", "thistle", "fourleaf", "oyster", "amethyst", "pirate", "blade", "matrix", "magma", "glitch", "comet", "neon", "rainbow", "moonlight", "apogee", "ether", "cathedral", "blazar", "wormhole", "beacon", "gear", "nova", "platinum", "blizzard", "saturn", "knight", "chess", "mask", "note", "ruby", "moth", "quartz", "obsidian", "spade", "mirror", "snowman", "donut", "chameleon", "empyrean", "snow", "clover"]);
+    for (let i = SKINS.length - 1; i >= 0; i--) if (REMOVED_SKINS.has(SKINS[i].id)) SKINS.splice(i, 1);
 
     // ---- worlds 22..61 ----
     const NEW_ICONS = {
@@ -1349,8 +1369,12 @@
       ROBOT: { avatar: 18, text: "аватарку 🤖" },
     };
 
-    const SEASON = 2, VERSION = "2.1";
+    const SEASON = 2, VERSION = "2.2";
     const CHANGELOG = [
+      { v: "2.2", t: "Сложные боссы и невероятные скины", items: [
+        "Боссы в 5 раз сложнее: 200 ударов вместо 40 (растёт до 700), на бой 30 секунд, награда втрое больше. Навык «Ускорение» тоже бьёт босса",
+        "Убрана половина скинов, у которых бонус к клику лишь немного отличался от предыдущего. Надетый удалённый скин заменяется на классический",
+        "Новая редкость «Невероятные»: 20 скинов за монеты, от 1 септиллиона до 1e42" ] },
       { v: "2.1", t: "Боссы и больше контента", items: [
         "Боссы: время от времени появляется босс, успей отбить его кликами за 12 секунд",
         "Точный удар: когда кольцо сжимается вокруг монеты, нажми в нужный момент",
@@ -1704,7 +1728,7 @@
           next.earned = Math.max(clean(s.earned), next.score);
           for (const u of UPGRADES) next.lv[u.id] = Math.min(u.max || Infinity, whole(s.lv && s.lv[u.id]));
           for (const u of PERMS) next.perm[u.id] = Math.min(u.max || Infinity, whole(s.perm && s.perm[u.id]));
-          const owned = idsOf(s.owned, SKINS).filter((id) => SKINS.some((x) => x.id === id));
+          const owned = (typeof s.owned === "string" && s.sk !== 2 ? unpackSet(SKIN_ORDER_V1.map((id) => ({ id })), s.owned) : idsOf(s.owned, SKINS)).filter((id) => SKINS.some((x) => x.id === id));
           next.owned = Array.from(new Set(["classic", ...owned]));
           next.skin = next.owned.includes(s.skin) ? s.skin : "classic";
           const worlds = idsOf(s.worlds, WORLDS).filter((id) => WORLDS.some((x) => x.id === id));
@@ -1770,7 +1794,7 @@
     function writeNow() {
       if (saveBlocked) return;
       state.lastSeen = Date.now();
-      const json = JSON.stringify({ ...state, owned: packSet(SKINS, state.owned), worlds: packSet(WORLDS, state.worlds), claimed: packSet(ACHS, state.claimed) });
+      const json = JSON.stringify({ ...state, sk: 2, owned: packSet(SKINS, state.owned), worlds: packSet(WORLDS, state.worlds), claimed: packSet(ACHS, state.claimed) });
       if (cloud) cloud.setItem(STORAGE_KEY, json, () => {});
       try { localStorage.setItem(STORAGE_KEY, json); } catch {} // a local mirror next to the cloud copy
     }
@@ -2783,11 +2807,11 @@
     }
 
     // ---- boss: now and then a boss shows up; hit the coin enough times within 12 seconds to beat it ----
-    const BOSS_MS = 12000, BOSS_WAIT = 25000;
+    const BOSS_MS = 30000, BOSS_WAIT = 25000;
     let boss = null, nextBoss = Date.now() + 150000 + Math.random() * 120000;
     const bossEl = document.getElementById("boss-chip");
-    const bossNeed = () => 40 + 4 * Math.min(state.bosses, 25);
-    const bossReward = () => Math.round(Math.max(perSec() * 1200, perClick() * 250, 3000) * (1 + 0.1 * Math.min(state.bosses, 30)));
+    const bossNeed = () => 200 + 20 * Math.min(state.bosses, 25);
+    const bossReward = () => Math.round(Math.max(perSec() * 3600, perClick() * 750, 9000) * (1 + 0.1 * Math.min(state.bosses, 30)));
     function endBoss(msg, wait) {
       boss = null;
       nextBoss = Date.now() + wait;
@@ -2818,7 +2842,7 @@
       renderBoss();
     }
     function winBoss() {
-      const coins = bossReward(), gems = 1 + (state.bosses % 5 === 4 ? 2 : 0);
+      const coins = bossReward(), gems = 2 + (state.bosses % 5 === 4 ? 3 : 0);
       addCoins(coins);
       state.gems += gems;
       state.bosses += 1;
@@ -3099,7 +3123,10 @@
       ensureQuests();
       const gain = perSec();
       if (gain) { addCoins(gain); save(); }
-      if (Date.now() < state.haste) { addCoins(perClick() * 10); save(); }
+      if (Date.now() < state.haste) {
+        addCoins(perClick() * 10); save();
+        if (boss && boss.phase === "fight") { boss.hits += 10; if (boss.hits >= boss.need) winBoss(); } // Haste's autoclicks hit the boss too
+      }
       if (autoBuy() && tab === "upgrades" && !pressing) keepScroll(renderList);
       if (!goldenEl && !document.hidden && Date.now() >= nextGolden) {
         spawnGolden();
