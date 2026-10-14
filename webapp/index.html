@@ -2295,7 +2295,7 @@
       const equipped = state.skin === s.id;
       const trophyReady = !!s.trophy && state.bosses >= s.trophy, passReady = !!s.pass && passLevel() >= s.pass;
       const locked = !owned && (s.promo || (s.trophy && !trophyReady) || (s.pass && !passReady));
-      const price = equipped ? "Надето" : owned ? "Надеть" : s.promo ? "Промокод" : s.pass ? (passReady ? "Забрать" : `Пропуск ${passLevel()}/${s.pass}`) : s.trophy ? (trophyReady ? "Забрать" : `Боссы ${state.bosses}/${s.trophy}`) : s.gem ? `${GEM} ${s.gem}` : `${COIN} ${s.cost >= 1e6 ? short(s.cost) : fmt(s.cost)}`;
+      const price = equipped ? "Надето" : owned ? "Надеть" : s.promo ? "Промокод" : s.pass ? (passReady ? "Забрать" : `Ур. ${passLevel()}/${s.pass}`) : s.trophy ? (trophyReady ? "Забрать" : `Боссы ${state.bosses}/${s.trophy}`) : s.gem ? `${GEM} ${s.gem}` : `${COIN} ${s.cost >= 1e6 ? short(s.cost) : fmt(s.cost)}`;
       return `
         <button class="tile${equipped ? " equipped" : ""}" data-act="skin:${s.id}" style="--rar:${RARITY[s.r].c}"
                 ${owned || locked || s.trophy || s.pass ? "" : `data-cost="${s.gem || s.cost}" data-cur="${s.gem ? "gem" : "coin"}"`} ${equipped || locked ? "disabled" : ""}>
@@ -2796,7 +2796,6 @@
     const claimable = () => [
       ...(dailyInfo().claimable ? ["daily"] : []),
       ...(Array.from({ length: passLevel() }, (_, i) => i + 1).some((l) => !passHas(l)) ? ["pass"] : []),
-      ...(cupsLeft() > 0 ? ["cups"] : []),
       ...(TALENTS.some((t) => (state.talents[t.id] || 0) < TALENT_MAX && TALENT_COST[state.talents[t.id] || 0] <= talentPoints()) ? ["tal"] : []),
       ...(state.wheel !== dayKey() ? ["wheel"] : []),
       ...(state.chest <= Date.now() ? ["chest"] : []),
