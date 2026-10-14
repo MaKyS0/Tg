@@ -502,8 +502,8 @@
     .fx-orb i { width: calc(var(--s) * 4); height: calc(var(--s) * 4); border-radius: 50%; background: radial-gradient(circle, rgba(240, 171, 252, .7), transparent 70%); animation: hover var(--d) ease-in-out var(--dl) infinite; }
     .fx-shard i { rotate: 45deg; width: calc(var(--s) * 1.4); height: calc(var(--s) * 3); border-radius: 2px; background: linear-gradient(#fde68a, #a855f7); box-shadow: 0 0 8px #c084fc; animation: fall var(--d) linear var(--dl) infinite, twinkle 2s ease-in-out infinite; }
 
-    .qrow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
-    .qrow .qbtn { font-size: 10px; padding: 9px 1px 7px; white-space: nowrap; }
+    .qrow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .qrow .qbtn { font-size: 10.5px; padding: 9px 1px 7px; white-space: nowrap; }
     .qrow .qi { width: 34px; height: 34px; }
     .qbtn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: 16px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: transform .15s, background .15s; }
     .qbtn:active { transform: scale(.96); }
@@ -566,6 +566,29 @@
     .talrow button { flex: none; padding: 8px 12px; border: none; border-radius: 12px; background: var(--accent); color: #2b1d00; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
     .talrow button:disabled { background: var(--card-2); color: var(--hint); cursor: default; }
     .mok:disabled { background: var(--card-2); color: var(--hint); }
+    .coin-stage.formed { filter: drop-shadow(0 6px 18px rgba(var(--glow), .5)); }
+    .formgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; margin-top: 12px; }
+    .formbtn { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 2px 8px; border-radius: 14px; border: 2px solid transparent; background: var(--card); color: var(--text); font: inherit; font-size: 10px; cursor: pointer; }
+    .formbtn b { font-size: 11px; }
+    .formbtn.sel { border-color: var(--accent); background: rgba(255, 200, 61, .12); }
+    .formbtn.lock .fp { filter: grayscale(1) brightness(.55); }
+    .formbtn.lock { color: var(--hint); }
+    .formbtn:active { transform: scale(.95); }
+    .formbtn .fp svg { width: 40px; height: 40px; display: block; }
+    .passlist { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+    .prow { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--card); font-size: 12px; }
+    .prow b { flex: none; width: 28px; text-align: center; font-family: var(--font-display); font-size: 14px; color: var(--accent-ink); }
+    .prow span { flex: 1; min-width: 0; color: var(--hint); }
+    .prow.lock { opacity: .55; }
+    .prow.got { opacity: .7; }
+    .prow button { flex: none; padding: 7px 12px; border: none; border-radius: 10px; background: var(--accent); color: #2b1d00; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+    .prow button:disabled { background: var(--card-2); color: var(--hint); cursor: default; }
+    .jars { display: flex; justify-content: center; gap: 14px; margin: 14px 0 6px; }
+    .jar { width: 84px; height: 96px; border-radius: 22px; border: 1px solid var(--line); background: var(--card); font-size: 48px; cursor: pointer; transition: transform .15s, opacity .2s; }
+    .jar:not(:disabled):active { transform: scale(.92); }
+    .jar.open { background: rgba(61, 220, 151, .16); border-color: var(--good); transform: scale(1.06); }
+    .jar.dim { opacity: .35; }
+    .jar:disabled:not(.open):not(.dim) { opacity: .5; }
     .clog { margin-bottom: 16px; }
     .clog h4 { margin: 0 0 6px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
     .clog h4 b { padding: 2px 8px; border-radius: 8px; background: var(--accent); color: #2b1d00; font-size: 12px; }
@@ -765,7 +788,8 @@
     ICONS.skillcd = ICONS.auto;
     ICONS.surge = ICONS.bolt;
     ICONS.haste = ICONS.power;
-    const COIN = '<svg class="cur" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ffd23f" stroke="#d99000" stroke-width="1.4"/><circle cx="8" cy="8" r="3.6" fill="none" stroke="#d99000" stroke-width="1.2"/></svg>';
+    let COIN = '<svg class="cur" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ffd23f" stroke="#d99000" stroke-width="1.4"/><circle cx="8" cy="8" r="3.6" fill="none" stroke="#d99000" stroke-width="1.2"/></svg>';
+    const COIN0 = COIN;
     const GEM = '<svg class="cur" viewBox="0 0 16 16"><path d="M4 2h8l3 4-7 8-7-8z" fill="#7fe3ff" stroke="#2590c4" stroke-width="1.2" stroke-linejoin="round"/><path d="M1 6h14M6 2L5 6l3 8 3-8-1-4" fill="none" stroke="#2590c4" stroke-width="1"/></svg>';
 
     // Coin upgrades are reset by a rebirth (a share of the levels is kept). `inc` = base income per second per level.
@@ -1251,6 +1275,52 @@
       });
     }
 
+    // Pattern tier: 60 cosmetic skins (pattern x colour), priced 800 coins up to 1e80.
+    RARITY.push({ n: "Узорные", c: "#a78bfa" });
+    {
+      const pats = [["Горошек", "dots"], ["Полоски", "stripes"], ["Клетка", "checker"], ["Ромбы", "grid"], ["Лучи", "rays"], ["Волны", "waves"], ["Спираль", "swirl"], ["Крапинки", "dots"], ["Сетка", "grid"], ["Рябь", "waves"]];
+      const cols = [["алый", 355], ["лазурный", 205], ["изумрудный", 150], ["золотой", 45], ["аметистовый", 275], ["бирюзовый", 175]];
+      const shapes = [0, "squircle", "blob", "leaf", "square"], fxs = [0, "shine", "pulse", ["shine", "pulse"], "holo"], gl = ["◈", "✦", "❖", "✧", "❂", "✺"];
+      let i = 0;
+      for (const [pn, pat] of pats) for (const [cn, h] of cols) {
+        SKINS.push(makeSkin(["pat" + (i + 1), `${pn} · ${cn}`, gl[i % 6], 12, h, 65 + (i * 7) % 25, shapes[(i + 2) % 5], fxs[(i * 3 + 1) % 5], pat, i % 9 === 8 ? 1 : 0], 0, { cost: round2(800 * Math.pow(1e80 / 800, i / 59)) }));
+        i++;
+      }
+    }
+    // Pass tier: six skins that the battle pass hands out at levels 10, 20, ... 60 (free once the level is reached).
+    RARITY.push({ n: "Пропускные", c: "#34d399" });
+    [
+      ["passbronze", "Бронзовый пропуск", "★", 13, 28, 70, "squircle", "shine", "stripes", 0, 10, 2e4], ["passsilver", "Серебряный пропуск", "★", 13, 210, 15, "squircle", "shine", "grid", 0, 20, 2e5],
+      ["passgold", "Золотой пропуск", "★", 13, 46, 90, "squircle", ["shine", "pulse"], "rays", 0, 30, 2e6], ["passplat", "Платиновый пропуск", "★", 13, 185, 40, "squircle", ["shine", "orbit"], "swirl", 1, 40, 2e7],
+      ["passdiamond", "Алмазный пропуск", "★", 13, 195, 85, "squircle", ["holo", "orbit", "shine"], "checker", 1, 50, 2e8], ["passchamp", "Чемпионский пропуск", "★", 13, 300, 90, "squircle", ["holo", "orbit", "pulse", "shine"], "rays", 1, 60, 2e9],
+    ].forEach((sp) => { SKINS.push({ ...makeSkin(sp.slice(0, 10), sp[11], { cost: sp[10] }), pass: sp[10] }); });
+
+    // ---- forms of the clicked object (the coin can become a star, a heart, a gear...) ----
+    const polyPts = (pts) => pts.map(([x, y]) => `${(50 + 50 * x).toFixed(1)}% ${(50 + 50 * y).toFixed(1)}%`).join(", ");
+    const radial = (n, f, off = 0) => Array.from({ length: n }, (_, i) => { const a = (i / n) * Math.PI * 2 - Math.PI / 2 + off, r = f(a, i); return [Math.cos(a) * r, Math.sin(a) * r]; });
+    const curve = (n, f) => Array.from({ length: n }, (_, i) => f((i / n) * Math.PI * 2));
+    const fit = (pts) => { // scale and centre a curve so that it fills the box exactly
+      const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+      const k = Math.max(x1 - x0, y1 - y0) / 2, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      return pts.map(([x, y]) => [(x - cx) / k, (y - cy) / k]);
+    };
+    const gearPts = (() => { const k = 10, st = Math.PI * 2 / k, out = []; for (let t = 0; t < k; t++) [[0, 0.8], [0.1, 1], [0.4, 1], [0.5, 0.8]].forEach(([d, r]) => { const a = (t + d) * st - Math.PI / 2; out.push([Math.cos(a) * r, Math.sin(a) * r]); }); return out; })();
+    const FORMS = [
+      ["coin", "Монета", "free", 0, null], ["cookie", "Печенье", "free", 0, radial(72, (a) => 0.95 + 0.035 * Math.sin(a * 11) + 0.02 * Math.sin(a * 7))],
+      ["hex", "Соты", "free", 0, radial(6, () => 1)], ["egg", "Яйцо", "lg", 1, fit(curve(72, (t) => [0.8 * Math.sin(t) * (1 - 0.14 * Math.cos(t)), -0.98 * Math.cos(t)]))],
+      ["diamond", "Ромб", "rb", 1, [[0, -1], [0.72, 0], [0, 1], [-0.72, 0]]], ["star", "Звезда", "rb", 2, radial(10, (a, i) => (i % 2 ? 0.45 : 1))],
+      ["gem", "Самоцвет", "rb", 3, [[-0.5, -0.85], [0.5, -0.85], [0.95, -0.3], [0, 1], [-0.95, -0.3]]],
+      ["gear", "Шестерня", "lg", 3, gearPts], ["heart", "Сердце", "rb", 4, fit(curve(64, (t) => [16 * Math.pow(Math.sin(t), 3), -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))]))],
+      ["drop", "Капля", "lg", 5, fit(curve(64, (t) => [1.2 * Math.sin(t) * Math.sin(t / 2), -Math.cos(t)]))], ["flower", "Цветок", "rb", 6, radial(120, (a) => 0.74 + 0.26 * Math.cos(a * 6))],
+      ["clover", "Клевер", "rb", 8, radial(120, (a) => 0.7 + 0.3 * Math.cos(a * 4))], ["octagon", "Восьмиугольник", "lg", 10, radial(8, () => 1, Math.PI / 8)],
+      ["shield", "Щит", "rb", 10, [[-0.85, -0.9], [0.85, -0.9], [0.85, 0.1], [0.55, 0.62], [0, 1], [-0.55, 0.62], [-0.85, 0.1]]], ["triangle", "Пирамида", "lg", 20, [[0, -1], [0.95, 0.8], [-0.95, 0.8]]],
+      ["spark", "Искра", "gem", 20, radial(8, (a, i) => (i % 2 ? 0.28 : 1))], ["sun", "Солнце", "gem", 35, radial(32, (a, i) => (i % 2 ? 0.74 : 1))],
+      ["cross", "Крест", "lg", 40, [[-0.3, -1], [0.3, -1], [0.3, -0.3], [1, -0.3], [1, 0.3], [0.3, 0.3], [0.3, 1], [-0.3, 1], [-0.3, 0.3], [-1, 0.3], [-1, -0.3], [-0.3, -0.3]]],
+      ["bolt", "Молния", "gem", 50, [[0.15, -1], [-0.75, 0.15], [-0.1, 0.15], [-0.3, 1], [0.75, -0.25], [0.1, -0.25], [0.5, -1]]],
+      ["crown", "Корона", "gem", 80, [[-0.95, 0.8], [-0.95, -0.5], [-0.5, 0], [0, -0.9], [0.5, 0], [0.95, -0.5], [0.95, 0.8]]],
+    ].map(([id, name, kind, n, pts]) => ({ id, name, kind, n, pts }));
+    const formSvg = (pts, cls) => `<svg ${cls ? `class="${cls}" ` : ""}viewBox="0 0 100 100"><polygon points="${pts.map(([x, y]) => `${(50 + 48 * x).toFixed(1)},${(50 + 48 * y).toFixed(1)}`).join(" ")}" fill="#ffd23f" stroke="#d99000" stroke-width="6" stroke-linejoin="round"/></svg>`;
+
     // ---- worlds 22..61 ----
     const NEW_ICONS = {
       pyramid: '<path d="M12 3L2.5 20h19z" fill="currentColor" fill-opacity=".3"/><path d="M12 3v17"/>',
@@ -1437,7 +1507,18 @@
         ["Сияющий проспект", "city", 300], ["Затерянный храм", "ruins", 50], ["Забытая крепость", "ruins", 30], ["Древний акведук", "ruins", 40], ["Руины богов", "ruins", 45],
         ["Облачный замок", "sky", 200], ["Грозовая гряда", "sky", 240], ["Закатное небо", "sky", 20], ["Радужные облака", "sky", 320], ["Леденцовые горы", "candy", 330],
         ["Зефирные облака", "candy", 340], ["Мармеладное море", "candy", 310], ["Тёмный разлом", "void", 265], ["Пустота", "void", 255], ["Конец времён", "void", 275],
-        ["Сад камней", "garden", 100], ["Цветущий луг", "garden", 80]].forEach(([name, theme, h], j) => {
+        ["Сад камней", "garden", 100], ["Цветущий луг", "garden", 80],
+        ["Эльфийская чаща", "forest", 145], ["Грибная роща", "forest", 20], ["Туманная чаща", "forest", 160], ["Лунный бор", "forest", 230], ["Златолесье", "forest", 50], ["Зелёный каньон", "forest", 130],
+        ["Ореховая долина", "forest", 35], ["Хвойный склон", "forest", 155], ["Караванный путь", "desert", 38], ["Песчаный храм", "desert", 42], ["Раскалённая долина", "desert", 12],
+        ["Дюны эха", "desert", 48], ["Красная пустошь", "desert", 8], ["Оазис пальм", "desert", 165], ["Ледяной собор", "ice", 195], ["Белая тундра", "ice", 210], ["Стеклянные горы", "ice", 185],
+        ["Снежный перевал", "ice", 200], ["Полярная ночь", "ice", 235], ["Ледниковая бухта", "ice", 190], ["Хрустальная вьюга", "ice", 205], ["Подводный сад", "sea", 170], ["Рыбацкая гавань", "sea", 200],
+        ["Морской маяк", "sea", 215], ["Остров сокровищ", "sea", 45], ["Пиратская бухта", "sea", 355], ["Тихая гавань", "sea", 190], ["Глубоководный храм", "sea", 225], ["Орбита Юпитера", "space", 25],
+        ["Кольцо астероидов", "space", 35], ["Звёздная колыбель", "space", 290], ["Квазарная буря", "space", 270], ["Космическая верфь", "space", 215], ["Станция Омега", "space", 200],
+        ["Тёмная сторона луны", "space", 250], ["Лавовый каньон", "fire", 10], ["Угольная шахта", "fire", 15], ["Вулкан духов", "fire", 320], ["Жаровня богов", "fire", 25], ["Огненные пески", "fire", 30],
+        ["Хрустальный грот", "magic", 185], ["Сад фей", "magic", 300], ["Башня звёзд", "magic", 255], ["Лес светлячков", "magic", 100], ["Чародейская долина", "magic", 280], ["Неоновая гавань", "city", 285],
+        ["Подземный город", "city", 30], ["Кварталы теней", "city", 260], ["Золотый город", "city", 48], ["Склеп королей", "ruins", 270], ["Храм забытых", "ruins", 40], ["Каменный круг", "ruins", 120],
+        ["Небесная гавань", "sky", 205], ["Золотые облака", "sky", 45], ["Шоколадный водопад", "candy", 25], ["Пряничные горы", "candy", 30], ["Эхо пустоты", "void", 270], ["Грань бытия", "void", 285],
+        ["Райский сад", "garden", 120], ["Лавандовый холм", "garden", 275]].forEach(([name, theme, h], j) => {
         const k = 90 + j, [icon, fx, kind, sun] = T[theme], id = "w" + (k + 1);
         const sc = scenery(kind, k + 1, "");
         ICONS[id] = ICONS[icon];
@@ -1465,6 +1546,16 @@
       ["👽", ["#bbf7d0", "#047857"], "gem", 15], ["🧛", ["#fecaca", "#7f1d1d"], "gem", 25], ["🧞", ["#a5f3fc", "#4338ca"], "gem", 40], ["🐉", ["#fde047", "#b91c1c"], "gem", 70],
       ["🌙", ["#e0e7ff", "#4338ca"], "lg", 5], ["🔮", ["#e9d5ff", "#6b21a8"], "lg", 30], ["🪄", ["#fef9c3", "#7c3aed"], "lg", 40], ["🎖️", ["#fde68a", "#a16207"], "lg", 60], ["🌈", ["#fda4af", "#4f46e5"], "lg", 110],
       ["☀️", ["#fef08a", "#ea580c"], "rb", 4], ["⭐", ["#fde047", "#ca8a04"], "rb", 6], ["💫", ["#bfdbfe", "#7c3aed"], "rb", 10], ["🌟", ["#fef9c3", "#d97706"], "rb", 14], ["🌍", ["#86efac", "#0369a1"], "rb", 18],
+      ["😀", ["#fde68a", "#f59e0b"]], ["😁", ["#fcd34d", "#d97706"]], ["😅", ["#fde68a", "#ea580c"]], ["😆", ["#fef08a", "#ca8a04"]], ["😉", ["#fbcfe8", "#be185d"]],
+      ["😋", ["#fecaca", "#dc2626"]], ["😌", ["#e0e7ff", "#6366f1"]], ["😍", ["#fda4af", "#be123c"]], ["😘", ["#fbcfe8", "#db2777"]], ["😜", ["#bbf7d0", "#16a34a"]],
+      ["🎃", ["#fdba74", "#c2410c"], "gem", 15], ["👻", ["#e5e7eb", "#6b7280"], "gem", 20], ["💀", ["#d1d5db", "#374151"], "gem", 25], ["🤡", ["#fda4af", "#1d4ed8"], "gem", 30],
+      ["🦸", ["#93c5fd", "#b91c1c"], "gem", 45], ["🦹", ["#c4b5fd", "#1e1b4b"], "gem", 55], ["🧚", ["#f5d0fe", "#a21caf"], "gem", 65], ["🧜", ["#a5f3fc", "#0e7490"], "gem", 80],
+      ["🏅", ["#fde68a", "#b45309"], "lg", 6], ["🎯", ["#fecaca", "#b91c1c"], "lg", 12], ["🎲", ["#e5e7eb", "#4b5563"], "lg", 18], ["🎭", ["#fde68a", "#9333ea"], "lg", 22],
+      ["🎨", ["#fbcfe8", "#2563eb"], "lg", 35], ["🎤", ["#fda4af", "#4338ca"], "lg", 45], ["🎸", ["#fdba74", "#7c2d12"], "lg", 55], ["🎺", ["#fde047", "#a16207"], "lg", 65],
+      ["🏆", ["#fef08a", "#ca8a04"], "lg", 80], ["💍", ["#e0f2fe", "#7c3aed"], "lg", 90], ["📿", ["#fecaca", "#7f1d1d"], "lg", 105], ["🔱", ["#a5f3fc", "#1e3a8a"], "lg", 120],
+      ["🌴", ["#bbf7d0", "#15803d"], "rb", 7], ["⛄", ["#e0f2fe", "#0369a1"], "rb", 9], ["🌋", ["#fdba74", "#7f1d1d"], "rb", 11], ["⛰️", ["#d1d5db", "#4b5563"], "rb", 12],
+      ["🗻", ["#e0e7ff", "#6366f1"], "rb", 13], ["🍁", ["#fdba74", "#b91c1c"], "rb", 15], ["🌊", ["#a5f3fc", "#0e7490"], "rb", 16], ["🌸", ["#fbcfe8", "#be185d"], "rb", 17],
+      ["🍄", ["#fecaca", "#b91c1c"], "rb", 19], ["🌻", ["#fde047", "#ca8a04"], "rb", 22],
     ].map(([e, g, kind, n]) => ({ e, g, kind: kind || "free", n: n || 0 }));
 
     // ---- promo codes: each works once per player ----
@@ -1482,6 +1573,12 @@
       WORLD: { coins: 120, text: "монеты за два часа игры" },
       SEA: { gems: 10, text: "10 кристаллов" }, OCEAN: { coins: 240, text: "монеты за четыре часа игры" }, MEGA: { gems: 20, text: "20 кристаллов" },
       PET2: { pet: true, text: "случайного питомца" }, SKY: { turbo: 600000, text: "Турбо ×3 на 10 минут" }, GOLD: { coins: 360, text: "монеты за шесть часов игры" },
+      BIGBANG: { xp: 2000, text: "2000 опыта пропуска" }, PASS: { xp: 5000, text: "5000 опыта пропуска" }, XPBOOST: { xp: 1000, text: "1000 опыта пропуска" },
+      FORM: { gems: 7, text: "7 кристаллов" }, CONCEPT: { coins: 90, text: "монеты за полтора часа игры" }, SHAPE: { gems: 5, text: "5 кристаллов" }, LUCKY: { gems: 9, text: "9 кристаллов" },
+      JACKPOT: { gems: 25, text: "25 кристаллов" }, ZOO2: { pet: true, text: "случайного питомца" }, ZOO3: { pet: true, text: "случайного питомца" }, TURBO2: { turbo: 900000, text: "Турбо ×3 на 15 минут" },
+      MINE: { coins: 200, text: "монеты за три часа игры" }, FARM: { coins: 150, text: "монеты за два с половиной часа игры" }, BANK: { coins: 300, text: "монеты за пять часов игры" },
+      EGG: { pet: true, text: "случайного питомца" }, DRAGON: { pet: true, text: "случайного питомца" }, HERO: { gems: 14, text: "14 кристаллов" }, CHAMP: { gems: 18, text: "18 кристаллов" },
+      LEGEND: { gems: 40, text: "40 кристаллов" }, ETERNAL: { gems: 50, text: "50 кристаллов" },
       STAR: { gems: 6, text: "6 кристаллов" }, FUN: { pet: true, text: "случайного питомца" }, RICH: { gems: 30, text: "30 кристаллов" }, WELCOME: { gems: 3, text: "3 кристалла" },
     };
 
@@ -1501,6 +1598,16 @@
       ["frog", "Лягушка", "🐸", 0, "golden", 0.04, "к частоте золотых монет"], ["hamster", "Хомяк", "🐹", 0, "discount", 0.012, "скидка на улучшения"],
       ["penguin", "Пингвин", "🐧", 1, "offline", 0.08, "к офлайн-доходу"], ["lion", "Лев", "🦁", 1, "click", 0.08, "к доходу с кликов"],
       ["horse", "Конь", "🐎", 1, "income", 0.06, "к доходу в секунду"], ["tiger", "Тигр", "🐯", 1, "crit", 0.012, "к шансу крита"],
+      ["deer", "Олень", "🦌", 0, "click", 0.05, "к доходу с кликов"], ["bear", "Медведь", "🐻", 0, "income", 0.045, "к доходу в секунду"],
+      ["parrot", "Попугай", "🦜", 0, "crit", 0.008, "к шансу крита"], ["hedgehog", "Ёж", "🦔", 0, "discount", 0.012, "скидка на улучшения"],
+      ["squirrel", "Белка", "🐿️", 0, "golden", 0.04, "к частоте золотых монет"], ["butterfly", "Бабочка", "🦋", 1, "gems", 0.05, "к кристаллам за перерождение"],
+      ["ladybug", "Божья коровка", "🐞", 1, "golden", 0.05, "к частоте золотых монет"], ["crab", "Краб", "🦀", 1, "discount", 0.018, "скидка на улучшения"],
+      ["fish", "Рыбка", "🐠", 1, "offline", 0.09, "к офлайн-доходу"], ["seal", "Тюлень", "🦭", 1, "income", 0.07, "к доходу в секунду"],
+      ["kangaroo", "Кенгуру", "🦘", 2, "click", 0.13, "к доходу с кликов"], ["giraffe", "Жираф", "🦒", 2, "crit", 0.014, "к шансу крита"],
+      ["zebra", "Зебра", "🦓", 2, "offline", 0.13, "к офлайн-доходу"], ["croc", "Крокодил", "🐊", 2, "discount", 0.02, "скидка на улучшения"],
+      ["peacock", "Павлин", "🦚", 2, "golden", 0.06, "к частоте золотых монет"], ["swan", "Лебедь", "🦢", 3, "gems", 0.14, "к кристаллам за перерождение"],
+      ["dragon2", "Древний дракон", "🐉", 3, "income", 0.25, "к доходу в секунду"], ["alien", "Пришелец", "👾", 3, "click", 0.25, "к доходу с кликов"],
+      ["unicorn2", "Радужный единорог", "🌈", 3, "crit", 0.025, "к шансу крита"], ["sphinx", "Сфинкс-страж", "🗿", 3, "discount", 0.03, "скидка на улучшения"],
       ["shark", "Акула", "🦈", 2, "income", 0.1, "к доходу в секунду"], ["dino", "Динозавр", "🦖", 2, "click", 0.14, "к доходу с кликов"],
       ["elephant", "Слон", "🐘", 2, "gems", 0.08, "к кристаллам за перерождение"], ["panther", "Пантера", "🐆", 3, "income", 0.2, "к доходу в секунду"],
     ].map(([id, name, e, r, kind, v, text]) => ({ id, name, e, r, kind, v, text }));
@@ -1514,7 +1621,10 @@
       ["night", "Ночной дозор", "🌙", "offline", 0.06, "к офлайн-доходу"], ["nose", "Кристальный нюх", "💎", "gems", 0.05, "к кристаллам за перерождение"],
       ["hunter", "Охотник", "🎯", "boss", 0.04, "меньше ударов по боссу"], ["time", "Время босса", "⏱️", "bosstime", 3, "секунд на бой с боссом"],
       ["tame", "Приручение", "🐾", "petdrop", 0.05, "к шансу питомца с босса"], ["rush", "Быстрое возрождение", "🔁", "rbcost", 0.03, "дешевле перерождение"],
-      ["aim", "Меткость", "🏹", "aim", 40, "мс к окну точного удара"],
+      ["aim", "Меткость", "🏹", "aim", 40, "мс к окну точного удара"], ["lumpT", "Золотой куш", "🪙", "lump", 0.1, "к кушу золотой монеты"],
+      ["feverT", "Долгий жар", "🔥", "fever", 2, "секунд к золотой лихорадке"], ["xpT", "Быстрое обучение", "📘", "xp", 0.08, "к опыту пропуска"],
+      ["cupsT", "Ловкие руки", "🤹", "cups", 1, "попытка в «Напёрстках» в день"], ["chestT", "Ключ от сундука", "🗝️", "chest", 0.08, "быстрее сундук"],
+      ["expdT", "Вожак отряда", "🧭", "expd", 0.06, "к награде экспедиций"], ["bossrewT", "Трофеи боссов", "🏴", "bossrew", 0.1, "к награде за босса"],
     ].map(([id, name, e, kind, v, text]) => ({ id, name, e, kind, v, text }));
     const TALENT_MAX = 5, TALENT_COST = [1, 1, 2, 2, 3];
     // Leagues beyond Mythic: 142 more ("title + number"), each about x2.15 harder than the one before; league 150 needs about 5e59 coins.
@@ -1525,8 +1635,14 @@
       LEAGUES.push({ n: i < 140 ? `${LEAGUE_TITLES[Math.floor(i / 7)]} ${["I", "II", "III", "IV", "V", "VI", "VII"][i % 7]}` : ["Предел", "Бесконечность"][i - 140],
         at: round2(5e12 * Math.pow(2.15, i + 1)), c: [hsl(h, 75, 72), hsl(h, 70, 40)] });
     }
-    const SEASON = 2, VERSION = "2.5";
+    const SEASON = 2, VERSION = "2.6";
     const CHANGELOG = [
+      { v: "2.6", t: "Формы монеты и ещё куча контента", items: [
+        "Формы монеты: 20 силуэтов (звезда, сердце, шестерня, цветок, молния, корона…), меняют и саму монету, и значок валюты («Награды» → «Форма»)",
+        "Боевой пропуск на 60 уровней: опыт за клики, боссов и задания, награды монетами, кристаллами, питомцами и скинами",
+        "Напёрстки: мини-игра с призами, три попытки в день",
+        "+60 миров (всего 233), +66 скинов (узорные и пропускные), +20 питомцев (50), +40 аватарок (96), +7 талантов (20)",
+        "+60 достижений, +20 промокодов" ] },
       { v: "2.5", t: "Море контента", items: [
         "Таланты: очко за каждое перерождение, 13 талантов с пятью уровнями (раздел «Награды» → «Таланты»)",
         "+62 мира, всего 173: леса, пустыни, льды, моря, космос, огонь, магия, города, руины, небо, сладости и бездна",
@@ -1576,7 +1692,32 @@
     const ACH_GRAD = {
       power: ["#ffa24a", "#ff5a36"], gold: ["#ffd23f", "#f59e0b"], cycle: ["#c58bff", "#7c3aed"],
       skin: ["#f78fc0", "#db2777"], space: ["#3ddbe6", "#3b82f6"], mult: ["#ffe27a", "#f0a500"],
+      gift: ["#34d399", "#2563eb"],
     };
+    // Ladders of long-term goals: [id, icon, name, description, target, gems, value]. The numbers are plain text on purpose: this
+    // runs before the number formatters exist.
+    const LADDER = [];
+    {
+      const add = (id, icon, name, desc, rows, val) => rows.forEach(([t, label, gems], i) => LADDER.push([id + (i + 1), icon, `${name} ${["I", "II", "III", "IV", "V", "VI", "VII"][i]}`, desc.replace("#", label), t, gems, val]));
+      add("lclk", "power", "Тапер-легенда", "Сделай # кликов", [[3e7, "30 млн", 40], [1e8, "100 млн", 60], [3e8, "300 млн", 80], [1e9, "1 млрд", 100]], () => state.clicks);
+      add("lcoin", "gold", "Рекордсмен", "Заработай # монет за всё время", [[1e60, "1e60", 100], [1e70, "1e70", 120], [1e80, "1e80", 150], [1e90, "1e90", 200]], () => state.total);
+      add("lboss", "power", "Покоритель боссов", "Победи # боссов", [[300, "300", 60], [500, "500", 100], [1000, "1000", 200]], () => state.bosses);
+      add("lperf", "mult", "Мастер точности", "Сделай # точных ударов", [[2000, "2000", 40], [5000, "5000", 70], [10000, "10 000", 120]], () => state.perfects);
+      add("lgold", "mult", "Золотой век", "Поймай # золотых монет", [[2000, "2000", 40], [5000, "5000", 80]], () => state.golden);
+      add("lfren", "power", "Вихрь", "Вызови бешенство # раз", [[500, "500", 30], [1000, "1000", 50]], () => state.frenzies);
+      add("lchest", "gold", "Сундуколов", "Открой # сундуков", [[500, "500", 30], [1000, "1000", 50]], () => state.chests);
+      add("lexp", "gold", "Следопыт", "Заверши # экспедиций", [[200, "200", 30], [500, "500", 60]], () => state.exps);
+      add("lreb", "cycle", "Колесо перерождений", "Переродись # раз", [[25, "25", 60], [30, "30", 80], [40, "40", 120]], () => state.rebirths);
+      add("lleague", "gold", "Покоритель лиг", "Достигни лиги номер #", [[29, "30", 20], [39, "40", 30], [59, "60", 45], [74, "75", 60], [89, "90", 80], [119, "120", 110], [134, "135", 140]], () => leagueInfo().i);
+      add("lskin", "skin", "Коллекционер скинов", "Собери # скинов", [[150, "150", 60], [190, "190", 90], [230, "230", 140]], () => state.owned.length);
+      add("lworld", "space", "Странник миров", "Открой # миров", [[160, "160", 60], [200, "200", 90], [233, "233", 140]], () => state.wmax);
+      add("lpet", "mult", "Хозяин зверей", "Собери # питомцев", [[30, "30", 30], [40, "40", 50], [50, "50", 80]], () => Object.keys(state.pets).length);
+      add("ltal", "cycle", "Великий учитель", "Потрать # очков талантов", [[40, "40", 30], [80, "80", 60], [130, "130", 100]], () => talentSpent());
+      add("lpass", "gift", "Путь пропуска", "Дойди до # уровня пропуска", [[10, "10", 10], [20, "20", 15], [30, "30", 20], [40, "40", 30], [50, "50", 40], [60, "60", 60]], () => passLevel());
+      add("lform", "gift", "Меняющий облик", "Открой # форм монеты", [[5, "5", 10], [10, "10", 20], [15, "15", 30], [20, "20", 50]], () => formCount());
+      add("lpromo", "gold", "Кодолов", "Активируй # промокодов", [[10, "10", 8], [20, "20", 15], [30, "30", 25]], () => state.promos.length);
+      add("lcups", "mult", "Напёрсточник", "Выиграй в «Напёрстках» # раз", [[10, "10", 10], [50, "50", 25], [100, "100", 50]], () => state.cups.won);
+    }
     const ACHS = [
       ["clicks100", "power", "Разминка", "Сделай 100 кликов", 100, 1, () => state.clicks],
       ["clicks1k", "power", "Мозоли", "Сделай 1 000 кликов", 1e3, 2, () => state.clicks],
@@ -1655,6 +1796,7 @@
       ["boss200", "power", "Бессмертный чемпион", "Победи 200 боссов", 200, 50, () => state.bosses],
       ["tal5", "cycle", "Ученик", "Потрать 5 очков талантов", 5, 6, () => talentSpent()],
       ["tal20", "cycle", "Мудрец", "Потрать 20 очков талантов", 20, 25, () => talentSpent()],
+      ...LADDER,
     ].map(([id, icon, name, desc, target, gems, val]) => ({ id, icon, name, desc, target, gems, val, grad: ACH_GRAD[icon] }));
 
     // Daily quests restart every day and pay gems.
@@ -1747,7 +1889,7 @@
 
     // Expeditions: one at a time, paid in coins (income for the trip time, with a bonus) and gems.
     const EXPS = [{ h: 1, mult: 1, gems: 0 }, { h: 4, mult: 4.5, gems: 1 }, { h: 8, mult: 10, gems: 2 }];
-    const expCoins = (x) => Math.round(Math.max(perSec() * 3600 * x.h * x.mult, perClick() * 120 * x.h, 300 * x.h));
+    const expCoins = (x) => Math.round(Math.max(perSec() * 3600 * x.h * x.mult, perClick() * 120 * x.h, 300 * x.h) * (1 + tal("expd")));
     const hm = (ms) => `${Math.floor(ms / 3.6e6)} ч ${Math.ceil((ms % 3.6e6) / 6e4)} мин`;
 
     const mainEl = document.getElementById("main");
@@ -1812,6 +1954,11 @@
       exps: 0,
       pets: {},
       talents: {},
+      form: "coin",
+      forms: [],
+      xp: 0,
+      pass: "",
+      cups: { day: "", left: 3, won: 0 },
       wmax: 1,
       bosses: 0,
       perfects: 0,
@@ -1891,7 +2038,7 @@
     const critChance = () => CRIT_CHANCE + 0.01 * state.lv.crit + perk("crit") + pet("crit") + tal("crit");
     const critMult = () => CRIT_MULT + 0.5 * state.lv.critp + perk("critp") + tal("critp");
     const goldenGap = () => (45000 + Math.random() * 75000) * (1 - 0.06 * state.lv.luck) * (1 - Math.min(0.8, perk("golden") + pet("golden") + tal("golden")));
-    const feverMs = () => 15000 + 3000 * state.lv.fever + perk("fever");
+    const feverMs = () => 15000 + 3000 * state.lv.fever + perk("fever") + 1000 * tal("fever");
     const offlineRate = () => 0.5 + 0.1 * state.perm.night + perk("offline") + pet("offline") + tal("offline");
     const offlineCap = () => (3 + state.perm.night) * 3600;
 
@@ -1967,6 +2114,11 @@
           next.wmax = Math.max(whole(s.wmax), next.worlds.length);
           // worlds open strictly in order, so worlds lost to the short-lived version 2.1 reset are restored from the lifetime counter
           if (next.worlds.length < next.wmax) next.worlds = WORLDS.slice(0, Math.min(next.wmax, WORLDS.length)).map((w) => w.id);
+          next.form = FORMS.some((f) => f.id === s.form) ? s.form : "coin";
+          next.forms = Array.isArray(s.forms) ? [...new Set(s.forms.filter((id) => FORMS.some((f) => f.id === id && f.kind === "gem")))] : [];
+          next.xp = clean(s.xp);
+          next.pass = typeof s.pass === "string" && /^[0-9a-f]{0,16}$/.test(s.pass) ? s.pass : "";
+          next.cups = { day: s.cups && typeof s.cups.day === "string" ? s.cups.day : "", left: Math.min(20, whole(s.cups && s.cups.left)), won: whole(s.cups && s.cups.won) };
           next.talents = Object.fromEntries(TALENTS.filter((t) => whole(s.talents && s.talents[t.id]) > 0).map((t) => [t.id, Math.min(TALENT_MAX, whole(s.talents[t.id]))]));
           next.pets = Object.fromEntries(PETS.filter((p) => whole(s.pets && s.pets[p.id]) > 0).map((p) => [p.id, Math.min(PET_MAX, whole(s.pets[p.id]))]));
           next.bosses = whole(s.bosses);
@@ -2056,6 +2208,16 @@
       stageEl.style.setProperty("--shape", skinShape(s));
       const fx = [].concat(s.fx || []);
       FX_CLASSES.forEach((c) => coin.classList.toggle(c, fx.includes(c)));
+      applyForm();
+    }
+
+    // the form clips the clicked object; the header icon and every price tag follow it
+    function applyForm() {
+      const f = FORMS.find((x) => x.id === state.form) || FORMS[0];
+      coin.style.clipPath = f.pts ? `polygon(${polyPts(f.pts)})` : "";
+      stageEl.classList.toggle("formed", !!f.pts);
+      COIN = f.pts ? formSvg(f.pts, "cur") : COIN0;
+      document.getElementById("score-ic").innerHTML = COIN;
     }
 
     const worldGrad = (w) => `linear-gradient(135deg, ${w.grad[0]}, ${w.grad[1]})`;
@@ -2131,12 +2293,12 @@
     function skinTile(s) {
       const owned = state.owned.includes(s.id);
       const equipped = state.skin === s.id;
-      const trophyReady = !!s.trophy && state.bosses >= s.trophy;
-      const locked = !owned && (s.promo || (s.trophy && !trophyReady));
-      const price = equipped ? "Надето" : owned ? "Надеть" : s.promo ? "Промокод" : s.trophy ? (trophyReady ? "Забрать" : `Боссы ${state.bosses}/${s.trophy}`) : s.gem ? `${GEM} ${s.gem}` : `${COIN} ${s.cost >= 1e6 ? short(s.cost) : fmt(s.cost)}`;
+      const trophyReady = !!s.trophy && state.bosses >= s.trophy, passReady = !!s.pass && passLevel() >= s.pass;
+      const locked = !owned && (s.promo || (s.trophy && !trophyReady) || (s.pass && !passReady));
+      const price = equipped ? "Надето" : owned ? "Надеть" : s.promo ? "Промокод" : s.pass ? (passReady ? "Забрать" : `Ур. ${passLevel()}/${s.pass}`) : s.trophy ? (trophyReady ? "Забрать" : `Боссы ${state.bosses}/${s.trophy}`) : s.gem ? `${GEM} ${s.gem}` : `${COIN} ${s.cost >= 1e6 ? short(s.cost) : fmt(s.cost)}`;
       return `
         <button class="tile${equipped ? " equipped" : ""}" data-act="skin:${s.id}" style="--rar:${RARITY[s.r].c}"
-                ${owned || locked || s.trophy ? "" : `data-cost="${s.gem || s.cost}" data-cur="${s.gem ? "gem" : "coin"}"`} ${equipped || locked ? "disabled" : ""}>
+                ${owned || locked || s.trophy || s.pass ? "" : `data-cost="${s.gem || s.cost}" data-cur="${s.gem ? "gem" : "coin"}"`} ${equipped || locked ? "disabled" : ""}>
           <span class="skin-icon" style="${skinIconStyle(s)}">${s.glyph}</span>
           <span class="t-name${s.name.length > 10 ? " long" : ""}">${s.name}</span>
           <span class="t-bonus">${s.bonus ? `+${s.bonus >= 1e6 ? short(s.bonus) : fmt(s.bonus)} к клику` : "Без бонуса"}</span>
@@ -2287,6 +2449,9 @@
           <button class="qbtn" data-act="modal:profile"><span class="qi" style="background:linear-gradient(135deg,${av.g[0]},${av.g[1]})">${av.e}</span>Профиль</button>
           <button class="qbtn" data-act="modal:pets"><span class="qi" style="background:linear-gradient(135deg,#f9a8d4,#a855f7)">🐾</span>Питомцы</button>
           <button class="qbtn" data-act="modal:talents"><span class="qi" style="background:linear-gradient(135deg,#fde047,#ea580c)">🎓</span>Таланты</button>
+          <button class="qbtn" data-act="modal:forms"><span class="qi" style="background:linear-gradient(135deg,#fcd34d,#f97316)">★</span>Форма</button>
+          <button class="qbtn" data-act="modal:pass"><span class="qi" style="background:linear-gradient(135deg,#34d399,#3b82f6)">🎫</span>Пропуск</button>
+          <button class="qbtn" data-act="modal:cups"><span class="qi" style="background:linear-gradient(135deg,#fb923c,#a16207)">🏺</span>Напёрстки</button>
           <button class="qbtn" data-act="modal:promo"><span class="qi" style="background:linear-gradient(135deg,#ffd23f,#f59e0b)">${ICONS.gift}</span>Промокод</button>
           <button class="qbtn${state.seenVer !== VERSION ? " new" : ""}" data-act="modal:log"><span class="qi" style="background:linear-gradient(135deg,#4ea4f6,#7c3aed)">${ICONS.star}</span>Новое</button></div>`;
         listEl.innerHTML = quick + itemHTML({
@@ -2570,6 +2735,7 @@
     function doRebirth() {
       const g = rebirthGems(), keep = keepShare();
       state.gems += g;
+      addXp(3000);
       state.rebirths += 1;
       state.score = startCoins();
       state.earned = 0;
@@ -2602,7 +2768,8 @@
       const s = skinById(id);
       if (!state.owned.includes(s.id)) {
         if (s.promo) return;
-        if (s.trophy) { if (state.bosses < s.trophy) return; }
+        if (s.pass) { if (passLevel() < s.pass) return; }
+        else if (s.trophy) { if (state.bosses < s.trophy) return; }
         else if (s.gem) { if (state.gems < s.gem) return; state.gems -= s.gem; }
         else { if (state.score < s.cost) return; state.score -= s.cost; }
         state.owned.push(s.id);
@@ -2628,6 +2795,7 @@
     // ids of rewards that can be collected right now
     const claimable = () => [
       ...(dailyInfo().claimable ? ["daily"] : []),
+      ...(Array.from({ length: passLevel() }, (_, i) => i + 1).some((l) => !passHas(l)) ? ["pass"] : []),
       ...(TALENTS.some((t) => (state.talents[t.id] || 0) < TALENT_MAX && TALENT_COST[state.talents[t.id] || 0] <= talentPoints()) ? ["tal"] : []),
       ...(state.wheel !== dayKey() ? ["wheel"] : []),
       ...(state.chest <= Date.now() ? ["chest"] : []),
@@ -2655,6 +2823,7 @@
       const a = ACHS.find((x) => x.id === id);
       if (!a || state.claimed.includes(id) || a.val() < a.target) return;
       state.claimed.push(id);
+      addXp(50);
       state.gems += a.gems;
       toast(`«${a.name}»: +${a.gems} кристаллов`);
       haptic("success");
@@ -2796,6 +2965,7 @@
       state.gems += x.gems;
       state.exp = { until: 0, kind: 0 };
       state.exps += 1;
+      addXp(400);
       toast(`Экспедиция: +${fmt(coins)} монет${x.gems ? ` и ${x.gems} ${x.gems === 1 ? "кристалл" : "кристалла"}` : ""}`);
       haptic("success");
       renderStats();
@@ -2805,7 +2975,7 @@
 
     function claimChest() {
       if (Date.now() < state.chest) return;
-      state.chest = Date.now() + 4 * 3600e3;
+      state.chest = Date.now() + 4 * 3600e3 * (1 - Math.min(0.5, tal("chest")));
       state.chests += 1;
       const coins = wheelCoins(30);
       addCoins(coins);
@@ -2823,6 +2993,7 @@
       ensureQuests();
       if (!q || state.quests.done.includes(id) || state.quests.p[q.key] < questTarget(q)) return;
       state.quests.done.push(id);
+      addXp(150);
       state.gems += q.gems;
       toast(`«${q.name}»: +${q.gems} ${q.gems === 1 ? "кристалл" : "кристалла"}`);
       haptic("success");
@@ -2947,6 +3118,7 @@
       const d = dailyInfo();
       if (!d.claimable) return;
       state.daily = { last: dayKey(), streak: d.streak };
+      addXp(100);
       addCoins(d.coins);
       state.gems += d.gems;
       toast(`Подарок дня: +${fmt(d.coins)} монет${d.gems ? ` и ${d.gems} кристалла` : ""}`);
@@ -2985,9 +3157,10 @@
       goldenEl.remove();
       goldenEl = null;
       state.golden += 1;
+      addXp(60);
       state.quests.p.golden += 1;
       if (Math.random() < 0.5) {
-        const lump = Math.round(Math.max(perSec() * 300, perClick() * 100) * (1 + perk("lump")));
+        const lump = Math.round(Math.max(perSec() * 300, perClick() * 100) * (1 + perk("lump") + tal("lump")));
         addCoins(lump);
         showPlus(x, y, lump, true);
         toast(`Золотая монета: куш +${fmt(lump)}`);
@@ -3052,7 +3225,7 @@
     const bossEl = document.getElementById("boss-chip");
     const bossNeed = () => Math.round((200 + 20 * Math.min(state.bosses, 25)) * (1 - Math.min(0.5, tal("boss"))));
     const bossMs = () => BOSS_MS + 1000 * tal("bosstime");
-    const bossReward = () => Math.round(Math.max(perSec() * 3600, perClick() * 750, 9000) * (1 + 0.1 * Math.min(state.bosses, 30)));
+    const bossReward = () => Math.round(Math.max(perSec() * 3600, perClick() * 750, 9000) * (1 + 0.1 * Math.min(state.bosses, 30)) * (1 + tal("bossrew")));
     function endBoss(msg, wait) {
       boss = null;
       nextBoss = Date.now() + wait;
@@ -3087,6 +3260,7 @@
       addCoins(coins);
       state.gems += gems;
       state.bosses += 1;
+      addXp(200);
       state.quests.p.boss += 1;
       const drop = Math.random() < 0.4 + tal("petdrop") ? " · " + givePet(rollPet()) : "";
       endBoss(`Босс побеждён: +${fmt(coins)} монет и ${gems} ${gems < 5 ? "кристалла" : "кристаллов"}${drop}`, 360000 + Math.random() * 180000);
@@ -3127,6 +3301,7 @@
       if (perfectChain >= 3) toast(`Серия точных ударов ×${perfectChain}`);
       addCoins(gain);
       state.perfects += 1;
+      addXp(30);
       state.quests.p.perfect += 1;
       showPlus(x, y, gain, true);
       ripple(x, y);
@@ -3134,6 +3309,114 @@
       bump();
       haptic("gold");
       endTarget();
+    }
+
+    // ---- battle pass: 60 levels of experience, a reward at each (the skins come at 10, 20 ... 60) ----
+    const PASS_LEVELS = 60;
+    const passTotal = (l) => 300 * l + 50 * l * (l - 1); // xp needed to be at level l (the step from l to l+1 costs 300 + 100 l)
+    function passLevel() { let l = 0; while (l < PASS_LEVELS && state.xp >= passTotal(l + 1)) l++; return l; }
+    const passHas = (l) => ((parseInt(state.pass[(l - 1) >> 2] || "0", 16) || 0) >> (3 - ((l - 1) & 3))) & 1;
+    function passMark(l) {
+      const a = state.pass.padEnd(PASS_LEVELS / 4, "0").split(""), i = (l - 1) >> 2;
+      a[i] = ((parseInt(a[i], 16) || 0) | (1 << (3 - ((l - 1) & 3)))).toString(16);
+      state.pass = a.join("");
+    }
+    const passReward = (l) => ({ coins: wheelCoins(10 + 4 * l), gems: (l % 3 === 0 ? 2 + Math.floor(l / 10) : 0) + (l === PASS_LEVELS ? 50 : 0), egg: l % 5 === 0 });
+    const passSkin = (l) => SKINS.find((x) => x.pass === l);
+    function addXp(n) {
+      const before = passLevel();
+      state.xp += Math.round(n * (1 + tal("xp")));
+      const after = passLevel();
+      if (after > before && ready) { toast(`Пропуск: уровень ${after}`); haptic("success"); if (tab === "skins") keepScroll(renderList); }
+    }
+    function claimPass(l, quiet) {
+      if (l < 1 || l > passLevel() || passHas(l)) return false;
+      const r = passReward(l);
+      passMark(l);
+      addCoins(r.coins);
+      state.gems += r.gems;
+      if (r.egg) givePet(rollPet());
+      if (!quiet) { toast(`Пропуск ${l}: +${fmt(r.coins)} монет${r.gems ? ` и ${r.gems} кр.` : ""}${r.egg ? " и питомец" : ""}`); haptic("success"); }
+      return true;
+    }
+    function passView() {
+      const lv = passLevel(), into = state.xp - passTotal(lv), need = lv >= PASS_LEVELS ? 1 : 300 + 100 * lv, free = [...Array(lv)].map((_, i) => i + 1).filter((l) => !passHas(l)).length;
+      const row = (l) => {
+        const r = passReward(l), sk = passSkin(l), got = passHas(l), ok = l <= lv;
+        const what = [`${fmt(r.coins)} монет`, r.gems ? `${r.gems} кр.` : "", r.egg ? "питомец" : "", sk ? `скин «${sk.name}»` : ""].filter(Boolean).join(" · ");
+        return `<div class="prow${got ? " got" : ""}${ok ? "" : " lock"}"><b>${l}</b><span>${what}</span>
+          <button type="button" data-pass="${l}"${got || !ok ? " disabled" : ""}>${got ? "✓" : ok ? "Забрать" : "🔒"}</button></div>`;
+      };
+      return `<h3>Боевой пропуск · уровень ${lv} из ${PASS_LEVELS}</h3>
+        <div class="sub">Опыт даётся за клики, боссов, точные удары, золотые монеты, задания, экспедиции и перерождения. Награды за уровни можно забирать в любой момент.</div>
+        <i class="meter"><b style="width:${lv >= PASS_LEVELS ? 100 : Math.min(100, into / need * 100).toFixed(1)}%;--c1:#34d399;--c2:#3b82f6"></b></i>
+        <div class="sub" style="margin-top:6px">${lv >= PASS_LEVELS ? "Максимум" : `Опыт: ${fmt(into)} из ${fmt(need)} до следующего уровня`}</div>
+        <button class="mok" type="button" data-m="passall"${free ? "" : " disabled"}>Забрать всё (${free})</button>
+        <div class="passlist">${Array.from({ length: PASS_LEVELS }, (_, i) => row(i + 1)).join("")}</div>`;
+    }
+
+    // ---- forms ----
+    const formOpen = (f) => f.kind === "free" || (f.kind === "lg" && leagueInfo().i >= f.n) || (f.kind === "rb" && state.rebirths >= f.n) || state.forms.includes(f.id);
+    function formCount() { return FORMS.filter(formOpen).length; }
+    function pickForm(id) {
+      const f = FORMS.find((x) => x.id === id);
+      if (!f) return;
+      if (!formOpen(f)) {
+        if (f.kind !== "gem") { toast(f.kind === "lg" ? `Нужна лига «${LEAGUES[f.n].n}»` : `Нужно перерождений: ${f.n}`); return; }
+        if (state.gems < f.n) { toast(`Нужно кристаллов: ${f.n}`); return; }
+        state.gems -= f.n;
+        state.forms.push(f.id);
+      }
+      state.form = f.id;
+      applyForm();
+      coin.classList.remove("swap"); void coin.offsetWidth; if (!calm.matches) coin.classList.add("swap");
+      haptic("success");
+      renderStats();
+      renderModal();
+      if (tab !== "home") keepScroll(renderList);
+      flush();
+    }
+    function formsView() {
+      const tile = (f) => {
+        const open = formOpen(f), sel = state.form === f.id;
+        const label = sel ? "Выбрано" : open ? "Открыта" : f.kind === "gem" ? `${GEM}${f.n}` : f.kind === "lg" ? LEAGUES[f.n].n : `${f.n} пер.`;
+        const svg = f.pts ? formSvg(f.pts) : COIN0.replace('class="cur" ', "");
+        return `<button class="formbtn${sel ? " sel" : ""}${open ? "" : " lock"}" data-form="${f.id}"><span class="fp">${svg}</span><b>${f.name}</b><span>${label}</span></button>`;
+      };
+      return `<h3>Форма монеты · ${formCount()} из ${FORMS.length}</h3>
+        <div class="sub">Меняет силуэт кликабельного предмета и значок валюты. Цвета берутся от надетого скина. Часть форм открывается за лигу и перерождения, часть покупается за кристаллы.</div>
+        <div class="formgrid">${FORMS.map(tile).join("")}</div>`;
+    }
+
+    // ---- thimbles: a daily mini game, three tries a day ----
+    const cupsMax = () => 3 + Math.floor(tal("cups"));
+    function cupsLeft() { if (state.cups.day !== today) { state.cups.day = today; state.cups.left = cupsMax(); } return state.cups.left; }
+    let cupResult = null;
+    function pickCup(i) {
+      if (cupsLeft() <= 0 || cupResult) return;
+      state.cups.left -= 1;
+      const table = [["coins", 34], ["gems", 24], ["egg", 8], ["turbo", 12], ["none", 22]];
+      let r = Math.random() * table.reduce((n, t) => n + t[1], 0), kind = "none";
+      for (const [k, w] of table) { if (r < w) { kind = k; break; } r -= w; }
+      let text = "Пусто. Повезёт в следующий раз", icon = "💨";
+      if (kind === "coins") { const g = wheelCoins(45); addCoins(g); text = `+${fmt(g)} монет`; icon = "💰"; }
+      else if (kind === "gems") { const n = 1 + Math.floor(Math.random() * 3); state.gems += n; text = `+${n} ${n === 1 ? "кристалл" : "кристалла"}`; icon = "💎"; }
+      else if (kind === "egg") { text = "Питомец: " + givePet(rollPet()); icon = "🥚"; }
+      else if (kind === "turbo") { state.turbo = Math.max(Date.now(), state.turbo) + 120000; text = "Турбо ×3 на 2 минуты"; icon = "⚡"; }
+      if (kind !== "none") { state.cups.won += 1; haptic("success"); } else haptic();
+      cupResult = { i, text, icon };
+      renderStats();
+      renderModal();
+      flush();
+    }
+    function cupsView() {
+      const left = cupsLeft();
+      const jar = (i) => `<button type="button" class="jar${cupResult ? (cupResult.i === i ? " open" : " dim") : ""}" data-cup="${i}"${cupResult || !left ? " disabled" : ""}>${cupResult && cupResult.i === i ? cupResult.icon : "🏺"}</button>`;
+      return `<h3>Напёрстки</h3>
+        <div class="sub">Выбери кувшин: под одним из них может быть приз. Попыток сегодня: ${left} из ${cupsMax()}. Выиграно за всё время: ${state.cups.won}.</div>
+        <div class="jars">${[0, 1, 2].map(jar).join("")}</div>
+        <div class="pmsg ${cupResult && cupResult.icon !== "💨" ? "ok" : ""}">${cupResult ? cupResult.text : left ? "Выбирай" : "Попытки на сегодня закончились, возвращайся завтра"}</div>
+        ${cupResult && left ? '<button class="mok" type="button" data-m="cupagain">Ещё раз</button>' : ""}`;
     }
 
     // ---- pets ----
@@ -3175,6 +3458,7 @@
       const gain = perClick() * (crit ? critMult() : 1);
       addCoins(gain);
       state.clicks += 1;
+      addXp(2);
       state.quests.p.clicks += 1;
       renderStats();
       save();
@@ -3292,11 +3576,12 @@
     }
 
     function renderModal() {
-      const views = { profile: profileView, promo: promoView, log: logView, season: seasonView, pets: petsView, talents: talentsView };
+      const views = { profile: profileView, promo: promoView, log: logView, season: seasonView, pets: petsView, talents: talentsView, forms: formsView, pass: passView, cups: cupsView };
       if (views[modalKind]) mbody.innerHTML = views[modalKind]();
     }
     function openModal(kind) {
       modalKind = kind;
+      cupResult = null;
       promoMsg = null;
       if (kind === "log" || kind === "season") { state.seenVer = VERSION; save(); }
       renderModal();
@@ -3338,6 +3623,7 @@
         if (p.turbo) state.turbo = Math.max(Date.now(), state.turbo) + p.turbo;
         if (p.skin && !state.owned.includes(p.skin)) state.owned.push(p.skin);
         if (p.pet) givePet(rollPet());
+        if (p.xp) addXp(p.xp);
         if (p.avatar != null && !state.avs.includes(p.avatar)) state.avs.push(p.avatar);
         state.promos.push(code);
         promoMsg = ["ok", `Готово! Получено: ${p.text}`];
@@ -3353,6 +3639,14 @@
       if (e.target === modalEl || e.target.closest("#mclose") || e.target.closest('[data-m="close"]')) { closeModal(); return; }
       const av = e.target.closest("[data-av]");
       if (av) { pickAvatar(Number(av.dataset.av)); return; }
+      const fm = e.target.closest("[data-form]");
+      if (fm) { pickForm(fm.dataset.form); return; }
+      const ps = e.target.closest("[data-pass]");
+      if (ps) { if (claimPass(Number(ps.dataset.pass))) { renderStats(); renderModal(); flush(); } return; }
+      if (e.target.closest('[data-m="passall"]')) { let n = 0; for (let l = 1; l <= passLevel(); l++) if (claimPass(l, true)) n++; if (n) { toast(`Пропуск: награды получены (${n})`); haptic("success"); renderStats(); renderModal(); flush(); } return; }
+      const cp = e.target.closest("[data-cup]");
+      if (cp) { pickCup(Number(cp.dataset.cup)); return; }
+      if (e.target.closest('[data-m="cupagain"]')) { cupResult = null; renderModal(); return; }
       const tl = e.target.closest("[data-tal]");
       if (tl) { buyTalent(tl.dataset.tal); return; }
       if (e.target.closest('[data-m="respec"]')) { respecTalents(); return; }
