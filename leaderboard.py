@@ -4,7 +4,12 @@ import urllib.parse
 import urllib.request
 
 UNITS = ["", "тыс", "млн", "млрд", "трлн", "квадр", "квинт", "секст", "септ", "окт", "нон", "дец"]
-LEAGUES = ["Новичок", "Бронза", "Серебро", "Золото", "Платина", "Алмаз", "Легенда", "Миф"]
+LEAGUE_TITLES = ["Титан", "Гигант", "Властелин", "Чемпион", "Мастер", "Гранд", "Архонт", "Страж", "Владыка", "Император",
+                 "Полубог", "Бог", "Демиург", "Творец", "Хранитель", "Вечный", "Космос", "Вселенная", "Мультивселенная", "Абсолют"]
+ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII"]
+# 150 leagues, the same names as in the game: eight classic ones, then 20 titles x 7 steps, then two last ones
+LEAGUES = (["Новичок", "Бронза", "Серебро", "Золото", "Платина", "Алмаз", "Легенда", "Миф"]
+           + [f"{LEAGUE_TITLES[i // 7]} {ROMAN[i % 7]}" for i in range(140)] + ["Предел", "Бесконечность"])
 ORDERS = {"coins": "total.desc,tg_id.asc", "rebirths": "rebirths.desc,total.desc"}
 
 

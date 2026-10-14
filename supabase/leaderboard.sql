@@ -11,7 +11,7 @@ create table if not exists public.leaderboard (
   name text not null check (char_length(name) between 1 and 24),
   total numeric not null check (total >= 0 and total < 1e100),
   rebirths integer not null default 0 check (rebirths between 0 and 1000000),
-  league smallint not null default 0 check (league between 0 and 20),
+  league smallint not null default 0 check (league between 0 and 200),
   skin text check (skin is null or char_length(skin) <= 24),
   avatar smallint not null default 0 check (avatar between 0 and 200),
   updated_at timestamptz not null default now()
@@ -19,6 +19,8 @@ create table if not exists public.leaderboard (
 
 -- upgrading a season-1 table
 alter table public.leaderboard add column if not exists avatar smallint not null default 0 check (avatar between 0 and 200);
+alter table public.leaderboard drop constraint if exists leaderboard_league_check;
+alter table public.leaderboard add constraint leaderboard_league_check check (league between 0 and 200);
 alter table public.leaderboard drop constraint if exists leaderboard_total_check;
 alter table public.leaderboard add constraint leaderboard_total_check check (total >= 0 and total < 1e100);
 
@@ -57,7 +59,7 @@ begin
   select * into cur from public.leaderboard where tg_id = p_id;
   if not found then
     insert into public.leaderboard (tg_id, name, total, rebirths, league, skin, avatar)
-    values (p_id, nm, p_total, greatest(0, least(coalesce(p_rebirths, 0), 1000000)), greatest(0, least(coalesce(p_league, 0), 20)), left(p_skin, 24), av);
+    values (p_id, nm, p_total, greatest(0, least(coalesce(p_rebirths, 0), 1000000)), greatest(0, least(coalesce(p_league, 0), 200)), left(p_skin, 24), av);
     v_total := p_total;
   elsif now() - cur.updated_at >= interval '10 seconds' then
     v_total := greatest(cur.total, least(p_total, greatest(cur.total * 10, 10000000)));
@@ -65,7 +67,7 @@ begin
       name = nm,
       total = v_total,
       rebirths = greatest(cur.rebirths, least(coalesce(p_rebirths, 0), 1000000)),
-      league = greatest(cur.league, least(greatest(coalesce(p_league, 0), 0), 20)),
+      league = greatest(cur.league, least(greatest(coalesce(p_league, 0), 0), 200)),
       skin = left(p_skin, 24),
       avatar = av,
       updated_at = now()

@@ -26,6 +26,16 @@ class ShortNumberTests(unittest.TestCase):
         self.assertEqual(lb.short_number(5 * 10**33), "5 дец")
         self.assertEqual(lb.short_number(12 * 10**36), "1,2e37")
 
+    def test_league_names_match_the_game(self):
+        self.assertEqual(len(lb.LEAGUES), 150)
+        self.assertEqual(lb.LEAGUES[7], "Миф")
+        self.assertEqual(lb.LEAGUES[8], "Титан I")
+        self.assertEqual(lb.LEAGUES[14], "Титан VII")
+        self.assertEqual(lb.LEAGUES[15], "Гигант I")
+        self.assertEqual(lb.LEAGUES[147], "Абсолют VII")
+        self.assertEqual(lb.LEAGUES[149], "Бесконечность")
+        self.assertEqual(len(set(lb.LEAGUES)), 150)
+
     def test_small_numbers_keep_separators(self):
         self.assertEqual(lb.short_number(123456), "123 456")
         self.assertEqual(lb.short_number(0), "0")
@@ -54,7 +64,9 @@ class FormatTests(unittest.TestCase):
 
     def test_league_is_clamped_and_names_are_plain_text(self):
         text = lb.format_top(self.rows)
-        self.assertIn("<b>x</b> · Миф", text)  # printed as is; the bot sends no parse_mode
+        self.assertIn("<b>x</b> · Творец I", text)  # printed as is; the bot sends no parse_mode (league 99 is no longer the last one)
+        top = lb.format_top([{"tg_id": 1, "name": "z", "total": 5, "rebirths": 0, "league": 999}])
+        self.assertIn("z · Бесконечность", top)  # out-of-range leagues clamp to the last one
         self.assertNotIn("Traceback", text)
 
     def test_long_names_are_cut(self):

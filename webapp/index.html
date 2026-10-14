@@ -73,6 +73,7 @@
     .emblem b { position: relative; font-family: var(--font-display); font-size: 11px; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
     .lg-info { flex: 1; min-width: 0; }
     .lg-name { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 800; }
+    .lg-name > #lg-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lg-name span { color: var(--hint); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
     .meter { display: block; height: 6px; margin-top: 5px; border-radius: 3px; background: var(--card-2); overflow: hidden; }
     .meter b { display: block; width: 0; height: 100%; border-radius: 3px; transition: width .3s; background: linear-gradient(90deg, var(--c1, var(--accent)), var(--c2, #ff9d2e)); }
@@ -1398,6 +1399,8 @@
       ["🛸", ["#86efac", "#0f766e"], "rb", 12], ["🌌", ["#c4b5fd", "#312e81"], "rb", 16],
       ["🤖", ["#cbd5e1", "#0e7490"], "gem", 8], ["👾", ["#d8b4fe", "#6d28d9"], "gem", 12], ["🧙", ["#a5b4fc", "#4338ca"], "gem", 25], ["🥷", ["#94a3b8", "#0f172a"], "gem", 40],
       ["🪐", ["#fdba74", "#7c2d12"], "gem", 60], ["💎", ["#a5f3fc", "#0369a1"], "gem", 100],
+      ["🥇", ["#fde68a", "#b45309"], "lg", 10], ["🛡️", ["#bfdbfe", "#1e40af"], "lg", 25], ["⚔️", ["#e5e7eb", "#4b5563"], "lg", 50], ["🏰", ["#c4b5fd", "#4c1d95"], "lg", 75],
+      ["🌠", ["#fef08a", "#7e22ce"], "lg", 100], ["☄️", ["#fdba74", "#9f1239"], "lg", 125], ["♾️", ["#f0abfc", "#0f172a"], "lg", 149], ["🌀", ["#67e8f9", "#1e3a8a"], "rb", 20],
     ].map(([e, g, kind, n]) => ({ e, g, kind: kind || "free", n: n || 0 }));
 
     // ---- promo codes: each works once per player ----
@@ -1409,6 +1412,10 @@
       MAKYS: { gems: 25, text: "25 кристаллов" },
       TGCLICK: { skin: "gift", text: "эксклюзивный скин «Подарок»" },
       ROBOT: { avatar: 18, text: "аватарку 🤖" },
+      LEAGUE: { gems: 8, text: "8 кристаллов" },
+      BOSS: { gems: 12, text: "12 кристаллов" },
+      ZOO: { pet: true, text: "случайного питомца" },
+      WORLD: { coins: 120, text: "монеты за два часа игры" },
     };
 
     // Pets: found in the crystal chest, as boss drops or in eggs; a repeat raises the level (max 5), at max it pays 2 gems.
@@ -1420,11 +1427,26 @@
       ["unicorn", "Единорог", "🦄", 2, "gems", 0.06, "к кристаллам за перерождение"], ["dragon", "Дракончик", "🐲", 2, "income", 0.08, "к доходу в секунду"],
       ["griffin", "Грифон", "🦅", 2, "click", 0.1, "к доходу с кликов"], ["phoenix", "Феникс", "🔥", 3, "income", 0.15, "к доходу в секунду"],
       ["whale", "Космокит", "🐋", 3, "offline", 0.15, "к офлайн-доходу"], ["hydra", "Гидра", "🐍", 3, "crit", 0.015, "к шансу крита"],
+      ["bee", "Пчела", "🐝", 0, "click", 0.05, "к доходу с кликов"], ["panda", "Панда", "🐼", 0, "offline", 0.08, "к офлайн-доходу"],
+      ["bat", "Летучая мышь", "🦇", 1, "crit", 0.01, "к шансу крита"], ["octopus", "Осьминог", "🐙", 1, "discount", 0.02, "скидка на улучшения"],
+      ["wolf", "Волк", "🐺", 2, "click", 0.12, "к доходу с кликов"], ["kraken", "Кракен", "🦑", 3, "gems", 0.1, "к кристаллам за перерождение"],
     ].map(([id, name, e, r, kind, v, text]) => ({ id, name, e, r, kind, v, text }));
     const PET_RARITY = [{ n: "Обычный", c: "#9aa7ad", w: 60 }, { n: "Редкий", c: "#4cc3ff", w: 28 }, { n: "Эпический", c: "#b779ff", w: 10 }, { n: "Легендарный", c: "#ffb02e", w: 2 }];
     const PET_MAX = 5;
-    const SEASON = 2, VERSION = "2.3";
+    // Leagues beyond Mythic: 142 more ("title + number"), each about x2.15 harder than the one before; league 150 needs about 5e59 coins.
+    // Keep the titles in sync with leaderboard.py (the bot prints the league name).
+    const LEAGUE_TITLES = ["Титан", "Гигант", "Властелин", "Чемпион", "Мастер", "Гранд", "Архонт", "Страж", "Владыка", "Император", "Полубог", "Бог", "Демиург", "Творец", "Хранитель", "Вечный", "Космос", "Вселенная", "Мультивселенная", "Абсолют"];
+    for (let i = 0; i < 142; i++) {
+      const h = (i * 37 + 200) % 360;
+      LEAGUES.push({ n: i < 140 ? `${LEAGUE_TITLES[Math.floor(i / 7)]} ${["I", "II", "III", "IV", "V", "VI", "VII"][i % 7]}` : ["Предел", "Бесконечность"][i - 140],
+        at: round2(5e12 * Math.pow(2.15, i + 1)), c: [hsl(h, 75, 72), hsl(h, 70, 40)] });
+    }
+    const SEASON = 2, VERSION = "2.4";
     const CHANGELOG = [
+      { v: "2.4", t: "150 лиг", items: [
+        "Лиги не заканчиваются на «Мифе»: теперь их 150, от «Титана I» до «Бесконечности»; каждая примерно вдвое сложнее предыдущей",
+        "8 новых аватарок (за лиги и перерождения), 6 новых питомцев, 2 новых задания дня и 10 достижений",
+        "Новые промокоды: LEAGUE, BOSS, ZOO, WORLD" ] },
       { v: "2.3", t: "Питомцы и трофеи", items: [
         "Питомцы: 12 существ с бонусами к доходу, кликам, криту, золоту, офлайну, скидкам и кристаллам. Выпадают из сундука, яйца за кристаллы и после боссов (раздел «Награды» → «Питомцы»)",
         "Трофейные скины: 10 скинов бесплатно за победы над боссами (от 1 до 100)",
@@ -1497,6 +1519,16 @@
       ["pet1", "mult", "Друг человека", "Получи питомца", 1, 2, () => Object.keys(state.pets).length],
       ["pets12", "mult", "Зверинец", "Собери всех питомцев", PETS.length, 10, () => Object.keys(state.pets).length],
       ["boss30", "power", "Гроза боссов", "Победи 30 боссов", 30, 10, () => state.bosses],
+      ["league20", "gold", "Двадцатая лига", "Достигни 20-й лиги", 19, 8, () => leagueInfo().i],
+      ["league50", "gold", "Полсотни лиг", "Достигни 50-й лиги", 49, 15, () => leagueInfo().i],
+      ["league100", "gold", "Сотая лига", "Достигни 100-й лиги", 99, 30, () => leagueInfo().i],
+      ["league150", "gold", "Бесконечность", "Достигни 150-й лиги", 149, 60, () => leagueInfo().i],
+      ["skins40", "skin", "Кладовая", "Собери 40 скинов", 40, 12, () => state.owned.length],
+      ["pets6", "mult", "Дрессировщик", "Собери 6 питомцев", 6, 5, () => Object.keys(state.pets).length],
+      ["perfect200", "mult", "Меткий глаз", "Сделай 200 точных ударов", 200, 8, () => state.perfects],
+      ["boss100", "power", "Легенда арены", "Победи 100 боссов", 100, 25, () => state.bosses],
+      ["rb20", "cycle", "Вечное возрождение", "Переродись 20 раз", 20, 30, () => state.rebirths],
+      ["promo3", "gold", "Охотник за кодами", "Активируй 3 промокода", 3, 3, () => state.promos.length],
     ].map(([id, icon, name, desc, target, gems, val]) => ({ id, icon, name, desc, target, gems, val, grad: ACH_GRAD[icon] }));
 
     // Daily quests restart every day and pay gems.
@@ -1506,11 +1538,13 @@
         target: () => Math.max(5000, perSec() * 1800 + perClick() * 200), desc: (t) => `Заработай ${fmt(t)} монет` },
       { id: "golden", key: "golden", name: "Охотник", icon: "mult", gems: 2, grad: ["#ffe27a", "#f0a500"], target: () => 2, desc: (t) => `Поймай золотых монет: ${t}` },
       { id: "buys", key: "buys", name: "Строитель", icon: "up", gems: 1, grad: ["#3ddbe6", "#3b82f6"], target: () => 8, desc: (t) => `Купи улучшений: ${t}` },
+      { id: "boss", key: "boss", name: "Охотник на боссов", icon: "power", gems: 3, grad: ["#ef4444", "#f97316"], target: () => 1, desc: () => "Победи босса" },
+      { id: "perfect", key: "perfect", name: "Снайпер", icon: "mult", gems: 2, grad: ["#3ddc97", "#0ea5e9"], target: () => 5, desc: (t) => `Сделай точных ударов: ${t}` },
     ];
     const questTarget = (q) => (q.id === "earn" ? state.quests.t.earn : q.target());
     function ensureQuests() {
       if (state.quests.day === today) return;
-      state.quests = { day: today, p: { clicks: 0, earn: 0, golden: 0, buys: 0 }, t: { earn: QUESTS[1].target() }, done: [] };
+      state.quests = { day: today, p: { clicks: 0, earn: 0, golden: 0, buys: 0, boss: 0, perfect: 0 }, t: { earn: QUESTS[1].target() }, done: [] };
     }
 
     // Boosts are the other thing gems can buy besides permanent perks.
@@ -1639,7 +1673,7 @@
       daily: { last: "", streak: 0 },
       turbo: 0,
       wheel: "",
-      quests: { day: "", p: { clicks: 0, earn: 0, golden: 0, buys: 0 }, t: { earn: 0 }, done: [] },
+      quests: { day: "", p: { clicks: 0, earn: 0, golden: 0, buys: 0, boss: 0, perfect: 0 }, t: { earn: 0 }, done: [] },
       settings: { sound: true, haptic: true, manager: true, collector: true, top: true },
       chest: 0,
       frenzies: 0,
@@ -2207,7 +2241,7 @@
         shownLeague = L.i;
         leagueEl.style.setProperty("--c1", L.cur.c[0]);
         leagueEl.style.setProperty("--c2", L.cur.c[1]);
-        emblemEl.innerHTML = `${ICONS.shield}<b>${L.i + 1}</b>`;
+        emblemEl.innerHTML = `${ICONS.shield}<b style="font-size:${L.i >= 99 ? 8 : L.i >= 9 ? 10 : 11}px">${L.i + 1}</b>`;
         document.getElementById("lg-name").textContent = L.cur.n;
       }
       document.getElementById("lg-pct").textContent = L.next ? `${Math.floor(L.pct * 100)}%` : "Максимум";
@@ -2549,7 +2583,7 @@
           const av = AVATARS[Math.min(AVATARS.length - 1, Math.max(0, Number(r.avatar) || 0))];
           return `<div class="trow r${i + 1}${mine ? " me" : ""}"><span class="rk">${i + 1}</span>
             <span class="av sm" style="background:linear-gradient(135deg,${av.g[0]},${av.g[1]})">${av.e}</span>
-            <span class="emblem sm" style="--c1:${L.c[0]};--c2:${L.c[1]}">${ICONS.shield}<b>${LEAGUES.indexOf(L) + 1}</b></span>
+            <span class="emblem sm" style="--c1:${L.c[0]};--c2:${L.c[1]}">${ICONS.shield}<b style="font-size:${LEAGUES.indexOf(L) >= 99 ? 7 : 9}px">${LEAGUES.indexOf(L) + 1}</b></span>
             <span class="tn"><b>${esc(r.name)}${mine ? " (ты)" : ""}</b><i>${L.n}</i></span><span class="tv">${val}</span></div>`;
         }).join("");
       }
@@ -2919,6 +2953,7 @@
       addCoins(coins);
       state.gems += gems;
       state.bosses += 1;
+      state.quests.p.boss += 1;
       const drop = Math.random() < 0.4 ? " · " + givePet(rollPet()) : "";
       endBoss(`Босс побеждён: +${fmt(coins)} монет и ${gems} ${gems < 5 ? "кристалла" : "кристаллов"}${drop}`, 360000 + Math.random() * 180000);
       if (tab === "skins") keepScroll(renderList);
@@ -2958,6 +2993,7 @@
       if (perfectChain >= 3) toast(`Серия точных ударов ×${perfectChain}`);
       addCoins(gain);
       state.perfects += 1;
+      state.quests.p.perfect += 1;
       showPlus(x, y, gain, true);
       ripple(x, y);
       burst(x, y, true);
@@ -3135,6 +3171,7 @@
         if (p.coins) addCoins(wheelCoins(p.coins));
         if (p.turbo) state.turbo = Math.max(Date.now(), state.turbo) + p.turbo;
         if (p.skin && !state.owned.includes(p.skin)) state.owned.push(p.skin);
+        if (p.pet) givePet(rollPet());
         if (p.avatar != null && !state.avs.includes(p.avatar)) state.avs.push(p.avatar);
         state.promos.push(code);
         promoMsg = ["ok", `Готово! Получено: ${p.text}`];
