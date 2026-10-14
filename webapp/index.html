@@ -171,6 +171,9 @@
       content: ""; position: absolute; inset: -7%; border-radius: 50%; pointer-events: none;
       background: radial-gradient(circle at 50% 0, rgb(var(--glow)) 0 4%, transparent 5%); animation: spin 4s linear infinite;
     }
+    .combo { display: block; width: min(64%, 220px); height: 6px; margin: 14px auto 0; border-radius: 3px; background: var(--card-2); overflow: hidden; }
+    .combo b { display: block; width: 0; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #7c5cff, #ff4f9a); transition: width .15s; }
+    .combo.frenzy b { background: linear-gradient(90deg, var(--accent), #ff5a1f); box-shadow: 0 0 10px rgba(255, 140, 0, .8); }
     .kbd-hint { display: none; color: var(--hint); font-size: 12px; margin-top: 10px; }
 
     /* world particles: each <i> gets --s (size), --d (duration), --dl (negative delay) inline */
@@ -198,6 +201,17 @@
     .fx-confetti i:nth-child(4n+2) { background: #4dd0e1; }
     .fx-confetti i:nth-child(4n+3) { background: #ffd93d; }
     .fx-confetti i:nth-child(4n) { background: #a78bfa; }
+    .fx-mist i { width: calc(var(--s) * 9); height: calc(var(--s) * 9); border-radius: 50%; background: radial-gradient(circle, rgba(220, 255, 230, .3), transparent 70%); animation: blow var(--d) linear var(--dl) infinite; }
+    .fx-plankton i { background: #7ff7ff; box-shadow: 0 0 8px #22d3ee; animation: hover var(--d) ease-in-out var(--dl) infinite; }
+    .fx-meteor i { width: calc(var(--s) * 9); height: 2px; border-radius: 2px; rotate: -30deg; background: linear-gradient(90deg, transparent, #fff); animation: shoot var(--d) linear var(--dl) infinite; }
+    .fx-pixel i { border-radius: 0; animation: twinkle var(--d) steps(3) var(--dl) infinite; }
+    .fx-pixel i:nth-child(4n+1) { background: #ff6b6b; }
+    .fx-pixel i:nth-child(4n+2) { background: #ffd93d; }
+    .fx-pixel i:nth-child(4n+3) { background: #6bcb77; }
+    .fx-pixel i:nth-child(4n) { background: #4d96ff; }
+    .fx-flash i { width: 2px; height: calc(var(--s) * 9); border-radius: 1px; background: linear-gradient(#fff, #9ec5ff); box-shadow: 0 0 10px #9ec5ff; animation: flash var(--d) steps(1) var(--dl) infinite; }
+    @keyframes shoot { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translate(-260px, 150px); opacity: 0; } }
+    @keyframes flash { 0%, 92%, 100% { opacity: 0; } 94%, 98% { opacity: 1; } }
     .fx-swirl i { background: #c4b5fd; box-shadow: 0 0 8px #8b5cf6; animation: suck var(--d) ease-in var(--dl) infinite; }
     @keyframes suck { 0% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 0; } 25% { opacity: 1; } 100% { transform: translate(0, 0) scale(.2); opacity: 0; } }
     @keyframes fall { from { top: -4%; } to { top: 104%; } }
@@ -239,6 +253,7 @@
     #toast.show { opacity: 1; transform: translate(-50%, 0); }
     @media (prefers-reduced-motion: reduce) {
       #fx { display: none; }
+      .combo b { transition: none; }
       .halo, .ring, #coin.holo, #coin.pulse, #coin.flame, #coin.glitch .g, #coin.spin .g, #coin.shine::after, #coin.orbit::before { animation: none; }
       .wheel { transition: none; }
       .golden { animation: cross 14s linear forwards; }
@@ -373,6 +388,27 @@
     .rebirth-btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
     .rebirth-btn.armed { background: linear-gradient(135deg, #ef4444, #f97316); }
 
+    /* leaderboard */
+    .league { cursor: pointer; }
+    .tsort { display: flex; gap: 6px; }
+    .tsort .chipbtn { flex: 1; padding: 8px 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--hint); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .tsort .chipbtn.on { background: var(--text); color: var(--bg); border-color: transparent; }
+    .tme { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: linear-gradient(135deg, rgba(255, 200, 61, .16), rgba(255, 90, 31, .1)); }
+    .tme b { font-family: var(--font-display); font-size: 18px; }
+    .tme span { color: var(--hint); font-size: 12px; }
+    .trow { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 14px; background: var(--card); border: 1px solid transparent; }
+    .trow.me { border-color: var(--accent); background: rgba(255, 200, 61, .1); }
+    .rk { flex: none; width: 26px; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 13px; color: var(--hint); }
+    .trow.r1 .rk { color: #ffc83d; font-size: 16px; } .trow.r2 .rk { color: #cfd8e0; font-size: 15px; } .trow.r3 .rk { color: #e0955a; font-size: 14px; }
+    .emblem.sm { width: 30px; height: 30px; border-radius: 10px; }
+    .emblem.sm svg { width: 22px; height: 22px; }
+    .emblem.sm b { font-size: 9px; }
+    .tn { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .tn b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tn i { font-style: normal; color: var(--hint); font-size: 11px; }
+    .tv { flex: none; font-weight: 800; font-size: 14px; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
+    .tstate { text-align: center; color: var(--hint); font-size: 13px; padding: 24px 12px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+    .tstate button { padding: 8px 16px; border: none; border-radius: 12px; background: var(--accent); color: #2b1d00; font: inherit; font-weight: 800; cursor: pointer; }
     /* keyboard focus */
     button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .tab:focus-visible { outline-offset: -2px; }
@@ -441,7 +477,7 @@
   <div id="toast" role="status"></div>
   <main id="main">
     <header class="hud">
-      <div class="league" id="league">
+      <div class="league" id="league" role="button" tabindex="0" aria-label="Топ игроков">
         <span class="emblem" id="emblem"></span>
         <div class="lg-info">
           <div class="lg-name"><span id="lg-name" style="color:var(--text);font-size:13px;font-weight:800"></span><span id="lg-pct"></span></div>
@@ -470,6 +506,7 @@
           <div class="halo"></div><div class="ring"></div>
           <button id="coin" aria-label="Кликнуть по монетке"></button>
         </div>
+        <i class="combo" id="combo"><b id="combo-bar"></b></i>
         <div class="kbd-hint">Пробел — клик · цифры — разделы</div>
       </div>
     </div>
@@ -546,6 +583,14 @@
       share:    svg('<circle cx="6" cy="12" r="2.500"/><circle cx="18" cy="6" r="2.500"/><circle cx="18" cy="18" r="2.500"/><path d="M8.200 11l7.600-4M8.200 13l7.600 4"/>'),
       wheel:    svg('<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.600 5.600l12.800 12.800M18.400 5.600L5.600 18.400"/>'),
     });
+    Object.assign(ICONS, {
+      jungle:   svg('<path d="M12 21V11"/><path d="M12 11C9 11 6 9 5 6c3-1 6 0 7 5zM12 11c3 0 6-2 7-5-3-1-6 0-7 5zM12 11c0-3-1-6-3-8 3 0 5 3 3 8zM12 11c0-3 1-6 3-8-3 0-5 3-3 8z" fill="currentColor"/>'),
+      atlantis: svg('<path d="M3 21h18M5 21V12l3-3 3 3v9M13 21V9l3-4 3 4v12"/>'),
+      moon:     svg('<circle cx="12" cy="12" r="8"/><circle cx="9" cy="10" r="1.500" fill="currentColor"/><circle cx="14.500" cy="14" r="2" fill="currentColor"/>'),
+      storm:    svg('<path d="M6 16a4 4 0 0 1 0-8 5 5 0 0 1 9.600-1A4.500 4.500 0 0 1 17 16z"/><path d="M12 13l-2 4h3l-2 4"/>'),
+      pixel:    svg('<rect x="4" y="4" width="6" height="6" fill="currentColor"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6" fill="currentColor"/>'),
+      chest:    svg('<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 13h18M12 11v4M5 9a7 5 0 0 1 14 0"/>'),
+    });
     ICONS.crit = ICONS.bolt;
     ICONS.farm = ICONS.meadow;
     ICONS.fever = ICONS.auto;
@@ -553,6 +598,7 @@
     ICONS.turbo = ICONS.bolt;
     ICONS.rain = ICONS.mult;
     ICONS.cash = ICONS.gold;
+    ICONS.collector = ICONS.luck;
     const COIN = '<svg class="cur" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ffd23f" stroke="#d99000" stroke-width="1.4"/><circle cx="8" cy="8" r="3.6" fill="none" stroke="#d99000" stroke-width="1.2"/></svg>';
     const GEM = '<svg class="cur" viewBox="0 0 16 16"><path d="M4 2h8l3 4-7 8-7-8z" fill="#7fe3ff" stroke="#2590c4" stroke-width="1.2" stroke-linejoin="round"/><path d="M1 6h14M6 2L5 6l3 8 3-8-1-4" fill="none" stroke="#2590c4" stroke-width="1"/></svg>';
 
@@ -597,6 +643,8 @@
         desc: (l) => `После перерождения остаётся ${Math.min(60, 10 + 5 * l)}% уровней${l < 10 ? ` → ${Math.min(60, 15 + 5 * l)}%` : ""}` },
       { id: "manager",  name: "Менеджер",          base: 20, growth: 1, max: 1, grad: ["#7fb2ff", "#3558d8"],
         desc: (l) => l ? "Сам покупает доходные улучшения" : "Сам покупает самое дешёвое доходное улучшение" },
+      { id: "collector", name: "Сборщик", base: 15, growth: 1, max: 1, grad: ["#ffe27a", "#d49a00"],
+        desc: (l) => l ? "Сам ловит золотые монеты через 2 секунды" : "Сам ловит золотые монеты, как только они появились" },
       { id: "cpower",   name: "Мощь кликов",       base: 2, growth: 2, grad: ["#ffa24a", "#ff5a36"],
         desc: (l) => `+25% к доходу с кликов · сейчас +${25 * l}%` },
       { id: "night",    name: "Ночная смена",      base: 3, growth: 2, max: 5, grad: ["#8a8cff", "#3d3fc4"],
@@ -661,16 +709,31 @@
         back: "M0 120V98L120 92L175 32H225L280 92L400 98V120Z",
         front: "M0 120V104C80 96 150 108 220 102S350 106 400 100V120Z",
         extra: '<ellipse cx="200" cy="33" rx="25" ry="5" fill="#ff7a1a" opacity=".9"/>' },
+      { id: "jungle", name: "Джунгли", mult: 11, cost: 2.5e7, rebirths: 8, fx: "mist", perk: { crit: 0.04, golden: 0.15 }, perkText: "+4% к шансу крита, золотые монеты на 15% чаще",
+        grad: ["#86efac", "#15803d"], sky: "34,197,94", ground: "#14532d",
+        back: "M0 120V80Q20 50 40 80Q60 40 80 80Q110 30 140 80Q170 50 200 82Q230 36 260 80Q290 54 320 82Q350 40 380 80L400 70V120Z",
+        front: "M0 120V102C60 94 140 108 220 100S350 104 400 98V120Z",
+        extra: '<path d="M50 0V40M52 0V30M330 0V50M200 0V26" stroke="#166534" stroke-width="3" fill="none"/>' },
       { id: "ocean", name: "Океан", mult: 16, cost: 1e8, rebirths: 10, fx: "bubble", perk: { offline: 0.25 }, perkText: "+25% к офлайн-доходу",
         grad: ["#67e8f9", "#0e7490"], sky: "34,211,238", ground: "#0891b2",
         back: "M0 70Q25 58 50 70T100 70T150 70T200 70T250 70T300 70T350 70T400 70V120H0Z",
         front: "M0 92Q25 80 50 92T100 92T150 92T200 92T250 92T300 92T350 92T400 92V120H0Z" },
+      { id: "atlantis", name: "Подводный город", mult: 22, cost: 5e8, rebirths: 12, fx: "plankton", perk: { offline: 0.15, discount: 0.05 }, perkText: "+15% к офлайн-доходу, улучшения дешевле на 5%",
+        grad: ["#67e8f9", "#1d4ed8"], sky: "34,150,238", ground: "#1e3a8a",
+        back: "M30 120V80H44V60L52 48L60 60V80H74V120ZM150 120V70H166V50L176 36L186 50V70H202V120ZM290 120V84H304V62L312 50L320 62V84H334V120Z",
+        front: "M0 120V108Q50 100 100 108T200 108T300 108T400 106V120Z",
+        extra: '<circle cx="100" cy="40" r="4" fill="none" stroke="#a5f3fc" stroke-width="1.500"/><circle cx="240" cy="30" r="6" fill="none" stroke="#a5f3fc" stroke-width="1.500"/><circle cx="350" cy="50" r="3" fill="none" stroke="#a5f3fc" stroke-width="1.500"/>' },
       { id: "space", name: "Космос", mult: 32, cost: 2e9, rebirths: 15, fx: "star", perk: { gems: 0.2 }, perkText: "+20% кристаллов за перерождение",
         grad: ["#c4b5fd", "#5b21b6"], sky: "139,92,246", ground: "#6d28d9",
         back: "M0 120V96Q200 58 400 96V120Z",
         front: "M0 120V110Q100 98 200 104T400 106V120Z",
         extra: '<circle cx="320" cy="32" r="13" fill="#a78bfa" opacity=".55"/>' +
                '<ellipse cx="320" cy="32" rx="25" ry="6" fill="none" stroke="#a78bfa" stroke-width="2" opacity=".6" transform="rotate(-15 320 32)"/>' },
+      { id: "moon", name: "Лунная база", mult: 45, cost: 9e9, rebirths: 18, fx: "meteor", perk: { critp: 1, click: 0.1 }, perkText: "Крит сильнее на ×1, +10% к кликам",
+        grad: ["#e5e7eb", "#4b5563"], sky: "148,163,184", ground: "#475569",
+        back: "M0 120V90Q60 72 120 90T240 88T360 90T400 88V120Z",
+        front: "M0 120V106Q100 98 200 104T400 104V120Z",
+        extra: '<path d="M260 100V84Q290 56 320 84V100Z" fill="#94a3b8" opacity=".6"/><circle cx="90" cy="34" r="10" fill="#e2e8f0" opacity=".7"/><circle cx="340" cy="30" r="12" fill="#38bdf8" opacity=".6"/>' },
       { id: "city", name: "Киберсити", mult: 64, cost: 3e10, rebirths: 20, fx: "rain", perk: { discount: 0.1 }, perkText: "−10% к цене улучшений",
         grad: ["#f0abfc", "#a21caf"], sky: "236,72,200", ground: "#4a1d6e",
         back: "M0 120V70H30V50H55V80H75V40H105V90H125V60H160V30H190V85H215V55H250V75H275V35H305V80H330V58H360V45H385V90H400V120Z",
@@ -686,6 +749,11 @@
         back: "M110 120V84H140V66H170V48H230V66H260V84H290V120Z",
         front: "M0 120V108H400V120Z",
         extra: '<circle cx="200" cy="30" r="8" fill="#ffd23f" opacity=".9"/><path d="M60 120V70M80 120V70M320 120V70M340 120V70" stroke="#b45309" stroke-width="6"/>' },
+      { id: "storm", name: "Грозовой фронт", mult: 140, cost: 1.8e12, rebirths: 32, fx: "flash", perk: { crit: 0.06 }, perkText: "+6% к шансу крита",
+        grad: ["#a5b4fc", "#312e81"], sky: "99,102,241", ground: "#1e1b4b",
+        back: "M0 120V70Q30 40 70 60Q100 30 140 56Q180 28 220 54Q260 26 300 56Q340 34 372 58Q390 52 400 60V120Z",
+        front: "M0 120V104Q100 96 200 102T400 100V120Z",
+        extra: '<path d="M200 30l-10 26h12l-8 24" stroke="#fde68a" stroke-width="3" fill="none"/>' },
       { id: "sky", name: "Небеса", mult: 160, cost: 3e12, rebirths: 34, fx: "petal", perk: { fever: 10000 }, perkText: "Лихорадка на 10 с дольше",
         grad: ["#fbcfe8", "#db2777"], sky: "255,170,200", ground: "#f9a8d4",
         back: "M0 120V96Q20 70 50 84Q70 56 105 80Q140 60 160 90Q190 72 220 92Q250 64 285 86Q320 70 345 92Q375 78 400 96V120Z",
@@ -696,13 +764,18 @@
         back: "M0 120V92Q50 66 100 92T200 92T300 92T400 92V120Z",
         front: "M0 120V108Q60 98 120 108T240 108T360 108T400 106V120Z",
         extra: '<path d="M70 92V60M310 92V54" stroke="#fff" stroke-width="3"/><circle cx="70" cy="54" r="9" fill="#ff6b9d"/><circle cx="310" cy="48" r="9" fill="#4dd0e1"/>' },
+      { id: "pixel", name: "Пиксельный мир", mult: 225, cost: 2.5e13, rebirths: 42, fx: "pixel", perk: { income: 0.15, lump: 0.5 }, perkText: "+15% к доходу в секунду, куш на 50% больше",
+        grad: ["#fca5a5", "#4d96ff"], sky: "77,150,255", ground: "#1d4ed8",
+        back: "M0 120V90H40V74H80V90H120V66H160V84H200V70H240V92H280V78H320V88H360V72H400V120Z",
+        front: "M0 120V104H80V100H160V106H240V100H320V104H400V120Z",
+        extra: '<rect x="60" y="40" width="10" height="10" fill="#ffd93d"/><rect x="300" y="30" width="10" height="10" fill="#ffd93d"/><rect x="180" y="24" width="10" height="10" fill="#6bcb77"/>' },
       { id: "void", name: "Бездна", mult: 256, cost: 5e13, rebirths: 45, fx: "swirl", perk: { lump: 1 }, perkText: "Золотой куш вдвое больше",
         grad: ["#c4b5fd", "#1e1b4b"], sky: "100,60,200", ground: "#1e1b4b",
         back: "M0 120V100Q200 70 400 100V120Z",
         front: "M0 120V112Q100 104 200 108T400 110V120Z",
         extra: '<ellipse cx="200" cy="52" rx="42" ry="10" fill="none" stroke="#a78bfa" stroke-width="3" opacity=".75"/><circle cx="200" cy="52" r="17" fill="#05010f"/>' },
     ];
-    const FX_SPEED = { firefly: 5, sand: 3, snow: 7, ember: 4, bubble: 5, star: 2.5, foam: 6, glow: 5, gold: 3, confetti: 5, leaf: 6, spore: 7, rain: 1.2, crystal: 3, petal: 8, swirl: 4 }; // base seconds per cycle
+    const FX_SPEED = { firefly: 5, sand: 3, snow: 7, ember: 4, bubble: 5, star: 2.5, mist: 6, plankton: 5, meteor: 2.5, pixel: 3, flash: 1.5, foam: 6, glow: 5, gold: 3, confetti: 5, leaf: 6, spore: 7, rain: 1.2, crystal: 3, petal: 8, swirl: 4 }; // base seconds per cycle
 
     // r = rarity tier (index into RARITY). Ordered by price; bonus is added to the click before multipliers.
     const RARITY = [
@@ -866,6 +939,8 @@
       ["worlds3", "space", "Путешественник", "Открой 3 мира", 3, 3, () => state.worlds.length],
       ["worlds6", "space", "Исследователь", "Открой 6 миров", 6, 6, () => state.worlds.length],
       ["worldsAll", "space", "Покоритель миров", "Открой все миры", WORLDS.length, 10, () => state.worlds.length],
+      ["frenzy10", "power", "Неудержимый", "Вызови бешенство 10 раз", 10, 3, () => state.frenzies],
+      ["chest10", "gold", "Кладоискатель", "Открой 10 сундуков", 10, 4, () => state.chests],
       ["gold1", "mult", "Золотая удача", "Поймай золотую монету", 1, 1, () => state.golden],
       ["gold10", "mult", "Охотник за золотом", "Поймай 10 золотых монет", 10, 4, () => state.golden],
     ].map(([id, icon, name, desc, target, gems, val]) => ({ id, icon, name, desc, target, gems, val, grad: ACH_GRAD[icon] }));
@@ -929,6 +1004,13 @@
       spin: () => [400, 500, 600, 800].forEach((f, i) => tone(f, 0.08, "triangle", 0.04, i * 0.5)),
     };
 
+    // Shared leaderboard (Supabase). The key is the public "publishable" one: it can only read the top and call submit_score.
+    const TOP = { url: "https://fverflnsjkwednyrgxhx.supabase.co", key: "sb_publishable_4-iopg1DttOOBrZQuTBqbA_g7Eg7YlZ" };
+    const tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+    const topState = { status: "idle", rows: [], sort: "total", me: null };
+    let lastSubmit = 0, lastSentTotal = -1;
+    const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
     const mainEl = document.getElementById("main");
     const scoreEl = document.getElementById("score");
     const perClickEl = document.getElementById("per-click");
@@ -945,7 +1027,7 @@
     const emblemEl = document.getElementById("emblem");
     const leagueEl = document.getElementById("league");
     const TAB_ICONS = { home: "tap", upgrades: "up", skins: "skin", worlds: "space", rebirth: "cycle", rewards: "trophy" };
-    const TAB_TITLES = { upgrades: "Прокачка", skins: "Скины", worlds: "Миры", rebirth: "Перерождение", rewards: "Награды" };
+    const TAB_TITLES = { top: "Топ игроков", upgrades: "Прокачка", skins: "Скины", worlds: "Миры", rebirth: "Перерождение", rewards: "Награды" };
     const coin = document.getElementById("coin");
     const listEl = document.getElementById("list");
     const tabs = document.querySelectorAll(".tab");
@@ -979,7 +1061,10 @@
       turbo: 0,
       wheel: "",
       quests: { day: "", p: { clicks: 0, earn: 0, golden: 0, buys: 0 }, t: { earn: 0 }, done: [] },
-      settings: { sound: true, haptic: true },
+      settings: { sound: true, haptic: true, manager: true, collector: true, top: true },
+      chest: 0,
+      frenzies: 0,
+      chests: 0,
     });
     let state = defaultState();
     let tab = "home";
@@ -992,6 +1077,8 @@
     let nextGolden = Date.now() + 40000 + Math.random() * 40000;
     let toastTimer = null;
     let rewardSig = "";
+    let combo = 0, comboAt = 0, comboTimer = null, frenzyUntil = 0;
+    const COMBO_NEED = 30, COMBO_GAP = 700, FRENZY_MS = 6000;
     let today = "";
     let spinning = false;
     let wheelAngle = 0;
@@ -1023,12 +1110,13 @@
     const startCoins = () => 200 * state.perm.start;
     function addCoins(n) { state.score += n; state.earned += n; state.total += n; state.quests.p.earn += n; }
     const buffActive = () => Date.now() < buff.until;
+    const frenzyOn = () => Date.now() < frenzyUntil;
     const baseIncome = () => GENS.reduce((sum, u) => sum + u.inc * state.lv[u.id], 0);
     const incomeMult = () => multiplier() * (1 + perk("income"));
     const perSec = () => Math.round(baseIncome() * incomeMult());
     const perClick = () =>
       Math.round((1 + state.lv.power + skinById(state.skin).bonus + state.lv.fingers * 0.01 * baseIncome()) *
-        multiplier() * (1 + 0.25 * state.perm.cpower + perk("click")) * (buffActive() ? buff.mult : 1));
+        multiplier() * (1 + 0.25 * state.perm.cpower + perk("click")) * (buffActive() ? buff.mult : 1) * (frenzyOn() ? 2 : 1));
     const critChance = () => CRIT_CHANCE + 0.01 * state.lv.crit + perk("crit");
     const critMult = () => CRIT_MULT + 0.5 * state.lv.critp + perk("critp");
     const goldenGap = () => (45000 + Math.random() * 75000) * (1 - 0.06 * state.lv.luck) * (1 - perk("golden"));
@@ -1095,7 +1183,10 @@
             done: Array.isArray(q.done) ? q.done.filter((id) => QUESTS.some((x) => x.id === id)) : [],
           };
           const st = s.settings || {};
-          next.settings = { sound: st.sound !== false, haptic: st.haptic !== false };
+          next.settings = { sound: st.sound !== false, haptic: st.haptic !== false, manager: st.manager !== false, collector: st.collector !== false, top: st.top !== false };
+          next.chest = clean(s.chest);
+          next.frenzies = whole(s.frenzies);
+          next.chests = whole(s.chests);
         } catch {}
       } else {
         // progress from the first version (score only)
@@ -1262,7 +1353,18 @@
       if (tab === "worlds") return `${state.worlds.length} из ${WORLDS.length} открыто`;
       if (tab === "rebirth") return `Перерождений: ${fmt(state.rebirths)}`;
       if (tab === "rewards") return `${state.claimed.length} из ${ACHS.length} достижений`;
+      if (tab === "top") return topState.status === "ok" ? `${topState.rows.length} лучших` : "";
       return "";
+    }
+
+    function chestItem() {
+      const left = state.chest - Date.now();
+      const ready = left <= 0;
+      return itemHTML({
+        act: "chest", cta: ready, disabled: !ready, lead: iconTile("chest", ["#ffb347", "#b45309"]), name: "Сундук",
+        desc: "Раз в 4 часа: доход за полчаса и шанс на кристалл",
+        price: ready ? "Открыть" : `${Math.floor(left / 3.6e6)} ч ${Math.ceil((left % 3.6e6) / 6e4)} мин`,
+      });
     }
 
     function wheelCard() {
@@ -1306,9 +1408,13 @@
         listEl.innerHTML = "";
         return;
       }
+      if (tab === "top") {
+        listEl.innerHTML = topView();
+        return;
+      }
       if (tab === "upgrades") {
         const hidden = UPGRADES.some((u) => !upgradeVisible(u));
-        listEl.innerHTML = GROUPS.map((g) => {
+        listEl.innerHTML = (state.perm.manager ? settingItem("manager", "Менеджер", "Сам покупает доходные улучшения, можно выключить") : "") + GROUPS.map((g) => {
           const items = UPGRADES.filter((u) => u.group === g && upgradeVisible(u));
           return items.length ? `<div class="section">${g}</div>${items.map(upgradeItem).join("")}` : "";
         }).join("") + (hidden ? '<div class="more">Новые улучшения откроются, когда заработаешь больше.</div>' : "");
@@ -1333,7 +1439,7 @@
           name: `Ежедневный подарок <span class="lv">серия ${d.streak}</span>`,
           desc: `+${fmt(d.coins)} монет${d.gems ? ` и ${d.gems} кристалла` : ""} · каждый 7-й день +3 кристалла`,
           price: d.claimable ? "Забрать" : "Завтра",
-        }) + wheelCard() + `<div class="section">Задания дня · ${state.quests.done.length} из ${QUESTS.length}</div>` +
+        }) + chestItem() + wheelCard() + `<div class="section">Задания дня · ${state.quests.done.length} из ${QUESTS.length}</div>` +
           QUESTS.map(questItem).join("") + `<div class="section">Достижения · ${state.claimed.length} из ${ACHS.length}</div>` + rank.map((a) => {
           const v = Math.min(a.val(), a.target);
           const st = status(a);
@@ -1345,6 +1451,9 @@
         }).join("") + '<div class="section">Настройки</div>' +
           settingItem("sound", "Звук", "Тихие эффекты кликов, покупок и золотых монет") +
           settingItem("haptic", "Вибрация", "Отклик при кликах и покупках в Telegram") +
+          (state.perm.manager ? settingItem("manager", "Менеджер", "Автопокупка доходных улучшений") : "") +
+          (state.perm.collector ? settingItem("collector", "Сборщик", "Сам ловит золотые монеты") : "") +
+          settingItem("top", "Показывать меня в топе", "Твоё имя из Telegram и общий счёт видят все игроки") +
           itemHTML({ act: "share", cta: true, lead: iconTile("share", ["#4ea4f6", "#2563eb"]), name: "Пригласить друзей", desc: "Отправить ссылку на игру в Telegram", price: "Поделиться" });
       } else {
         listEl.innerHTML = rebirthCard() + '<div class="section">Бусты за кристаллы</div>' + BOOSTS.map((b) => itemHTML({
@@ -1507,7 +1616,7 @@
 
     // The manager buys the cheapest affordable income upgrade, a few per second at most.
     function autoBuy() {
-      if (!state.perm.manager) return false;
+      if (!state.perm.manager || !state.settings.manager) return false;
       let bought = false;
       for (let n = 0; n < 5; n++) {
         let best = null, bestCost = Infinity;
@@ -1573,6 +1682,7 @@
     const claimable = () => [
       ...(dailyInfo().claimable ? ["daily"] : []),
       ...(state.wheel !== dayKey() ? ["wheel"] : []),
+      ...(state.chest <= Date.now() ? ["chest"] : []),
       ...QUESTS.filter((q) => !state.quests.done.includes(q.id) && state.quests.p[q.key] >= questTarget(q)).map((q) => "q:" + q.id),
       ...ACHS.filter((a) => !state.claimed.includes(a.id) && a.val() >= a.target).map((a) => a.id),
     ];
@@ -1590,6 +1700,84 @@
       state.claimed.push(id);
       state.gems += a.gems;
       toast(`«${a.name}»: +${a.gems} кристаллов`);
+      haptic("success");
+      renderStats();
+      keepScroll(renderList);
+      flush();
+    }
+
+    const topHeaders = () => ({ apikey: TOP.key, Authorization: `Bearer ${TOP.key}`, "Content-Type": "application/json" });
+    const topOn = () => !!tgUser && state.settings.top && TOP.url.startsWith("https://");
+
+    // Sends the score at most once a minute and only when it changed (or when forced).
+    function submitScore(force) {
+      if (!ready || !topOn() || state.total < 100) return Promise.resolve(); // no empty rows for brand-new players
+      const now = Date.now();
+      if (!force && (now - lastSubmit < 60000 || state.total === lastSentTotal)) return Promise.resolve();
+      lastSubmit = now;
+      lastSentTotal = state.total;
+      const name = [tgUser.first_name, tgUser.username].find((x) => x) || "Игрок";
+      return fetch(`${TOP.url}/rest/v1/rpc/submit_score`, {
+        method: "POST", headers: topHeaders(),
+        body: JSON.stringify({ p_id: tgUser.id, p_name: String(name).slice(0, 24), p_total: state.total, p_rebirths: state.rebirths, p_league: leagueInfo().i, p_skin: state.skin }),
+      }).then((r) => (r.ok ? r.json() : null)).then((j) => {
+        const row = Array.isArray(j) ? j[0] : j;
+        if (row && row.rank != null) topState.me = { rank: Number(row.rank), players: Number(row.players) };
+      }).catch(() => {});
+    }
+
+    function leaveTop() {
+      topState.me = null;
+      if (!tgUser || !TOP.url.startsWith("https://")) return;
+      fetch(`${TOP.url}/rest/v1/rpc/leave_top`, { method: "POST", headers: topHeaders(), body: JSON.stringify({ p_id: tgUser.id }) }).catch(() => {});
+    }
+
+    function loadTop() {
+      topState.status = "loading";
+      if (tab === "top") keepScroll(() => renderList(true));
+      const order = topState.sort === "rebirths" ? "rebirths.desc,total.desc" : "total.desc,tg_id.asc";
+      const done = () => { if (tab === "top") keepScroll(() => renderList(true)); };
+      submitScore(true).then(() =>
+        fetch(`${TOP.url}/rest/v1/leaderboard?select=tg_id,name,total,rebirths,league&order=${order}&limit=50`, { headers: topHeaders() }))
+        .then((r) => { if (!r || !r.ok) throw new Error("bad response"); return r.json(); })
+        .then((rows) => { topState.rows = Array.isArray(rows) ? rows : []; topState.status = "ok"; done(); })
+        .catch(() => { topState.status = "error"; done(); });
+    }
+
+    function topView() {
+      const sort = (id, label) => `<button class="chipbtn${topState.sort === id ? " on" : ""}" data-act="topsort:${id}">${label}</button>`;
+      let body;
+      if (topState.status === "loading" || topState.status === "idle") body = '<div class="tstate">Загружаю топ…</div>';
+      else if (topState.status === "error") body = '<div class="tstate">Не удалось загрузить топ. Проверь соединение.<button data-act="toprefresh">Повторить</button></div>';
+      else if (!topState.rows.length) body = '<div class="tstate">В топе пока никого. Будь первым: зайди из Telegram и играй.</div>';
+      else {
+        body = topState.rows.map((r, i) => {
+          const L = LEAGUES[Math.min(LEAGUES.length - 1, Math.max(0, Number(r.league) || 0))];
+          const mine = tgUser && Number(r.tg_id) === Number(tgUser.id);
+          const val = topState.sort === "rebirths" ? `${fmt(r.rebirths)} пер.` : (r.total >= 1e6 ? short(r.total) : fmt(r.total));
+          return `<div class="trow r${i + 1}${mine ? " me" : ""}"><span class="rk">${i + 1}</span>
+            <span class="emblem sm" style="--c1:${L.c[0]};--c2:${L.c[1]}">${ICONS.shield}<b>${LEAGUES.indexOf(L) + 1}</b></span>
+            <span class="tn"><b>${esc(r.name)}${mine ? " (ты)" : ""}</b><i>${L.n}</i></span><span class="tv">${val}</span></div>`;
+        }).join("");
+      }
+      let me;
+      if (!tgUser) me = '<div class="tme"><b>Только для Telegram</b><span>Открой игру в Telegram, чтобы попасть в топ. Смотреть рейтинг можно и отсюда.</span></div>';
+      else if (!state.settings.top) me = '<div class="tme"><b>Ты скрыт из топа</b><span>Включи «Показывать меня в топе» в настройках раздела «Награды».</span></div>';
+      else if (state.total < 100) me = '<div class="tme"><b>Заработай 100 монет</b><span>После этого ты появишься в рейтинге.</span></div>';
+      else if (topState.me) me = `<div class="tme"><b>Твоё место: ${fmt(topState.me.rank)}</b><span>из ${fmt(topState.me.players)} ${topState.me.players % 10 === 1 && topState.me.players % 100 !== 11 ? "игрока" : "игроков"} · всего монет: ${state.total >= 1e6 ? short(state.total) : fmt(state.total)}</span></div>`;
+      else me = '<div class="tme"><b>Считаем твоё место…</b><span>Рейтинг обновляется раз в минуту.</span></div>';
+      return `<div class="tsort">${sort("total", "По монетам")}${sort("rebirths", "По перерождениям")}</div>${me}${body}`;
+    }
+
+    function claimChest() {
+      if (Date.now() < state.chest) return;
+      state.chest = Date.now() + 4 * 3600e3;
+      state.chests += 1;
+      const coins = wheelCoins(30);
+      addCoins(coins);
+      const gem = Math.random() < 0.4;
+      if (gem) state.gems += 1;
+      toast(`Сундук: +${fmt(coins)} монет${gem ? " и 1 кристалл" : ""}`);
       haptic("success");
       renderStats();
       keepScroll(renderList);
@@ -1680,6 +1868,7 @@
 
     function toggleSetting(id) {
       state.settings[id] = !state.settings[id];
+      if (id === "top") { if (state.settings.top) submitScore(true); else leaveTop(); }
       if (id === "sound" && state.settings.sound) SFX.success();
       renderStats();
       keepScroll(renderList);
@@ -1712,6 +1901,13 @@
       el.addEventListener("pointerdown", (e) => { e.preventDefault(); catchGolden(e.clientX, e.clientY); });
       document.body.appendChild(el);
       goldenEl = el;
+      if (state.perm.collector && state.settings.collector) {
+        setTimeout(() => {
+          if (goldenEl !== el) return;
+          const r = el.getBoundingClientRect();
+          catchGolden(r.left + r.width / 2, r.top + r.height / 2);
+        }, 2000);
+      }
     }
 
     function catchGolden(x, y) {
@@ -1752,8 +1948,35 @@
       flush();
     }
 
+    function renderCombo() {
+      const bar = document.getElementById("combo-bar");
+      if (!frenzyOn()) bar.style.width = Math.min(100, combo / COMBO_NEED * 100) + "%";
+    }
+
+    // Tapping fast fills the bar; a full bar starts a short frenzy with double click income.
+    function tickCombo() {
+      const now = Date.now();
+      combo = now - comboAt < COMBO_GAP ? combo + 1 : 1;
+      comboAt = now;
+      clearTimeout(comboTimer);
+      comboTimer = setTimeout(() => { combo = 0; renderCombo(); }, COMBO_GAP);
+      if (!frenzyOn() && combo >= COMBO_NEED) {
+        combo = 0;
+        frenzyUntil = now + FRENZY_MS;
+        state.frenzies += 1;
+        const box = document.getElementById("combo"), bar = document.getElementById("combo-bar");
+        box.classList.add("frenzy");
+        bar.style.transition = "none"; bar.style.width = "100%"; void bar.offsetWidth;
+        bar.style.transition = `width ${FRENZY_MS}ms linear`; bar.style.width = "0%";
+        toast("Бешенство: клики ×2 на 6 секунд");
+        haptic("gold");
+        setTimeout(() => { box.classList.remove("frenzy"); bar.style.transition = ""; renderCombo(); renderStats(); }, FRENZY_MS + 50);
+      } else renderCombo();
+    }
+
     function pressCoin(x, y) {
       if (!ready) return;
+      tickCombo();
       const crit = Math.random() < critChance();
       const gain = perClick() * (crit ? critMult() : 1);
       addCoins(gain);
@@ -1815,6 +2038,9 @@
       else if (kind === "ach") claimAch(id);
       else if (kind === "daily") claimDaily();
       else if (kind === "quest") claimQuest(id);
+      else if (kind === "chest") claimChest();
+      else if (kind === "topsort") { topState.sort = id; loadTop(); }
+      else if (kind === "toprefresh") loadTop();
       else if (kind === "boost") buyBoost(id);
       else if (kind === "spin") spin();
       else if (kind === "set") toggleSetting(id);
@@ -1832,6 +2058,9 @@
     }
     tabs.forEach((t) => t.addEventListener("click", () => setTab(t.dataset.tab)));
     document.getElementById("world-pill").addEventListener("click", () => setTab("worlds"));
+    const openTop = () => { setTab("top"); loadTop(); };
+    leagueEl.addEventListener("click", openTop);
+    leagueEl.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); openTop(); } });
     wide.addEventListener("change", () => setTab(tab));
 
     setInterval(() => {
@@ -1845,6 +2074,7 @@
         spawnGolden();
         nextGolden = Date.now() + goldenGap();
       }
+      if (!document.hidden) submitScore(false);
       renderStats();
     }, 1000);
 
@@ -1878,6 +2108,7 @@
       if (state.world !== "meadow") applyWorld();
       renderStats();
       renderList();
+      submitScore(false);
     });
   </script>
 </body>
