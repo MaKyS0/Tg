@@ -502,8 +502,8 @@
     .fx-orb i { width: calc(var(--s) * 4); height: calc(var(--s) * 4); border-radius: 50%; background: radial-gradient(circle, rgba(240, 171, 252, .7), transparent 70%); animation: hover var(--d) ease-in-out var(--dl) infinite; }
     .fx-shard i { rotate: 45deg; width: calc(var(--s) * 1.4); height: calc(var(--s) * 3); border-radius: 2px; background: linear-gradient(#fde68a, #a855f7); box-shadow: 0 0 8px #c084fc; animation: fall var(--d) linear var(--dl) infinite, twinkle 2s ease-in-out infinite; }
 
-    .qrow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-    .qrow .qbtn { font-size: 11px; padding: 10px 2px 8px; white-space: nowrap; }
+    .qrow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+    .qrow .qbtn { font-size: 10px; padding: 9px 1px 7px; white-space: nowrap; }
     .qrow .qi { width: 34px; height: 34px; }
     .qbtn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: 16px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: transform .15s, background .15s; }
     .qbtn:active { transform: scale(.96); }
@@ -554,6 +554,18 @@
     .petcard .pl i { width: 8px; height: 8px; border-radius: 50%; background: var(--card-2); }
     .petcard .pl i.on { background: var(--rar); box-shadow: 0 0 6px var(--rar); }
     .petcard .pd { color: var(--hint); font-size: 11px; line-height: 1.3; }
+    .talgrid { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 4px; }
+    .talrow { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 14px; background: var(--card); }
+    .talrow .te { font-size: 26px; flex: none; width: 34px; text-align: center; }
+    .talrow .ti { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .talrow .ti b { font-size: 13px; }
+    .talrow .ti span { color: var(--hint); font-size: 11px; }
+    .talrow .pl { display: flex; gap: 3px; }
+    .talrow .pl i { width: 8px; height: 8px; border-radius: 50%; background: var(--card-2); }
+    .talrow .pl i.on { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .talrow button { flex: none; padding: 8px 12px; border: none; border-radius: 12px; background: var(--accent); color: #2b1d00; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+    .talrow button:disabled { background: var(--card-2); color: var(--hint); cursor: default; }
+    .mok:disabled { background: var(--card-2); color: var(--hint); }
     .clog { margin-bottom: 16px; }
     .clog h4 { margin: 0 0 6px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
     .clog h4 b { padding: 2px 8px; border-radius: 8px; background: var(--accent); color: #2b1d00; font-size: 12px; }
@@ -1225,6 +1237,20 @@
       ["trophyseal", "Печать хаоса", "✹", 10, 300, 80, 0, ["glitch", "orbit", "spin"], "swirl", 1, 70, 3e9], ["trophygodslayer", "Убийца богов", "☠", 10, 0, 90, 0, ["flame", "glitch", "orbit", "shine"], "rays", 1, 100, 3e10],
     ].forEach((sp) => { SKINS.push({ ...makeSkin(sp.slice(0, 10), sp[11], { cost: sp[10] }), trophy: sp[10] }); });
 
+    // Collector tier: 48 purely cosmetic skins (no click bonus), priced from 500 coins up to 1e40, so there is always something to buy.
+    RARITY.push({ n: "Коллекционные", c: "#c084fc" });
+    {
+      const names = ["Ваниль", "Мята", "Лаванда", "Карамель", "Шоколад", "Малина", "Лимон", "Апельсин", "Черника", "Кокос", "Персик", "Слива", "Вишнёвый сок", "Мёд", "Корица", "Имбирь",
+        "Зефир", "Мармелад", "Леденец", "Пастила", "Эклер", "Макарун", "Капучино", "Какао", "Лайм", "Арбузная корка", "Ежевика", "Клубника", "Папайя", "Манго", "Гранатовый сок", "Ананас",
+        "Дыня", "Груша", "Абрикос", "Инжир", "Фисташка", "Миндаль", "Кедр", "Сосна", "Дуб", "Берёза", "Клён", "Ива", "Бамбук", "Орхидея", "Тюльпан", "Подсолнух"];
+      const glyphs = ["●", "◐", "◑", "◒", "◓", "◔", "◕", "❤", "✿", "❀", "✾", "❁", "☘", "✤", "❖", "✦"];
+      const shapes = [0, "squircle", "blob", "leaf", "square"], fxs = [0, "shine", "pulse", ["shine", "pulse"], "holo", "spin"], pats = [0, "dots", "stripes", "rays", "waves", "checker", "grid", "swirl"];
+      names.forEach((n, i) => {
+        const sp = ["col" + (i + 1), n, glyphs[i % 16], 11, (i * 47) % 360, 55 + (i * 13) % 35, shapes[(i * 3 + 1) % 5], fxs[(i * 2 + 1) % 6], pats[(i * 5 + 2) % 8], i % 7 === 6 ? 1 : 0];
+        SKINS.push(makeSkin(sp, 0, { cost: round2(500 * Math.pow(1e40 / 500, i / 47)) }));
+      });
+    }
+
     // ---- worlds 22..61 ----
     const NEW_ICONS = {
       pyramid: '<path d="M12 3L2.5 20h19z" fill="currentColor" fill-opacity=".3"/><path d="M12 3v17"/>',
@@ -1387,6 +1413,39 @@
       WORLDS.push({ id, name, mult: round2(256 * Math.pow(1.13, k + 1)), cost: 0, rebirths: 0, fx, perk, perkText: perkLine(perk),
         grad, sky, ground, back: sc.back, front: sc.front, extra: sceneExtra(sun, sc, ground) });
     });
+    // 62 more worlds from short specs: [name, theme, hue]; colours, scenery and perks are derived (same seed, same world).
+    {
+      const T = { forest: ["forest", "leaf", "trees", "sun"], desert: ["desert", "sand", "dunes", "sun"], ice: ["glacier", "snow", "peaks", "moon"], sea: ["ocean", "bubble", "waves", "sun"],
+        space: ["space", "star", "hills", "stars"], fire: ["flame", "ember", "peaks", ""], magic: ["star", "glow", "spires", "moon"], city: ["city", "rain", "blocks", "moon"],
+        ruins: ["temple", "ash", "ruins", ""], sky: ["sky", "mist", "domes", "sun"], candy: ["candy", "confetti", "hills", "sun"], void: ["void", "swirl", "hills", "hole"], garden: ["meadow", "petal", "hills", "sun"] };
+      const perkFor = (k) => {
+        const g = 1 + k / 25, keys = ["income", "click", "crit", "gems", "offline", "discount", "golden", "lump", "critp", "fever"];
+        const val = { income: 0.3 * g, click: 0.4 * g, crit: Math.min(0.15, 0.03 + 0.002 * k), gems: Math.min(1, 0.2 + 0.01 * k), offline: 0.3 * g, discount: Math.min(0.3, 0.05 + 0.004 * k),
+          golden: Math.min(0.35, 0.1 + 0.005 * k), lump: 0.8 * g, critp: 1 + 0.05 * k, fever: 12000 + 300 * k };
+        const a = keys[k % 10], b = keys[(k * 3 + 4) % 10], p = { [a]: round2(val[a]) };
+        if (k % 2 === 0 && b !== a) p[b] = round2(val[b]);
+        return p;
+      };
+      [["Берёзовая роща", "forest", 120], ["Сосновый бор", "forest", 150], ["Дубрава", "forest", 95], ["Ивовый берег", "forest", 110], ["Кленовая аллея", "forest", 25], ["Заповедный лес", "forest", 135],
+        ["Лесное озеро", "forest", 170], ["Папоротниковая лощина", "forest", 140], ["Красные пески", "desert", 15], ["Соляная пустыня", "desert", 45], ["Оазис миражей", "desert", 180],
+        ["Барханы заката", "desert", 30], ["Каменная пустыня", "desert", 25], ["Золотой каньон", "desert", 40], ["Снежная долина", "ice", 200], ["Ледяной каньон", "ice", 190],
+        ["Полярная станция", "ice", 210], ["Замёрзшее озеро", "ice", 195], ["Метельный перевал", "ice", 215], ["Вечная мерзлота", "ice", 205], ["Лагуна", "sea", 185], ["Жемчужная бухта", "sea", 175],
+        ["Морской порт", "sea", 205], ["Штормовое море", "sea", 220], ["Глубинный разлом", "sea", 230], ["Кораллы заката", "sea", 10], ["Кольца Сатурна", "space", 40], ["Туманность Ориона", "space", 280],
+        ["Пояс Койпера", "space", 210], ["Красный карлик", "space", 10], ["Галактический центр", "space", 300], ["Нейтронная звезда", "space", 195], ["Раскалённая кузница", "fire", 15],
+        ["Вулканический остров", "fire", 8], ["Пепельная равнина", "fire", 20], ["Огненное озеро", "fire", 5], ["Пекло", "fire", 0], ["Заколдованный лес", "magic", 160], ["Башня магов", "magic", 270],
+        ["Лунная поляна", "magic", 240], ["Феерия", "magic", 310], ["Страна грёз", "magic", 290], ["Ночной мегаполис", "city", 250], ["Портовый город", "city", 200], ["Город на холмах", "city", 35],
+        ["Сияющий проспект", "city", 300], ["Затерянный храм", "ruins", 50], ["Забытая крепость", "ruins", 30], ["Древний акведук", "ruins", 40], ["Руины богов", "ruins", 45],
+        ["Облачный замок", "sky", 200], ["Грозовая гряда", "sky", 240], ["Закатное небо", "sky", 20], ["Радужные облака", "sky", 320], ["Леденцовые горы", "candy", 330],
+        ["Зефирные облака", "candy", 340], ["Мармеладное море", "candy", 310], ["Тёмный разлом", "void", 265], ["Пустота", "void", 255], ["Конец времён", "void", 275],
+        ["Сад камней", "garden", 100], ["Цветущий луг", "garden", 80]].forEach(([name, theme, h], j) => {
+        const k = 90 + j, [icon, fx, kind, sun] = T[theme], id = "w" + (k + 1);
+        const sc = scenery(kind, k + 1, "");
+        ICONS[id] = ICONS[icon];
+        const perk = perkFor(j);
+        WORLDS.push({ id, name, mult: round2(256 * Math.pow(1.13, k + 1)), cost: 0, rebirths: 0, fx, perk, perkText: perkLine(perk),
+          grad: [hsl(h, 70, 76), hsl((h + 25) % 360, 60, 34)], sky: hslRgb(h, 70, 55).join(","), ground: hsl(h, 45, 20), back: sc.back, front: sc.front, extra: sceneExtra(sun, sc, "") });
+      });
+    }
     // Worlds open in order: four per rebirth, and the coin price follows the rebirth price.
     WORLDS.forEach((w, i) => { w.rebirths = Math.floor(i / 4); w.cost = i ? round2(3000 * Math.pow(2.56, i - 1)) : 0; });
 
@@ -1401,6 +1460,11 @@
       ["🪐", ["#fdba74", "#7c2d12"], "gem", 60], ["💎", ["#a5f3fc", "#0369a1"], "gem", 100],
       ["🥇", ["#fde68a", "#b45309"], "lg", 10], ["🛡️", ["#bfdbfe", "#1e40af"], "lg", 25], ["⚔️", ["#e5e7eb", "#4b5563"], "lg", 50], ["🏰", ["#c4b5fd", "#4c1d95"], "lg", 75],
       ["🌠", ["#fef08a", "#7e22ce"], "lg", 100], ["☄️", ["#fdba74", "#9f1239"], "lg", 125], ["♾️", ["#f0abfc", "#0f172a"], "lg", 149], ["🌀", ["#67e8f9", "#1e3a8a"], "rb", 20],
+      ["😎", ["#fde68a", "#f59e0b"]], ["🤩", ["#fbcfe8", "#db2777"]], ["🥳", ["#fda4af", "#e11d48"]], ["🤠", ["#fdba74", "#b45309"]], ["🐸", ["#bef264", "#15803d"]],
+      ["🐵", ["#fed7aa", "#92400e"]], ["🦝", ["#d1d5db", "#4b5563"]], ["🐧", ["#bae6fd", "#1e3a8a"]], ["🐢", ["#86efac", "#166534"]], ["🐙", ["#f9a8d4", "#9d174d"]],
+      ["👽", ["#bbf7d0", "#047857"], "gem", 15], ["🧛", ["#fecaca", "#7f1d1d"], "gem", 25], ["🧞", ["#a5f3fc", "#4338ca"], "gem", 40], ["🐉", ["#fde047", "#b91c1c"], "gem", 70],
+      ["🌙", ["#e0e7ff", "#4338ca"], "lg", 5], ["🔮", ["#e9d5ff", "#6b21a8"], "lg", 30], ["🪄", ["#fef9c3", "#7c3aed"], "lg", 40], ["🎖️", ["#fde68a", "#a16207"], "lg", 60], ["🌈", ["#fda4af", "#4f46e5"], "lg", 110],
+      ["☀️", ["#fef08a", "#ea580c"], "rb", 4], ["⭐", ["#fde047", "#ca8a04"], "rb", 6], ["💫", ["#bfdbfe", "#7c3aed"], "rb", 10], ["🌟", ["#fef9c3", "#d97706"], "rb", 14], ["🌍", ["#86efac", "#0369a1"], "rb", 18],
     ].map(([e, g, kind, n]) => ({ e, g, kind: kind || "free", n: n || 0 }));
 
     // ---- promo codes: each works once per player ----
@@ -1416,6 +1480,9 @@
       BOSS: { gems: 12, text: "12 кристаллов" },
       ZOO: { pet: true, text: "случайного питомца" },
       WORLD: { coins: 120, text: "монеты за два часа игры" },
+      SEA: { gems: 10, text: "10 кристаллов" }, OCEAN: { coins: 240, text: "монеты за четыре часа игры" }, MEGA: { gems: 20, text: "20 кристаллов" },
+      PET2: { pet: true, text: "случайного питомца" }, SKY: { turbo: 600000, text: "Турбо ×3 на 10 минут" }, GOLD: { coins: 360, text: "монеты за шесть часов игры" },
+      STAR: { gems: 6, text: "6 кристаллов" }, FUN: { pet: true, text: "случайного питомца" }, RICH: { gems: 30, text: "30 кристаллов" }, WELCOME: { gems: 3, text: "3 кристалла" },
     };
 
     // Pets: found in the crystal chest, as boss drops or in eggs; a repeat raises the level (max 5), at max it pays 2 gems.
@@ -1430,9 +1497,26 @@
       ["bee", "Пчела", "🐝", 0, "click", 0.05, "к доходу с кликов"], ["panda", "Панда", "🐼", 0, "offline", 0.08, "к офлайн-доходу"],
       ["bat", "Летучая мышь", "🦇", 1, "crit", 0.01, "к шансу крита"], ["octopus", "Осьминог", "🐙", 1, "discount", 0.02, "скидка на улучшения"],
       ["wolf", "Волк", "🐺", 2, "click", 0.12, "к доходу с кликов"], ["kraken", "Кракен", "🦑", 3, "gems", 0.1, "к кристаллам за перерождение"],
+      ["rabbit", "Кролик", "🐰", 0, "income", 0.04, "к доходу в секунду"], ["duck", "Утёнок", "🦆", 0, "click", 0.05, "к доходу с кликов"],
+      ["frog", "Лягушка", "🐸", 0, "golden", 0.04, "к частоте золотых монет"], ["hamster", "Хомяк", "🐹", 0, "discount", 0.012, "скидка на улучшения"],
+      ["penguin", "Пингвин", "🐧", 1, "offline", 0.08, "к офлайн-доходу"], ["lion", "Лев", "🦁", 1, "click", 0.08, "к доходу с кликов"],
+      ["horse", "Конь", "🐎", 1, "income", 0.06, "к доходу в секунду"], ["tiger", "Тигр", "🐯", 1, "crit", 0.012, "к шансу крита"],
+      ["shark", "Акула", "🦈", 2, "income", 0.1, "к доходу в секунду"], ["dino", "Динозавр", "🦖", 2, "click", 0.14, "к доходу с кликов"],
+      ["elephant", "Слон", "🐘", 2, "gems", 0.08, "к кристаллам за перерождение"], ["panther", "Пантера", "🐆", 3, "income", 0.2, "к доходу в секунду"],
     ].map(([id, name, e, r, kind, v, text]) => ({ id, name, e, r, kind, v, text }));
     const PET_RARITY = [{ n: "Обычный", c: "#9aa7ad", w: 60 }, { n: "Редкий", c: "#4cc3ff", w: 28 }, { n: "Эпический", c: "#b779ff", w: 10 }, { n: "Легендарный", c: "#ffb02e", w: 2 }];
     const PET_MAX = 5;
+    // Talents: one point per rebirth, spent for good (they survive rebirths). Costs per level: 1, 1, 2, 2, 3.
+    const TALENTS = [
+      ["fist", "Железная хватка", "✊", "click", 0.1, "к доходу с кликов"], ["hands", "Золотые руки", "🤲", "income", 0.08, "к доходу в секунду"],
+      ["eye", "Зоркий глаз", "👁️", "crit", 0.01, "к шансу крита"], ["smash", "Мощь критов", "💥", "critp", 0.2, "к множителю крита"],
+      ["luck", "Удача", "🍀", "golden", 0.05, "к частоте золотых монет"], ["trade", "Мастер торга", "💰", "discount", 0.015, "скидка на улучшения"],
+      ["night", "Ночной дозор", "🌙", "offline", 0.06, "к офлайн-доходу"], ["nose", "Кристальный нюх", "💎", "gems", 0.05, "к кристаллам за перерождение"],
+      ["hunter", "Охотник", "🎯", "boss", 0.04, "меньше ударов по боссу"], ["time", "Время босса", "⏱️", "bosstime", 3, "секунд на бой с боссом"],
+      ["tame", "Приручение", "🐾", "petdrop", 0.05, "к шансу питомца с босса"], ["rush", "Быстрое возрождение", "🔁", "rbcost", 0.03, "дешевле перерождение"],
+      ["aim", "Меткость", "🏹", "aim", 40, "мс к окну точного удара"],
+    ].map(([id, name, e, kind, v, text]) => ({ id, name, e, kind, v, text }));
+    const TALENT_MAX = 5, TALENT_COST = [1, 1, 2, 2, 3];
     // Leagues beyond Mythic: 142 more ("title + number"), each about x2.15 harder than the one before; league 150 needs about 5e59 coins.
     // Keep the titles in sync with leaderboard.py (the bot prints the league name).
     const LEAGUE_TITLES = ["Титан", "Гигант", "Властелин", "Чемпион", "Мастер", "Гранд", "Архонт", "Страж", "Владыка", "Император", "Полубог", "Бог", "Демиург", "Творец", "Хранитель", "Вечный", "Космос", "Вселенная", "Мультивселенная", "Абсолют"];
@@ -1441,8 +1525,13 @@
       LEAGUES.push({ n: i < 140 ? `${LEAGUE_TITLES[Math.floor(i / 7)]} ${["I", "II", "III", "IV", "V", "VI", "VII"][i % 7]}` : ["Предел", "Бесконечность"][i - 140],
         at: round2(5e12 * Math.pow(2.15, i + 1)), c: [hsl(h, 75, 72), hsl(h, 70, 40)] });
     }
-    const SEASON = 2, VERSION = "2.4";
+    const SEASON = 2, VERSION = "2.5";
     const CHANGELOG = [
+      { v: "2.5", t: "Море контента", items: [
+        "Таланты: очко за каждое перерождение, 13 талантов с пятью уровнями (раздел «Награды» → «Таланты»)",
+        "+62 мира, всего 173: леса, пустыни, льды, моря, космос, огонь, магия, города, руины, небо, сладости и бездна",
+        "+48 косметических скинов редкости «Коллекционные» (без бонуса, от 500 монет до 1e40)",
+        "+12 питомцев (всего 30), +24 аватарки (всего 56), +38 достижений, +10 промокодов" ] },
       { v: "2.4", t: "150 лиг", items: [
         "Лиги не заканчиваются на «Мифе»: теперь их 150, от «Титана I» до «Бесконечности»; каждая примерно вдвое сложнее предыдущей",
         "8 новых аватарок (за лиги и перерождения), 6 новых питомцев, 2 новых задания дня и 10 достижений",
@@ -1529,6 +1618,43 @@
       ["boss100", "power", "Легенда арены", "Победи 100 боссов", 100, 25, () => state.bosses],
       ["rb20", "cycle", "Вечное возрождение", "Переродись 20 раз", 20, 30, () => state.rebirths],
       ["promo3", "gold", "Охотник за кодами", "Активируй 3 промокода", 3, 3, () => state.promos.length],
+      ["clicks100k", "power", "Сто тысяч касаний", "Сделай 100 000 кликов", 1e5, 8, () => state.clicks],
+      ["clicks1m", "power", "Миллион касаний", "Сделай 1 000 000 кликов", 1e6, 20, () => state.clicks],
+      ["clicks10m", "power", "Неутомимый", "Сделай 10 000 000 кликов", 1e7, 40, () => state.clicks],
+      ["coins1q", "gold", "Квадриллионер", "Заработай 1 квадр монет за всё время", 1e15, 25, () => state.total],
+      ["coins1qq", "gold", "Квинтиллионер", "Заработай 1 квинт монет за всё время", 1e18, 30, () => state.total],
+      ["coins1sp", "gold", "Септиллионер", "Заработай 1 септ монет за всё время", 1e24, 40, () => state.total],
+      ["coins1n", "gold", "Нониллионер", "Заработай 1e30 монет за всё время", 1e30, 50, () => state.total],
+      ["coins1e40", "gold", "За гранью", "Заработай 1e40 монет за всё время", 1e40, 60, () => state.total],
+      ["coins1e50", "gold", "Бесконечный счёт", "Заработай 1e50 монет за всё время", 1e50, 80, () => state.total],
+      ["gold50", "mult", "Золотая лихорадка", "Поймай 50 золотых монет", 50, 8, () => state.golden],
+      ["gold200", "mult", "Золотой магнат", "Поймай 200 золотых монет", 200, 15, () => state.golden],
+      ["gold1000", "mult", "Повелитель золота", "Поймай 1000 золотых монет", 1000, 30, () => state.golden],
+      ["frenzy50", "power", "Берсерк", "Вызови бешенство 50 раз", 50, 8, () => state.frenzies],
+      ["frenzy200", "power", "Вечная ярость", "Вызови бешенство 200 раз", 200, 20, () => state.frenzies],
+      ["chest50", "gold", "Искатель сокровищ", "Открой 50 сундуков", 50, 10, () => state.chests],
+      ["chest200", "gold", "Хозяин кладов", "Открой 200 сундуков", 200, 25, () => state.chests],
+      ["exp25", "gold", "Путешественник во времени", "Заверши 25 экспедиций", 25, 10, () => state.exps],
+      ["exp100", "gold", "Хроноскиталец", "Заверши 100 экспедиций", 100, 25, () => state.exps],
+      ["worlds20", "space", "Двадцать миров", "Открой 20 миров", 20, 10, () => state.wmax],
+      ["worlds40", "space", "Сорок миров", "Открой 40 миров", 40, 15, () => state.wmax],
+      ["worlds60", "space", "Шестьдесят миров", "Открой 60 миров", 60, 20, () => state.wmax],
+      ["worlds80", "space", "Восемьдесят миров", "Открой 80 миров", 80, 30, () => state.wmax],
+      ["worlds100", "space", "Сто миров", "Открой 100 миров", 100, 40, () => state.wmax],
+      ["worlds140", "space", "Властелин вселенных", "Открой 140 миров", 140, 60, () => state.wmax],
+      ["skins60", "skin", "Витрина", "Собери 60 скинов", 60, 20, () => state.owned.length],
+      ["skins100", "skin", "Галерея", "Собери 100 скинов", 100, 35, () => state.owned.length],
+      ["skins130", "skin", "Мегаколлекция", "Собери 130 скинов", 130, 50, () => state.owned.length],
+      ["pets12b", "mult", "Приют", "Собери 12 питомцев", 12, 10, () => Object.keys(state.pets).length],
+      ["pets20", "mult", "Заповедник", "Собери 20 питомцев", 20, 20, () => Object.keys(state.pets).length],
+      ["perfect500", "mult", "Снайпер-ас", "Сделай 500 точных ударов", 500, 15, () => state.perfects],
+      ["perfect1000", "mult", "Легендарный стрелок", "Сделай 1000 точных ударов", 1000, 30, () => state.perfects],
+      ["boss5", "power", "Охотник со стажем", "Победи 5 боссов", 5, 5, () => state.bosses],
+      ["boss20", "power", "Гроза арены", "Победи 20 боссов", 20, 12, () => state.bosses],
+      ["boss50", "power", "Убийца чудовищ", "Победи 50 боссов", 50, 20, () => state.bosses],
+      ["boss200", "power", "Бессмертный чемпион", "Победи 200 боссов", 200, 50, () => state.bosses],
+      ["tal5", "cycle", "Ученик", "Потрать 5 очков талантов", 5, 6, () => talentSpent()],
+      ["tal20", "cycle", "Мудрец", "Потрать 20 очков талантов", 20, 25, () => talentSpent()],
     ].map(([id, icon, name, desc, target, gems, val]) => ({ id, icon, name, desc, target, gems, val, grad: ACH_GRAD[icon] }));
 
     // Daily quests restart every day and pay gems.
@@ -1685,6 +1811,7 @@
       exp: { until: 0, kind: 0 },
       exps: 0,
       pets: {},
+      talents: {},
       wmax: 1,
       bosses: 0,
       perfects: 0,
@@ -1728,21 +1855,24 @@
     const isMax = (u) => u.max && state.lv[u.id] >= u.max;
     const perk = (k) => (worldById(state.world).perk || {})[k] || 0; // perk of the world you are in
     const upgradeCost = (u) =>
-      Math.max(1, Math.floor(u.base * Math.pow(u.growth, state.lv[u.id]) * Math.max(0.2, 1 - 0.05 * state.perm.discount - perk("discount") - pet("discount")) * priceMult()));
+      Math.max(1, Math.floor(u.base * Math.pow(u.growth, state.lv[u.id]) * Math.max(0.2, 1 - 0.05 * state.perm.discount - perk("discount") - pet("discount") - tal("discount")) * priceMult()));
     const permCost = (u) => Math.floor(u.base * Math.pow(u.growth, state.perm[u.id]));
     // owning every skin of a rarity gives +5% income, once per rarity
     const collection = () => RARITY.reduce((n, _, i) =>
       n + (SKINS.filter((x) => x.r === i).every((x) => state.owned.includes(x.id)) ? 0.05 : 0), 0);
+    const tal = (k) => TALENTS.reduce((n, t) => n + (t.kind === k ? t.v * (state.talents[t.id] || 0) : 0), 0);
+    const talentSpent = () => TALENTS.reduce((n, t) => n + TALENT_COST.slice(0, state.talents[t.id] || 0).reduce((a, b) => a + b, 0), 0);
+    const talentPoints = () => Math.max(0, state.rebirths - talentSpent());
     const pet = (k) => PETS.reduce((n, p) => n + (p.kind === k ? p.v * (state.pets[p.id] || 0) : 0), 0); // pets are defined further down; this runs later
     const turboOn = () => Date.now() < state.turbo;
     const surgeOn = () => Date.now() < state.surge;
     const multiplier = () =>
       (1 + 0.25 * state.lv.mult) * (1 + 0.5 * state.perm.gold + collection()) * worldById(state.world).mult * rebirthMult() * (turboOn() ? 3 : 1) * (surgeOn() ? 3 : 1);
-    const gemBoost = () => 1 + 0.25 * state.perm.gain + perk("gems") + pet("gems");
+    const gemBoost = () => 1 + 0.25 * state.perm.gain + perk("gems") + pet("gems") + tal("gems");
     // A rebirth is bought with the coins earned in the run: 1 млн for the first, x32 for every next one. Rebirths never stack,
     // one at a time. Each one makes all upgrades 16x pricier but multiplies the whole income for good.
     const REBIRTH_BASE = 1e6, REBIRTH_STEP = 32, PRICE_STEP = 16, REBIRTH_INCOME = 4;
-    const rebirthCost = (n = state.rebirths) => REBIRTH_BASE * Math.pow(REBIRTH_STEP, n);
+    const rebirthCost = (n = state.rebirths) => REBIRTH_BASE * Math.pow(REBIRTH_STEP, n) * (1 - Math.min(0.4, tal("rbcost")));
     const rebirthReady = () => state.earned >= rebirthCost();
     const rebirthGems = () => Math.round((3 + state.rebirths) * gemBoost());
     const rebirthMult = (n = state.rebirths) => Math.pow(REBIRTH_INCOME, n);
@@ -1753,16 +1883,16 @@
     const buffActive = () => Date.now() < buff.until;
     const frenzyOn = () => Date.now() < frenzyUntil;
     const baseIncome = () => GENS.reduce((sum, u) => sum + u.inc * state.lv[u.id], 0);
-    const incomeMult = () => multiplier() * (1 + perk("income") + pet("income"));
+    const incomeMult = () => multiplier() * (1 + perk("income") + pet("income") + tal("income"));
     const perSec = () => Math.round(baseIncome() * incomeMult());
     const perClick = () =>
       Math.round((1 + state.lv.power + skinById(state.skin).bonus + state.lv.fingers * 0.01 * baseIncome()) *
-        multiplier() * (1 + 0.25 * state.perm.cpower + perk("click") + pet("click")) * (buffActive() ? buff.mult : 1) * (frenzyOn() ? 2 : 1));
-    const critChance = () => CRIT_CHANCE + 0.01 * state.lv.crit + perk("crit") + pet("crit");
-    const critMult = () => CRIT_MULT + 0.5 * state.lv.critp + perk("critp");
-    const goldenGap = () => (45000 + Math.random() * 75000) * (1 - 0.06 * state.lv.luck) * (1 - Math.min(0.8, perk("golden") + pet("golden")));
+        multiplier() * (1 + 0.25 * state.perm.cpower + perk("click") + pet("click") + tal("click")) * (buffActive() ? buff.mult : 1) * (frenzyOn() ? 2 : 1));
+    const critChance = () => CRIT_CHANCE + 0.01 * state.lv.crit + perk("crit") + pet("crit") + tal("crit");
+    const critMult = () => CRIT_MULT + 0.5 * state.lv.critp + perk("critp") + tal("critp");
+    const goldenGap = () => (45000 + Math.random() * 75000) * (1 - 0.06 * state.lv.luck) * (1 - Math.min(0.8, perk("golden") + pet("golden") + tal("golden")));
     const feverMs = () => 15000 + 3000 * state.lv.fever + perk("fever");
-    const offlineRate = () => 0.5 + 0.1 * state.perm.night + perk("offline") + pet("offline");
+    const offlineRate = () => 0.5 + 0.1 * state.perm.night + perk("offline") + pet("offline") + tal("offline");
     const offlineCap = () => (3 + state.perm.night) * 3600;
 
     function leagueInfo() {
@@ -1837,6 +1967,7 @@
           next.wmax = Math.max(whole(s.wmax), next.worlds.length);
           // worlds open strictly in order, so worlds lost to the short-lived version 2.1 reset are restored from the lifetime counter
           if (next.worlds.length < next.wmax) next.worlds = WORLDS.slice(0, Math.min(next.wmax, WORLDS.length)).map((w) => w.id);
+          next.talents = Object.fromEntries(TALENTS.filter((t) => whole(s.talents && s.talents[t.id]) > 0).map((t) => [t.id, Math.min(TALENT_MAX, whole(s.talents[t.id]))]));
           next.pets = Object.fromEntries(PETS.filter((p) => whole(s.pets && s.pets[p.id]) > 0).map((p) => [p.id, Math.min(PET_MAX, whole(s.pets[p.id]))]));
           next.bosses = whole(s.bosses);
           next.perfects = whole(s.perfects);
@@ -2155,6 +2286,7 @@
         const quick = `<div class="qrow">
           <button class="qbtn" data-act="modal:profile"><span class="qi" style="background:linear-gradient(135deg,${av.g[0]},${av.g[1]})">${av.e}</span>Профиль</button>
           <button class="qbtn" data-act="modal:pets"><span class="qi" style="background:linear-gradient(135deg,#f9a8d4,#a855f7)">🐾</span>Питомцы</button>
+          <button class="qbtn" data-act="modal:talents"><span class="qi" style="background:linear-gradient(135deg,#fde047,#ea580c)">🎓</span>Таланты</button>
           <button class="qbtn" data-act="modal:promo"><span class="qi" style="background:linear-gradient(135deg,#ffd23f,#f59e0b)">${ICONS.gift}</span>Промокод</button>
           <button class="qbtn${state.seenVer !== VERSION ? " new" : ""}" data-act="modal:log"><span class="qi" style="background:linear-gradient(135deg,#4ea4f6,#7c3aed)">${ICONS.star}</span>Новое</button></div>`;
         listEl.innerHTML = quick + itemHTML({
@@ -2496,6 +2628,7 @@
     // ids of rewards that can be collected right now
     const claimable = () => [
       ...(dailyInfo().claimable ? ["daily"] : []),
+      ...(TALENTS.some((t) => (state.talents[t.id] || 0) < TALENT_MAX && TALENT_COST[state.talents[t.id] || 0] <= talentPoints()) ? ["tal"] : []),
       ...(state.wheel !== dayKey() ? ["wheel"] : []),
       ...(state.chest <= Date.now() ? ["chest"] : []),
       ...(state.exp.until && state.exp.until <= Date.now() ? ["exp"] : []),
@@ -2917,7 +3050,8 @@
     const BOSS_MS = 30000, BOSS_WAIT = 25000;
     let boss = null, nextBoss = Date.now() + 150000 + Math.random() * 120000;
     const bossEl = document.getElementById("boss-chip");
-    const bossNeed = () => 200 + 20 * Math.min(state.bosses, 25);
+    const bossNeed = () => Math.round((200 + 20 * Math.min(state.bosses, 25)) * (1 - Math.min(0.5, tal("boss"))));
+    const bossMs = () => BOSS_MS + 1000 * tal("bosstime");
     const bossReward = () => Math.round(Math.max(perSec() * 3600, perClick() * 750, 9000) * (1 + 0.1 * Math.min(state.bosses, 30)));
     function endBoss(msg, wait) {
       boss = null;
@@ -2942,9 +3076,9 @@
     }
     function startBoss() {
       if (!boss || boss.phase !== "wait") return;
-      boss = { phase: "fight", until: Date.now() + BOSS_MS, hits: 0, need: bossNeed() };
+      boss = { phase: "fight", until: Date.now() + bossMs(), hits: 0, need: bossNeed() };
       stageEl.classList.add("boss");
-      toast(`Босс! Нажми на монету ${boss.need} раз за ${BOSS_MS / 1000} секунд`);
+      toast(`Босс! Нажми на монету ${boss.need} раз за ${bossMs() / 1000} секунд`);
       haptic("crit");
       renderBoss();
     }
@@ -2954,7 +3088,7 @@
       state.gems += gems;
       state.bosses += 1;
       state.quests.p.boss += 1;
-      const drop = Math.random() < 0.4 ? " · " + givePet(rollPet()) : "";
+      const drop = Math.random() < 0.4 + tal("petdrop") ? " · " + givePet(rollPet()) : "";
       endBoss(`Босс побеждён: +${fmt(coins)} монет и ${gems} ${gems < 5 ? "кристалла" : "кристаллов"}${drop}`, 360000 + Math.random() * 180000);
       if (tab === "skins") keepScroll(renderList);
       haptic("success");
@@ -2967,7 +3101,7 @@
     // ---- precise hit: a ring shrinks around the coin, tap while it is green for a big bonus ----
     let target = null, targetTimer = null, nextTarget = Date.now() + 12000;
     const targetEl = document.getElementById("target");
-    const HOT_FROM = 1150, HOT_TO = 1500;
+    const HOT_FROM = 1150, HOT_TO = 1500, hotFrom = () => HOT_FROM - tal("aim");
     function endTarget() {
       target = null;
       clearTimeout(targetTimer);
@@ -2981,7 +3115,7 @@
       void targetEl.offsetWidth;
       targetEl.classList.add("on");
       const mine = target;
-      setTimeout(() => { if (target === mine) targetEl.classList.add("hot"); }, HOT_FROM);
+      setTimeout(() => { if (target === mine) targetEl.classList.add("hot"); }, hotFrom());
       targetTimer = setTimeout(() => { if (target === mine) endTarget(); }, HOT_TO + 80);
     }
     let perfectChain = 0, lastPerfect = 0;
@@ -3048,7 +3182,7 @@
       burst(x, y, crit);
       if (crit) { ripple(x, y); bump(); }
       if (boss && boss.phase === "fight") { boss.hits += crit ? 2 : 1; if (boss.hits >= boss.need) winBoss(); else renderBoss(); }
-      if (target) { const t = Date.now() - target.at; if (t >= HOT_FROM && t <= HOT_TO) perfect(x, y); }
+      if (target) { const t = Date.now() - target.at; if (t >= hotFrom() && t <= HOT_TO) perfect(x, y); }
       coin.classList.add("pressed");
       haptic(crit ? "crit" : undefined);
     }
@@ -3125,8 +3259,40 @@
         <div class="keep-row">${totals || "Пока без бонусов"}</div><div class="petgrid">${PETS.map(card).join("")}</div>`;
     }
 
+    function talentsView() {
+      const row = (t) => {
+        const lv = state.talents[t.id] || 0, max = lv >= TALENT_MAX, cost = TALENT_COST[lv] || 0;
+        const dots = Array.from({ length: TALENT_MAX }, (_, i) => `<i${i < lv ? ' class="on"' : ""}></i>`).join("");
+        const eff = t.v >= 1 ? `+${lv * t.v}` : `+${Math.round(t.v * lv * 1000) / 10}%`;
+        return `<div class="talrow"><span class="te">${t.e}</span><div class="ti"><b>${t.name}</b><span>${lv ? `${eff} ${t.text}` : t.text}</span><span class="pl">${dots}</span></div>
+          <button type="button" data-tal="${t.id}"${max || cost > talentPoints() ? " disabled" : ""}>${max ? "Макс" : `${cost} оч.`}</button></div>`;
+      };
+      return `<h3>Таланты · очков: ${talentPoints()}</h3>
+        <div class="sub">За каждое перерождение даётся одно очко. Таланты остаются навсегда. Уровни стоят 1, 1, 2, 2 и 3 очка. Всего очков получено: ${state.rebirths}, потрачено: ${talentSpent()}.</div>
+        <div class="talgrid">${TALENTS.map(row).join("")}</div>
+        <button class="mok" type="button" data-m="respec"${talentSpent() ? "" : " disabled"}>Сбросить таланты за 3 ${GEM}</button>`;
+    }
+    function buyTalent(id) {
+      const t = TALENTS.find((x) => x.id === id), lv = t && (state.talents[id] || 0);
+      if (!t || lv >= TALENT_MAX || TALENT_COST[lv] > talentPoints()) return;
+      state.talents[id] = lv + 1;
+      haptic("success");
+      renderStats();
+      renderModal();
+      flush();
+    }
+    function respecTalents() {
+      if (!talentSpent() || state.gems < 3) { if (talentSpent()) toast("Нужно 3 кристалла"); return; }
+      state.gems -= 3;
+      state.talents = {};
+      toast("Таланты сброшены: очки вернулись");
+      renderStats();
+      renderModal();
+      flush();
+    }
+
     function renderModal() {
-      const views = { profile: profileView, promo: promoView, log: logView, season: seasonView, pets: petsView };
+      const views = { profile: profileView, promo: promoView, log: logView, season: seasonView, pets: petsView, talents: talentsView };
       if (views[modalKind]) mbody.innerHTML = views[modalKind]();
     }
     function openModal(kind) {
@@ -3187,6 +3353,9 @@
       if (e.target === modalEl || e.target.closest("#mclose") || e.target.closest('[data-m="close"]')) { closeModal(); return; }
       const av = e.target.closest("[data-av]");
       if (av) { pickAvatar(Number(av.dataset.av)); return; }
+      const tl = e.target.closest("[data-tal]");
+      if (tl) { buyTalent(tl.dataset.tal); return; }
+      if (e.target.closest('[data-m="respec"]')) { respecTalents(); return; }
       if (e.target.closest('[data-m="apply"]')) applyPromo(document.getElementById("promo-in").value);
     });
     modalEl.addEventListener("keydown", (e) => {
