@@ -646,7 +646,9 @@
 
   <script>
     const tg = window.Telegram && window.Telegram.WebApp;
-    const STORAGE_KEY = "state";
+    // Season 2 lives under its own key: a cached older copy of the page keeps reading and writing "state" and can no longer
+    // strip the season mark from (and so reset) the new save.
+    const STORAGE_KEY = "s2", OLD_KEY = "state";
 
     const svg = (body) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
     const ICONS = {
@@ -1573,19 +1575,40 @@
     const cloud = tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast("6.9")
       ? tg.CloudStorage : null;
 
-    function readKey(key) {
+    let saveBlocked = false; // the cloud could not be read and nothing is stored locally: never overwrite real progress with a blank game
+    function readCloud(key, tries = 3) {
       return new Promise((resolve) => {
-        if (cloud) {
-          cloud.getItem(key, (err, value) => resolve(err ? "" : value || ""));
-        } else {
-          try { resolve(localStorage.getItem(key) || ""); } catch { resolve(""); }
-        }
+        const attempt = (n) => cloud.getItem(key, (err, v) => {
+          if (!err) resolve({ ok: true, value: v || "" });
+          else if (n >= tries) resolve({ ok: false, value: "" });
+          else setTimeout(() => attempt(n + 1), 500 * n);
+        });
+        attempt(1);
       });
     }
+    const readLocal = (key) => { try { return localStorage.getItem(key) || ""; } catch { return ""; } };
+    const stampOf = (raw) => { try { const j = JSON.parse(raw); return { season: Number(j.season), seen: Number(j.lastSeen) || 0 }; } catch { return null; } };
 
-    async function load() {
+    // Picks the newest save of the current season from the cloud, the local mirror and the old key.
+    async function readSave() {
+      let cloudRaw = "", cloudOk = true;
+      if (cloud) {
+        const r = await readCloud(STORAGE_KEY);
+        cloudOk = r.ok;
+        cloudRaw = r.value;
+        if (r.ok && !cloudRaw) { const old = await readCloud(OLD_KEY, 2); cloudRaw = old.value; }
+      }
+      const cands = [cloudRaw, readLocal(STORAGE_KEY), readLocal(OLD_KEY)].filter(Boolean)
+        .map((raw) => ({ raw, st: stampOf(raw) })).filter((c) => c.st);
+      const cur = cands.filter((c) => c.st.season === SEASON).sort((a, b) => b.st.seen - a.st.seen)[0];
+      saveBlocked = !!cloud && !cloudOk && !cur;
+      return (cur || cands[0] || { raw: "" }).raw;
+    }
+
+    async function load() { return parseState(await readSave()); }
+
+    function parseState(raw) {
       const next = defaultState();
-      const raw = await readKey(STORAGE_KEY);
       if (raw) {
         try {
           const s = JSON.parse(raw);
@@ -1648,10 +1671,11 @@
     }
 
     function writeNow() {
+      if (saveBlocked) return;
       state.lastSeen = Date.now();
       const json = JSON.stringify(state);
-      if (cloud) cloud.setItem(STORAGE_KEY, json);
-      else try { localStorage.setItem(STORAGE_KEY, json); } catch {}
+      if (cloud) cloud.setItem(STORAGE_KEY, json, () => {});
+      try { localStorage.setItem(STORAGE_KEY, json); } catch {} // a local mirror next to the cloud copy
     }
 
     // Writes at most once per 1.5 s while playing; purchases and leaving the app save at once (flush).
@@ -1818,7 +1842,7 @@
       const rows = [
         ["Кликов", fmt(state.clicks)], ["Монет за всё время", state.total >= 1e6 ? short(state.total) : fmt(state.total)],
         ["Перерождений", fmt(state.rebirths)], ["Доход от перерождений", `×${xs(rebirthMult())}`],
-        ["Лига", leagueInfo().cur.n], ["Цены улучшений", `×${xs(priceMult())}`],
+        ["Лига", leagueInfo().cur.n], ["Цены улучшений", `×${xs(priceMult())}`], ["Версия", `${VERSION}, сезон ${SEASON}`],
         ["Золотых монет поймано", fmt(state.golden)], ["Бешенств", fmt(state.frenzies)],
         ["Сундуков открыто", fmt(state.chests)], ["Достижений", `${state.claimed.length} из ${ACHS.length}`],
         ["Скинов", `${state.owned.length} из ${SKINS.length}`], ["Миров", `${state.worlds.length} из ${WORLDS.length}`],
@@ -2047,7 +2071,7 @@
       el.classList.add("pop");
       setTimeout(() => el.classList.remove("pop"), 650);
     }
-    let enterTimer = null;
+    let enterTimer = null, retryAt = 0;
     function enterAnim() {
       if (calm.matches) return;
       [...listEl.children].slice(0, 16).forEach((el, i) => el.style.setProperty("--i", i));
@@ -2880,6 +2904,15 @@
         nextGolden = Date.now() + goldenGap();
       }
       if (!document.hidden) submitScore(false);
+      if (saveBlocked && Date.now() >= retryAt) { // the cloud did not answer at start: keep asking, then pick the real save up
+        retryAt = Date.now() + 15000;
+        readSave().then((raw) => {
+          if (saveBlocked || !raw) return;
+          state = parseState(raw);
+          applySkin(); applyWorld(); renderStats(); renderList(true);
+          toast("Сохранение найдено, прогресс загружен");
+        });
+      }
       renderStats();
     }, 1000);
 
@@ -2914,6 +2947,7 @@
       renderStats();
       renderList();
       submitScore(false);
+      if (saveBlocked) toast("Не удалось загрузить сохранение. Прогресс цел, игра попробует ещё раз");
       if (seasonReset) openModal("season");
       else if (state.seenVer !== VERSION) {
         if (state.clicks > 0) openModal("log");
