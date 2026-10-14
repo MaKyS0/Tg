@@ -21,6 +21,11 @@ class ShortNumberTests(unittest.TestCase):
         for n, text in cases.items():
             self.assertEqual(lb.short_number(n), text, n)
 
+    def test_season_two_sizes(self):
+        self.assertEqual(lb.short_number(3 * 10**27), "3 окт")
+        self.assertEqual(lb.short_number(5 * 10**33), "5 дец")
+        self.assertEqual(lb.short_number(12 * 10**36), "1,2e37")
+
     def test_small_numbers_keep_separators(self):
         self.assertEqual(lb.short_number(123456), "123 456")
         self.assertEqual(lb.short_number(0), "0")

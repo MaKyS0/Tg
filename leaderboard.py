@@ -3,7 +3,7 @@ import json
 import urllib.parse
 import urllib.request
 
-UNITS = ["", "тыс", "млн", "млрд", "трлн", "квадр", "квинт", "секст", "септ"]
+UNITS = ["", "тыс", "млн", "млрд", "трлн", "квадр", "квинт", "секст", "септ", "окт", "нон", "дец"]
 LEAGUES = ["Новичок", "Бронза", "Серебро", "Золото", "Платина", "Алмаз", "Легенда", "Миф"]
 ORDERS = {"coins": "total.desc,tg_id.asc", "rebirths": "rebirths.desc,total.desc"}
 
@@ -13,6 +13,10 @@ def short_number(n: float) -> str:
     n = int(n)
     if n < 1_000_000:
         return f"{n:,}".replace(",", " ")
+    if n >= 10 ** 36:
+        exp = len(str(n)) - 1
+        mant = f"{n / 10 ** exp:.2f}".rstrip("0").rstrip(".").replace(".", ",")
+        return f"{mant}e{exp}"
     i = min(len(UNITS) - 1, (len(str(n)) - 1) // 3)
     value = round(n / 1000 ** i, 2)
     text = f"{value:.2f}".rstrip("0").rstrip(".").replace(".", ",")
