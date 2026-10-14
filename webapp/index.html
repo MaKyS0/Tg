@@ -1352,7 +1352,6 @@
     const SEASON = 2, VERSION = "2.1";
     const CHANGELOG = [
       { v: "2.1", t: "Боссы и больше контента", items: [
-        "Миры теперь сбрасываются перерождением: открывай их заново по порядку",
         "Боссы: время от времени появляется босс, успей отбить его кликами за 12 секунд",
         "Точный удар: когда кольцо сжимается вокруг монеты, нажми в нужный момент",
         "Кристальный сундук (за кристаллы): случайный скин, аватарка, монеты или буст",
@@ -1402,7 +1401,7 @@
       ["skinsAll", "skin", "Музей монет", "Собери все скины", SKINS.length, 15, () => state.owned.length],
       ["worlds3", "space", "Путешественник", "Открой 3 мира", 3, 3, () => state.wmax],
       ["worlds6", "space", "Исследователь", "Открой 6 миров", 6, 6, () => state.wmax],
-      ["worldsAll", "space", "Покоритель миров", "Открой все миры сразу", WORLDS.length, 10, () => state.worlds.length],
+      ["worldsAll", "space", "Покоритель миров", "Открой все миры", WORLDS.length, 10, () => state.worlds.length],
       ["boss1", "power", "Охотник на боссов", "Победи босса", 1, 2, () => state.bosses],
       ["boss10", "power", "Истребитель", "Победи 10 боссов", 10, 6, () => state.bosses],
       ["perfect50", "mult", "Снайпер", "Сделай 50 точных ударов", 50, 4, () => state.perfects],
@@ -1712,6 +1711,8 @@
           next.worlds = Array.from(new Set(["meadow", ...worlds]));
           next.world = next.worlds.includes(s.world) ? s.world : "meadow";
           next.wmax = Math.max(whole(s.wmax), next.worlds.length);
+          // worlds open strictly in order, so worlds lost to the short-lived version 2.1 reset are restored from the lifetime counter
+          if (next.worlds.length < next.wmax) next.worlds = WORLDS.slice(0, Math.min(next.wmax, WORLDS.length)).map((w) => w.id);
           next.bosses = whole(s.bosses);
           next.perfects = whole(s.perfects);
           next.clicks = whole(s.clicks);
@@ -1913,11 +1914,11 @@
           <div class="keep-row">Получишь:
             <span class="pill keep">Весь доход ×${xs(REBIRTH_INCOME)} навсегда (сейчас ×${xs(rebirthMult())}, будет ×${xs(rebirthMult(n + 1))})</span></div>
           <div class="keep-row">Останется:
-            <span class="pill keep">Скины</span><span class="pill keep">Кристаллы</span>
+            <span class="pill keep">Скины</span><span class="pill keep">Миры</span><span class="pill keep">Кристаллы</span>
             <span class="pill keep">Награды</span><span class="pill keep">Постоянные улучшения</span>
             <span class="pill keep">${pct}% уровней улучшений</span></div>
           <div class="keep-row">Сбросится:
-            <span class="pill lose">Монеты</span><span class="pill lose">Миры (откроешь заново)</span><span class="pill lose">${100 - pct}% уровней улучшений</span>
+            <span class="pill lose">Монеты</span><span class="pill lose">${100 - pct}% уровней улучшений</span>
             <span class="pill lose">Цены улучшений ×${PRICE_STEP} (сейчас ×${xs(priceMult())}, будут ×${xs(priceMult(n + 1))})</span></div>
           <div class="keep-row">Следующее перерождение будет стоить ${fmt(rebirthCost(n + 1))} монет за забег (в ${REBIRTH_STEP} раз дороже).</div>
           <button class="rebirth-btn" id="rb-btn" data-act="rebirth"></button>
@@ -2313,8 +2314,6 @@
       state.rebirths += 1;
       state.score = startCoins();
       state.earned = 0;
-      state.worlds = ["meadow"]; // worlds are lost too: open them again in order
-      state.world = "meadow";
       for (const id of Object.keys(state.lv)) state.lv[id] = Math.floor(state.lv[id] * keep);
       rebirthArmed = false;
       clearTimeout(armTimer);
