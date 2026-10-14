@@ -501,7 +501,9 @@
     .fx-orb i { width: calc(var(--s) * 4); height: calc(var(--s) * 4); border-radius: 50%; background: radial-gradient(circle, rgba(240, 171, 252, .7), transparent 70%); animation: hover var(--d) ease-in-out var(--dl) infinite; }
     .fx-shard i { rotate: 45deg; width: calc(var(--s) * 1.4); height: calc(var(--s) * 3); border-radius: 2px; background: linear-gradient(#fde68a, #a855f7); box-shadow: 0 0 8px #c084fc; animation: fall var(--d) linear var(--dl) infinite, twinkle 2s ease-in-out infinite; }
 
-    .qrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .qrow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .qrow .qbtn { font-size: 11px; padding: 10px 2px 8px; white-space: nowrap; }
+    .qrow .qi { width: 34px; height: 34px; }
     .qbtn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: 16px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: transform .15s, background .15s; }
     .qbtn:active { transform: scale(.96); }
     .qbtn .qi { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; color: #fff; font-size: 22px; line-height: 1; }
@@ -541,6 +543,16 @@
     .mok { width: 100%; margin-top: 14px; }
     .pmsg { min-height: 20px; margin-top: 10px; font-size: 13px; font-weight: 700; }
     .pmsg.ok { color: var(--good); } .pmsg.bad { color: var(--bad); }
+    .petgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+    .petcard { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 12px 8px 10px; border-radius: 16px; background: var(--card); border: 1px solid var(--rar); text-align: center; }
+    .petcard.lock { opacity: .55; border-color: var(--line); }
+    .petcard .pe { font-size: 34px; line-height: 1.1; }
+    .petcard b { font-size: 13px; }
+    .petcard .pr { font-size: 10px; font-weight: 800; color: var(--rar); }
+    .petcard .pl { display: flex; gap: 3px; }
+    .petcard .pl i { width: 8px; height: 8px; border-radius: 50%; background: var(--card-2); }
+    .petcard .pl i.on { background: var(--rar); box-shadow: 0 0 6px var(--rar); }
+    .petcard .pd { color: var(--hint); font-size: 11px; line-height: 1.3; }
     .clog { margin-bottom: 16px; }
     .clog h4 { margin: 0 0 6px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
     .clog h4 b { padding: 2px 8px; border-radius: 8px; background: var(--accent); color: #2b1d00; font-size: 12px; }
@@ -1202,6 +1214,16 @@
     const REMOVED_SKINS = new Set(["shell", "silver", "cloud", "cookie", "acorn", "bronze", "bell", "button", "pixel", "emerald", "hearts", "pearl", "clubs", "melon", "jet", "umbrella", "lantern", "compass", "leaf", "daisy", "clock", "kite", "lagoon", "coral", "shield", "moonlit", "thistle", "fourleaf", "oyster", "amethyst", "pirate", "blade", "matrix", "magma", "glitch", "comet", "neon", "rainbow", "moonlight", "apogee", "ether", "cathedral", "blazar", "wormhole", "beacon", "gear", "nova", "platinum", "blizzard", "saturn", "knight", "chess", "mask", "note", "ruby", "moth", "quartz", "obsidian", "spade", "mirror", "snowman", "donut", "chameleon", "empyrean", "snow", "clover"]);
     for (let i = SKINS.length - 1; i >= 0; i--) if (REMOVED_SKINS.has(SKINS[i].id)) SKINS.splice(i, 1);
 
+    // Trophy tier: free, unlocked by boss victories (appended at the end: the owned-skins bitmask depends on the order).
+    RARITY.push({ n: "Трофейные", c: "#f59e0b" });
+    [
+      ["trophyslime", "Слизень-трофей", "☻", 10, 120, 60, "blob", "pulse", "dots", 0, 1, 1e4], ["trophyfang", "Клык", "▲", 10, 40, 30, "leaf", "shine", "stripes", 0, 3, 3e4],
+      ["trophyclaw", "Коготь", "✶", 10, 20, 70, "leaf", "flame", "rays", 0, 6, 1e5], ["trophyhorn", "Рог", "♘", 10, 200, 40, "squircle", "shine", "grid", 0, 10, 4e5],
+      ["trophyscale", "Чешуя", "❂", 10, 150, 70, 0, ["holo", "shine"], "waves", 0, 15, 2e6], ["trophywing", "Крыло", "❋", 10, 280, 60, "leaf", ["holo", "orbit"], "swirl", 0, 20, 1e7],
+      ["trophyheart", "Сердце босса", "♥", 10, 350, 85, "blob", ["pulse", "flame"], "rays", 1, 30, 6e7], ["trophycrown", "Корона босса", "♚", 10, 48, 90, "squircle", ["pulse", "shine", "orbit"], "checker", 1, 45, 4e8],
+      ["trophyseal", "Печать хаоса", "✹", 10, 300, 80, 0, ["glitch", "orbit", "spin"], "swirl", 1, 70, 3e9], ["trophygodslayer", "Убийца богов", "☠", 10, 0, 90, 0, ["flame", "glitch", "orbit", "shine"], "rays", 1, 100, 3e10],
+    ].forEach((sp) => { SKINS.push({ ...makeSkin(sp.slice(0, 10), sp[11], { cost: sp[10] }), trophy: sp[10] }); });
+
     // ---- worlds 22..61 ----
     const NEW_ICONS = {
       pyramid: '<path d="M12 3L2.5 20h19z" fill="currentColor" fill-opacity=".3"/><path d="M12 3v17"/>',
@@ -1338,6 +1360,26 @@
       ["skytemple", "Небесный храм", "temple", "gold", ["#fef3c7", "#0369a1"], "125,211,252", "#7dd3fc", "domes", "sun", { income: 0.75, discount: 0.15 }],
       ["starsea", "Звёздный океан", "ocean", "star", ["#a5b4fc", "#1e1b4b"], "99,102,241", "#1e1b4b", "waves", "stars", { offline: 0.8, click: 0.8 }],
       ["eternity", "Врата вечности", "void", "shard", ["#fef08a", "#4c1d95"], "250,204,21", "#2e1065", "domes", "ring", { income: 0.9, critp: 3, gems: 0.5 }],
+      ["lavender", "Лавандовые поля", "meadow", "petal", ["#e9d5ff", "#6d28d9"], "167,139,250", "#5b21b6", "hills", "sun", { income: 0.8, offline: 0.4 }],
+      ["winery", "Винодельня", "meadow", "leaf", ["#fda4af", "#7f1d1d"], "190,24,93", "#881337", "hills", "sun", { click: 1.3, discount: 0.1 }],
+      ["oldtown", "Старый город", "city", "gold", ["#fde68a", "#78350f"], "217,119,6", "#78350f", "blocks", "moon", { gems: 0.7 }],
+      ["riverport", "Речной порт", "atlantis", "foam", ["#bae6fd", "#1e40af"], "59,130,246", "#1e3a8a", "waves", "sun", { offline: 0.9, lump: 1 }],
+      ["icewaste", "Ледяная пустошь", "glacier", "snow", ["#f0f9ff", "#475569"], "186,230,253", "#334155", "peaks", "", { crit: 0.12, critp: 2 }],
+      ["sandstorm", "Песчаная буря", "desert", "sand", ["#fde68a", "#92400e"], "217,119,6", "#78350f", "dunes", "", { golden: 0.3, click: 1 }],
+      ["starsand", "Звёздная пустыня", "desert", "star", ["#fcd34d", "#1e1b4b"], "99,102,241", "#312e81", "dunes", "stars", { income: 0.9 }],
+      ["mirrorlake", "Зеркальное озеро", "drop", "glow", ["#bfdbfe", "#4338ca"], "129,140,248", "#312e81", "waves", "moon", { discount: 0.2, gems: 0.4 }],
+      ["firewood", "Огненный лес", "flame", "ember", ["#fdba74", "#7f1d1d"], "239,68,68", "#450a0a", "trees", "", { click: 1.4, crit: 0.1 }],
+      ["neonjungle", "Неоновые джунгли", "jungle", "glow", ["#86efac", "#a21caf"], "217,70,239", "#3b0764", "trees", "moon", { income: 1, golden: 0.2 }],
+      ["gravwell", "Гравитационный колодец", "void", "swirl", ["#c4b5fd", "#020617"], "99,102,241", "#020617", "hills", "hole", { critp: 3.5, fever: 25000 }],
+      ["glowcave", "Светящиеся пещеры", "cave", "glow", ["#67e8f9", "#134e4a"], "34,211,238", "#134e4a", "ruins", "", { offline: 1, gems: 0.5 }],
+      ["magmasea", "Подводные вулканы", "volcano", "bubble", ["#fdba74", "#0c4a6e"], "249,115,22", "#0c4a6e", "peaks", "", { click: 1.5, income: 0.5 }],
+      ["floatisle", "Парящие острова", "sky", "mist", ["#d9f99d", "#0ea5e9"], "125,211,252", "#65a30d", "domes", "sun", { lump: 1.5, discount: 0.15 }],
+      ["clocktown", "Город часов", "gear", "gold", ["#fef3c7", "#92400e"], "245,158,11", "#78350f", "blocks", "sun", { income: 1.1, fever: 20000 }],
+      ["shadowwood", "Лес теней", "forest", "ash", ["#a1a1aa", "#09090b"], "113,113,122", "#09090b", "trees", "moon", { crit: 0.12, golden: 0.3 }],
+      ["crystalsea", "Хрустальный океан", "ocean", "crystal", ["#a5f3fc", "#312e81"], "103,232,249", "#1e1b4b", "waves", "stars", { gems: 0.8, offline: 0.6 }],
+      ["godforge", "Горн богов", "flame", "ember", ["#fef08a", "#b91c1c"], "251,146,60", "#7c2d12", "peaks", "sun", { click: 1.8, critp: 3 }],
+      ["spiritrealm", "Обитель духов", "eye", "glow", ["#e9d5ff", "#1e1b4b"], "192,132,252", "#2e1065", "domes", "ring", { income: 1.2, gems: 0.6 }],
+      ["creationcore", "Центр мироздания", "star", "shard", ["#fef9c3", "#6d28d9"], "250,204,21", "#3b0764", "domes", "ring", { income: 1.5, click: 2, critp: 3 }],
     ].forEach(([id, name, icon, fx, grad, sky, ground, kind, sun, perk], k) => {
       const sc = scenery(kind, k + 1, ground);
       ICONS[id] = ICONS[icon];
@@ -1369,8 +1411,26 @@
       ROBOT: { avatar: 18, text: "аватарку 🤖" },
     };
 
-    const SEASON = 2, VERSION = "2.2";
+    // Pets: found in the crystal chest, as boss drops or in eggs; a repeat raises the level (max 5), at max it pays 2 gems.
+    // Their bonuses add up with the world perks. kind: click / income / crit / golden / offline / discount / gems.
+    const PETS = [
+      ["cat", "Кот-копилка", "🐱", 0, "click", 0.05, "к доходу с кликов"], ["pup", "Щенок", "🐶", 0, "income", 0.04, "к доходу в секунду"],
+      ["owl", "Сова", "🦉", 0, "crit", 0.008, "к шансу крита"], ["fox", "Лиса", "🦊", 1, "golden", 0.04, "к частоте золотых монет"],
+      ["turtle", "Черепаха", "🐢", 1, "offline", 0.08, "к офлайн-доходу"], ["robot", "Робо-помощник", "🤖", 1, "discount", 0.015, "скидка на улучшения"],
+      ["unicorn", "Единорог", "🦄", 2, "gems", 0.06, "к кристаллам за перерождение"], ["dragon", "Дракончик", "🐲", 2, "income", 0.08, "к доходу в секунду"],
+      ["griffin", "Грифон", "🦅", 2, "click", 0.1, "к доходу с кликов"], ["phoenix", "Феникс", "🔥", 3, "income", 0.15, "к доходу в секунду"],
+      ["whale", "Космокит", "🐋", 3, "offline", 0.15, "к офлайн-доходу"], ["hydra", "Гидра", "🐍", 3, "crit", 0.015, "к шансу крита"],
+    ].map(([id, name, e, r, kind, v, text]) => ({ id, name, e, r, kind, v, text }));
+    const PET_RARITY = [{ n: "Обычный", c: "#9aa7ad", w: 60 }, { n: "Редкий", c: "#4cc3ff", w: 28 }, { n: "Эпический", c: "#b779ff", w: 10 }, { n: "Легендарный", c: "#ffb02e", w: 2 }];
+    const PET_MAX = 5;
+    const SEASON = 2, VERSION = "2.3";
     const CHANGELOG = [
+      { v: "2.3", t: "Питомцы и трофеи", items: [
+        "Питомцы: 12 существ с бонусами к доходу, кликам, криту, золоту, офлайну, скидкам и кристаллам. Выпадают из сундука, яйца за кристаллы и после боссов (раздел «Награды» → «Питомцы»)",
+        "Трофейные скины: 10 скинов бесплатно за победы над боссами (от 1 до 100)",
+        "+20 миров, всего 111",
+        "Серия точных ударов: подряд до ×5 к бонусу",
+        "Игра сама обновляется, если у Telegram застряла старая версия" ] },
       { v: "2.2", t: "Сложные боссы и невероятные скины", items: [
         "Боссы в 5 раз сложнее: 200 ударов вместо 40 (растёт до 700), на бой 30 секунд, награда втрое больше. Навык «Ускорение» тоже бьёт босса",
         "Убрана половина скинов, у которых бонус к клику лишь немного отличался от предыдущего. Надетый удалённый скин заменяется на классический",
@@ -1434,6 +1494,9 @@
       ["exp10", "gold", "Исследователь времени", "Заверши 10 экспедиций", 10, 4, () => state.exps],
       ["gold1", "mult", "Золотая удача", "Поймай золотую монету", 1, 1, () => state.golden],
       ["gold10", "mult", "Охотник за золотом", "Поймай 10 золотых монет", 10, 4, () => state.golden],
+      ["pet1", "mult", "Друг человека", "Получи питомца", 1, 2, () => Object.keys(state.pets).length],
+      ["pets12", "mult", "Зверинец", "Собери всех питомцев", PETS.length, 10, () => Object.keys(state.pets).length],
+      ["boss30", "power", "Гроза боссов", "Победи 30 боссов", 30, 10, () => state.bosses],
     ].map(([id, icon, name, desc, target, gems, val]) => ({ id, icon, name, desc, target, gems, val, grad: ACH_GRAD[icon] }));
 
     // Daily quests restart every day and pay gems.
@@ -1457,6 +1520,7 @@
         desc: () => { const l = Math.ceil((state.turbo - Date.now()) / 1000); return `Весь доход ×3 на 2 минуты${l > 0 ? ` · осталось ${l} с` : ""}`; } },
       { id: "rain", name: "Золотой дождь", cost: 2, icon: "rain", grad: ["#ffe27a", "#f0a500"], desc: () => "Золотая монета вылетает прямо сейчас" },
       { id: "loot", name: "Кристальный сундук", cost: 15, icon: "chest", grad: ["#67e8f9", "#7c3aed"], desc: () => "Случайный приз: скин, аватарка, монеты, кристаллы или буст" },
+      { id: "egg", name: "Яйцо питомца", cost: 8, icon: "gift", grad: ["#f9a8d4", "#a855f7"], desc: () => "Случайный питомец или его новый уровень: бонусы к доходу" },
       { id: "cash", name: "Касса", cost: 5, icon: "cash", grad: ["#7ee0b5", "#0f8f6a"], desc: () => `+${fmt(cashAmount())} монет, это доход примерно за час` },
     ];
 
@@ -1586,6 +1650,7 @@
       cd: { surge: 0, meteor: 0, haste: 0 },
       exp: { until: 0, kind: 0 },
       exps: 0,
+      pets: {},
       wmax: 1,
       bosses: 0,
       perfects: 0,
@@ -1629,16 +1694,17 @@
     const isMax = (u) => u.max && state.lv[u.id] >= u.max;
     const perk = (k) => (worldById(state.world).perk || {})[k] || 0; // perk of the world you are in
     const upgradeCost = (u) =>
-      Math.max(1, Math.floor(u.base * Math.pow(u.growth, state.lv[u.id]) * Math.max(0.2, 1 - 0.05 * state.perm.discount - perk("discount")) * priceMult()));
+      Math.max(1, Math.floor(u.base * Math.pow(u.growth, state.lv[u.id]) * Math.max(0.2, 1 - 0.05 * state.perm.discount - perk("discount") - pet("discount")) * priceMult()));
     const permCost = (u) => Math.floor(u.base * Math.pow(u.growth, state.perm[u.id]));
     // owning every skin of a rarity gives +5% income, once per rarity
     const collection = () => RARITY.reduce((n, _, i) =>
       n + (SKINS.filter((x) => x.r === i).every((x) => state.owned.includes(x.id)) ? 0.05 : 0), 0);
+    const pet = (k) => PETS.reduce((n, p) => n + (p.kind === k ? p.v * (state.pets[p.id] || 0) : 0), 0); // pets are defined further down; this runs later
     const turboOn = () => Date.now() < state.turbo;
     const surgeOn = () => Date.now() < state.surge;
     const multiplier = () =>
       (1 + 0.25 * state.lv.mult) * (1 + 0.5 * state.perm.gold + collection()) * worldById(state.world).mult * rebirthMult() * (turboOn() ? 3 : 1) * (surgeOn() ? 3 : 1);
-    const gemBoost = () => 1 + 0.25 * state.perm.gain + perk("gems");
+    const gemBoost = () => 1 + 0.25 * state.perm.gain + perk("gems") + pet("gems");
     // A rebirth is bought with the coins earned in the run: 1 млн for the first, x32 for every next one. Rebirths never stack,
     // one at a time. Each one makes all upgrades 16x pricier but multiplies the whole income for good.
     const REBIRTH_BASE = 1e6, REBIRTH_STEP = 32, PRICE_STEP = 16, REBIRTH_INCOME = 4;
@@ -1653,16 +1719,16 @@
     const buffActive = () => Date.now() < buff.until;
     const frenzyOn = () => Date.now() < frenzyUntil;
     const baseIncome = () => GENS.reduce((sum, u) => sum + u.inc * state.lv[u.id], 0);
-    const incomeMult = () => multiplier() * (1 + perk("income"));
+    const incomeMult = () => multiplier() * (1 + perk("income") + pet("income"));
     const perSec = () => Math.round(baseIncome() * incomeMult());
     const perClick = () =>
       Math.round((1 + state.lv.power + skinById(state.skin).bonus + state.lv.fingers * 0.01 * baseIncome()) *
-        multiplier() * (1 + 0.25 * state.perm.cpower + perk("click")) * (buffActive() ? buff.mult : 1) * (frenzyOn() ? 2 : 1));
-    const critChance = () => CRIT_CHANCE + 0.01 * state.lv.crit + perk("crit");
+        multiplier() * (1 + 0.25 * state.perm.cpower + perk("click") + pet("click")) * (buffActive() ? buff.mult : 1) * (frenzyOn() ? 2 : 1));
+    const critChance = () => CRIT_CHANCE + 0.01 * state.lv.crit + perk("crit") + pet("crit");
     const critMult = () => CRIT_MULT + 0.5 * state.lv.critp + perk("critp");
-    const goldenGap = () => (45000 + Math.random() * 75000) * (1 - 0.06 * state.lv.luck) * (1 - perk("golden"));
+    const goldenGap = () => (45000 + Math.random() * 75000) * (1 - 0.06 * state.lv.luck) * (1 - Math.min(0.8, perk("golden") + pet("golden")));
     const feverMs = () => 15000 + 3000 * state.lv.fever + perk("fever");
-    const offlineRate = () => 0.5 + 0.1 * state.perm.night + perk("offline");
+    const offlineRate = () => 0.5 + 0.1 * state.perm.night + perk("offline") + pet("offline");
     const offlineCap = () => (3 + state.perm.night) * 3600;
 
     function leagueInfo() {
@@ -1737,6 +1803,7 @@
           next.wmax = Math.max(whole(s.wmax), next.worlds.length);
           // worlds open strictly in order, so worlds lost to the short-lived version 2.1 reset are restored from the lifetime counter
           if (next.worlds.length < next.wmax) next.worlds = WORLDS.slice(0, Math.min(next.wmax, WORLDS.length)).map((w) => w.id);
+          next.pets = Object.fromEntries(PETS.filter((p) => whole(s.pets && s.pets[p.id]) > 0).map((p) => [p.id, Math.min(PET_MAX, whole(s.pets[p.id]))]));
           next.bosses = whole(s.bosses);
           next.perfects = whole(s.perfects);
           next.clicks = whole(s.clicks);
@@ -1899,11 +1966,12 @@
     function skinTile(s) {
       const owned = state.owned.includes(s.id);
       const equipped = state.skin === s.id;
-      const locked = !owned && s.promo;
-      const price = equipped ? "Надето" : owned ? "Надеть" : s.promo ? "Промокод" : s.gem ? `${GEM} ${s.gem}` : `${COIN} ${s.cost >= 1e6 ? short(s.cost) : fmt(s.cost)}`;
+      const trophyReady = !!s.trophy && state.bosses >= s.trophy;
+      const locked = !owned && (s.promo || (s.trophy && !trophyReady));
+      const price = equipped ? "Надето" : owned ? "Надеть" : s.promo ? "Промокод" : s.trophy ? (trophyReady ? "Забрать" : `Боссы ${state.bosses}/${s.trophy}`) : s.gem ? `${GEM} ${s.gem}` : `${COIN} ${s.cost >= 1e6 ? short(s.cost) : fmt(s.cost)}`;
       return `
         <button class="tile${equipped ? " equipped" : ""}" data-act="skin:${s.id}" style="--rar:${RARITY[s.r].c}"
-                ${owned || locked ? "" : `data-cost="${s.gem || s.cost}" data-cur="${s.gem ? "gem" : "coin"}"`} ${equipped || locked ? "disabled" : ""}>
+                ${owned || locked || s.trophy ? "" : `data-cost="${s.gem || s.cost}" data-cur="${s.gem ? "gem" : "coin"}"`} ${equipped || locked ? "disabled" : ""}>
           <span class="skin-icon" style="${skinIconStyle(s)}">${s.glyph}</span>
           <span class="t-name${s.name.length > 10 ? " long" : ""}">${s.name}</span>
           <span class="t-bonus">${s.bonus ? `+${s.bonus >= 1e6 ? short(s.bonus) : fmt(s.bonus)} к клику` : "Без бонуса"}</span>
@@ -2052,8 +2120,9 @@
         const av = AVATARS[state.avatar];
         const quick = `<div class="qrow">
           <button class="qbtn" data-act="modal:profile"><span class="qi" style="background:linear-gradient(135deg,${av.g[0]},${av.g[1]})">${av.e}</span>Профиль</button>
+          <button class="qbtn" data-act="modal:pets"><span class="qi" style="background:linear-gradient(135deg,#f9a8d4,#a855f7)">🐾</span>Питомцы</button>
           <button class="qbtn" data-act="modal:promo"><span class="qi" style="background:linear-gradient(135deg,#ffd23f,#f59e0b)">${ICONS.gift}</span>Промокод</button>
-          <button class="qbtn${state.seenVer !== VERSION ? " new" : ""}" data-act="modal:log"><span class="qi" style="background:linear-gradient(135deg,#4ea4f6,#7c3aed)">${ICONS.star}</span>Что нового</button></div>`;
+          <button class="qbtn${state.seenVer !== VERSION ? " new" : ""}" data-act="modal:log"><span class="qi" style="background:linear-gradient(135deg,#4ea4f6,#7c3aed)">${ICONS.star}</span>Новое</button></div>`;
         listEl.innerHTML = quick + itemHTML({
           act: "daily", cta: true, disabled: !d.claimable, lead: iconTile("gift", ACH_GRAD.mult),
           name: `Ежедневный подарок <span class="lv">серия ${d.streak}</span>`,
@@ -2367,7 +2436,8 @@
       const s = skinById(id);
       if (!state.owned.includes(s.id)) {
         if (s.promo) return;
-        if (s.gem) { if (state.gems < s.gem) return; state.gems -= s.gem; }
+        if (s.trophy) { if (state.bosses < s.trophy) return; }
+        else if (s.gem) { if (state.gems < s.gem) return; state.gems -= s.gem; }
         else { if (state.score < s.cost) return; state.score -= s.cost; }
         state.owned.push(s.id);
       }
@@ -2607,6 +2677,9 @@
         toast("Золотая монета вылетела");
       } else if (id === "loot") {
         openLoot();
+      } else if (id === "egg") {
+        toast("Яйцо: " + givePet(rollPet()));
+        celebrate();
       } else {
         const gain = cashAmount();
         addCoins(gain);
@@ -2846,7 +2919,9 @@
       addCoins(coins);
       state.gems += gems;
       state.bosses += 1;
-      endBoss(`Босс побеждён: +${fmt(coins)} монет и ${gems} ${gems === 1 ? "кристалл" : "кристалла"}`, 360000 + Math.random() * 180000);
+      const drop = Math.random() < 0.4 ? " · " + givePet(rollPet()) : "";
+      endBoss(`Босс побеждён: +${fmt(coins)} монет и ${gems} ${gems < 5 ? "кристалла" : "кристаллов"}${drop}`, 360000 + Math.random() * 180000);
+      if (tab === "skins") keepScroll(renderList);
       haptic("success");
       celebrate();
       renderStats();
@@ -2874,8 +2949,13 @@
       setTimeout(() => { if (target === mine) targetEl.classList.add("hot"); }, HOT_FROM);
       targetTimer = setTimeout(() => { if (target === mine) endTarget(); }, HOT_TO + 80);
     }
+    let perfectChain = 0, lastPerfect = 0;
     function perfect(x, y) {
-      const gain = Math.round(perClick() * 8);
+      const now = Date.now();
+      perfectChain = now - lastPerfect < 25000 ? Math.min(5, perfectChain + 1) : 1; // precise hits in a row raise the bonus up to x5
+      lastPerfect = now;
+      const gain = Math.round(perClick() * 8 * perfectChain);
+      if (perfectChain >= 3) toast(`Серия точных ударов ×${perfectChain}`);
       addCoins(gain);
       state.perfects += 1;
       showPlus(x, y, gain, true);
@@ -2886,11 +2966,25 @@
       endTarget();
     }
 
+    // ---- pets ----
+    function rollPet() {
+      let r = Math.random() * PETS.reduce((n, p) => n + PET_RARITY[p.r].w, 0);
+      for (const p of PETS) { r -= PET_RARITY[p.r].w; if (r < 0) return p; }
+      return PETS[0];
+    }
+    // gives a pet (or a level of it) and returns the text for the toast
+    function givePet(p) {
+      const lv = state.pets[p.id] || 0;
+      if (lv >= PET_MAX) { state.gems += 2; return `${p.e} ${p.name} уже на максимуме: +2 кристалла`; }
+      state.pets[p.id] = lv + 1;
+      return lv ? `${p.e} ${p.name}: уровень ${lv + 1}` : `новый питомец ${p.e} ${p.name}!`;
+    }
+
     // ---- crystal chest: the gem sink with a random prize ----
     function openLoot() {
       const skins = SKINS.filter((x) => !x.gem && !x.promo && x.r <= 3 && !state.owned.includes(x.id));
       const avs = AVATARS.map((_, i) => i).filter((i) => AVATARS[i].kind === "gem" && !state.avs.includes(i));
-      const table = [["coins", 34], ["gems", 20], ["turbo", 14], ["golden", 10], ["skin", skins.length ? 16 : 0], ["avatar", avs.length ? 6 : 0]];
+      const table = [["coins", 34], ["gems", 20], ["turbo", 14], ["golden", 10], ["skin", skins.length ? 16 : 0], ["avatar", avs.length ? 6 : 0], ["pet", 14]];
       let r = Math.random() * table.reduce((n, t) => n + t[1], 0), kind = "coins";
       for (const [k, w] of table) { if (r < w) { kind = k; break; } r -= w; }
       if (kind === "golden" && goldenEl) kind = "coins";
@@ -2899,6 +2993,7 @@
       else if (kind === "turbo") { state.turbo = Math.max(Date.now(), state.turbo) + 180000; toast("Сундук: турбо ×3 на 3 минуты"); }
       else if (kind === "golden") { spawnGolden(); toast("Сундук: золотая монета"); }
       else if (kind === "skin") { const sk = skins[Math.floor(Math.random() * skins.length)]; state.owned.push(sk.id); toast(`Сундук: скин «${sk.name}»!`); }
+      else if (kind === "pet") toast("Сундук: " + givePet(rollPet()));
       else { const i = avs[Math.floor(Math.random() * avs.length)]; state.avs.push(i); toast(`Сундук: аватарка ${AVATARS[i].e}`); }
       celebrate();
     }
@@ -2977,8 +3072,25 @@
       <div class="clog"><ul>${(CHANGELOG.find((c) => c.season) || CHANGELOG[0]).items.slice(0, 8).map((t) => `<li>${t}</li>`).join("")}</ul></div>
       <button class="mok" type="button" data-m="close">Играть</button>`;
 
+    function petsView() {
+      const have = Object.keys(state.pets).length;
+      const card = (p) => {
+        const lv = state.pets[p.id] || 0, R = PET_RARITY[p.r];
+        const dots = Array.from({ length: PET_MAX }, (_, i) => `<i${i < lv ? ' class="on"' : ""}></i>`).join("");
+        return `<div class="petcard${lv ? "" : " lock"}" style="--rar:${R.c}"><span class="pe">${lv ? p.e : "❔"}</span><b>${lv ? p.name : "???"}</b>
+          <span class="pr">${R.n}</span><span class="pl">${dots}</span><span class="pd">${lv ? `+${Math.round(p.v * lv * 1000) / 10}% ${p.text}` : "Найди в сундуке, яйце или у босса"}</span></div>`;
+      };
+      const totals = ["income", "click", "crit", "golden", "offline", "discount", "gems"].filter((k) => pet(k) > 0).map((k) => {
+        const n = { income: "доход/с", click: "клики", crit: "крит", golden: "золото", offline: "офлайн", discount: "скидка", gems: "кристаллы" }[k];
+        return `<span class="pill keep">${n} +${Math.round(pet(k) * 1000) / 10}%</span>`;
+      }).join("");
+      return `<h3>Питомцы · ${have} из ${PETS.length}</h3>
+        <div class="sub">Питомцы выпадают из кристального сундука, яйца за кристаллы и после боссов. Повтор повышает уровень (до ${PET_MAX}), бонусы работают всегда.</div>
+        <div class="keep-row">${totals || "Пока без бонусов"}</div><div class="petgrid">${PETS.map(card).join("")}</div>`;
+    }
+
     function renderModal() {
-      const views = { profile: profileView, promo: promoView, log: logView, season: seasonView };
+      const views = { profile: profileView, promo: promoView, log: logView, season: seasonView, pets: petsView };
       if (views[modalKind]) mbody.innerHTML = views[modalKind]();
     }
     function openModal(kind) {
