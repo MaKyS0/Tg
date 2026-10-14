@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import time
 
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command, CommandObject, CommandStart
@@ -20,6 +21,11 @@ load_dotenv()
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 WEBAPP_URL = os.environ["WEBAPP_URL"]
+
+
+def fresh_url() -> str:
+    """Telegram's WebView caches the page; a new query string on every press makes it fetch the current version."""
+    return f"{WEBAPP_URL}{'&' if '?' in WEBAPP_URL else '?'}v={int(time.time())}"
 # Optional: the public Supabase URL and publishable key of the leaderboard, for /top
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
@@ -31,7 +37,7 @@ dp = Dispatcher()
 async def start(message: Message) -> None:
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🪙 Играть", web_app=WebAppInfo(url=WEBAPP_URL))]
+            [InlineKeyboardButton(text="🪙 Играть", web_app=WebAppInfo(url=fresh_url()))]
         ]
     )
     await message.answer(
@@ -61,7 +67,7 @@ async def main() -> None:
     bot = Bot(BOT_TOKEN)
     # Button next to the message input that opens the Mini App
     await bot.set_chat_menu_button(
-        menu_button=MenuButtonWebApp(text="Играть", web_app=WebAppInfo(url=WEBAPP_URL))
+        menu_button=MenuButtonWebApp(text="Играть", web_app=WebAppInfo(url=fresh_url()))
     )
     await bot.set_my_commands([
         BotCommand(command="start", description="Открыть игру"),

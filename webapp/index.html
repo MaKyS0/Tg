@@ -3156,6 +3156,19 @@
     document.addEventListener("visibilitychange", () => { if (document.hidden) flush(); });
     window.addEventListener("pagehide", flush);
 
+    // Telegram's WebView likes to keep an old copy of the page. On start we ask the server (bypassing every cache) which
+    // version is current and, if ours is older, reopen the page under a fresh address. Tried once per version.
+    function selfUpdate() {
+      if (!/^https?:$/.test(location.protocol)) return;
+      fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" }).then((r) => (r.ok ? r.text() : "")).then((t) => {
+        const m = t.match(/VERSION = "([\d.]+)"/);
+        if (!m || m[1] === VERSION || !ready) return;
+        try { if (sessionStorage.getItem("upd") === m[1]) return; sessionStorage.setItem("upd", m[1]); } catch { return; }
+        flush();
+        toast("Вышло обновление, перезапускаю игру");
+        setTimeout(() => location.replace(location.pathname + "?v=" + m[1] + "&t=" + Date.now()), 900);
+      }).catch(() => {});
+    }
     if (tg) {
       tg.ready();
       tg.expand();
@@ -3185,6 +3198,7 @@
       renderList();
       submitScore(false);
       if (saveBlocked) toast("Не удалось загрузить сохранение. Прогресс цел, игра попробует ещё раз");
+      selfUpdate();
       if (seasonReset) openModal("season");
       else if (state.seenVer !== VERSION) {
         if (state.clicks > 0) openModal("log");
