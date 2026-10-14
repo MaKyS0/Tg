@@ -573,7 +573,18 @@
     .ripple { position: fixed; z-index: 7; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; border: 2px solid currentColor; pointer-events: none; animation: ripple .55s ease-out forwards; }
     .tab.has-badge:not(.active) .badge { animation: badge-pulse 1.6s ease-in-out infinite; }
     @keyframes badge-pulse { 50% { transform: scale(1.35); } }
+    .bosschip { border: none; cursor: pointer; color: #fff; font: inherit; font-size: 12px; font-weight: 800; background: linear-gradient(135deg, #ef4444, #f97316); animation: banner-pulse 1.2s ease-in-out infinite; }
+    .bosschip[hidden] { display: none; }
+    .bosschip svg { width: 15px; height: 15px; }
+    .bosschip.fight { animation: none; background: linear-gradient(90deg, #16a34a var(--p, 0%), #7f1d1d var(--p, 0%)); }
+    #stage.boss #coin { filter: drop-shadow(0 0 22px #ef4444) saturate(1.3); }
+    .target { position: absolute; inset: -7%; border-radius: 50%; border: 4px solid rgba(255, 255, 255, .9); box-shadow: 0 0 14px rgba(255, 255, 255, .7); pointer-events: none; opacity: 0; transform: scale(1.7); }
+    .target[hidden] { display: none; }
+    .target.on { opacity: 1; animation: target-shrink 1.5s linear forwards; }
+    .target.hot { border-color: #3ddc97; box-shadow: 0 0 20px #3ddc97, inset 0 0 14px rgba(61, 220, 151, .5); }
+    @keyframes target-shrink { to { transform: scale(.88); } }
     @media (prefers-reduced-motion: reduce) {
+      .target.on { animation: none; transform: scale(1); }
       .boom, .boom::before, .boom i, .boom .bt, .list.enter > *, .item.pop, .tile.pop, #score.bump, #coin.swap, .ripple, .rbchip, .tab.has-badge:not(.active) .badge { animation: none; }
       .boom { opacity: 1; }
     }
@@ -614,6 +625,7 @@
         <span class="chip buff" id="buff" hidden></span>
         <span class="chip buff" id="turbo" hidden></span>
         <button class="chip rbchip" id="rb-banner" type="button" hidden></button>
+        <button class="chip bosschip" id="boss-chip" type="button" hidden></button>
       </div>
     </div>
     <div class="coin-wrap">
@@ -621,7 +633,7 @@
       <div id="fx"></div>
       <div class="coin-holder">
         <div class="coin-stage" id="stage">
-          <div class="halo"></div><div class="ring"></div>
+          <div class="halo"></div><div class="ring"></div><i class="target" id="target" hidden></i>
           <button id="coin" aria-label="Кликнуть по монетке"></button>
         </div>
         <i class="combo" id="combo"><b id="combo-bar"></b></i>
@@ -1122,6 +1134,26 @@
         ["alpha", "Альфа", "Α", 7, 48, 90, 0, ["pulse", "orbit", "shine"], "rays", 1], ["eon", "Эон", "∞", 7, 320, 80, "blob", ["holo", "orbit"], "swirl", 1],
         ["limit", "Предел", "⊗", 7, 180, 90, 0, ["glitch", "orbit", "shine"], "checker", 1] ] },
     };
+    const MORE_SKINS = {
+      0: [["acorn", "Жёлудь", "❦", 0, 32, 55, "blob", 0, "dots"], ["bell", "Колокольчик", "❍", 0, 48, 75, 0, "shine", "waves"], ["feather", "Перо", "✎", 0, 200, 30, "leaf", 0, "stripes"]],
+      1: [["lantern", "Фонарь", "✧", 1, 40, 90, "squircle", "pulse", "grid"], ["compass", "Компас", "⊕", 1, 205, 55, 0, "spin", "rays"],
+          ["clock", "Часы", "◔", 1, 25, 40, 0, 0, "rays"], ["kite", "Воздушный змей", "▲", 1, 330, 70, "leaf", 0, "stripes"], ["mask", "Маска", "☻", 1, 280, 50, 0, 0, "checker"]],
+      2: [["thistle", "Чертополох", "❃", 2, 285, 50, "blob", 0, "dots"], ["fourleaf", "Счастье", "☘", 2, 125, 65, "leaf", "shine", 0],
+          ["oyster", "Жемчужница", "❂", 2, 190, 40, "blob", "pulse", "waves"], ["beacon", "Маяк", "☀", 2, 45, 80, 0, "spin", "rays"], ["thorn", "Шип", "✶", 2, 350, 70, "squircle", 0, "stripes", 1]],
+      3: [["wyvern", "Виверна", "♞", 3, 150, 70, "leaf", "flame", "swirl", 1], ["maelstrom", "Пучина", "❍", 3, 210, 80, "blob", "orbit", "waves", 1],
+          ["cinder", "Уголёк", "✹", 3, 15, 90, 0, "flame", "dots", 1], ["sphinx", "Сфинкс", "▣", 3, 42, 65, "squircle", "shine", "checker"], ["monsoon", "Муссон", "☂", 3, 195, 75, 0, "holo", "swirl"]],
+      4: [["nova", "Нова", "✺", 4, 55, 90, 0, ["pulse", "shine"], "rays"], ["lynx", "Рысь", "♘", 4, 28, 60, "leaf", ["shine", "orbit"], "stripes", 1],
+          ["rime", "Иней", "❄", 4, 190, 80, "squircle", ["shine", "pulse"], "grid"], ["oracle", "Оракул", "☉", 4, 270, 70, 0, ["holo", "orbit"], "swirl", 1], ["tide", "Прилив", "≈", 4, 205, 85, "blob", ["pulse", "orbit"], "waves"]],
+      5: [["empyrean", "Эмпирей", "☼", 5, 50, 70, 0, ["spin", "shine"], "rays"], ["cathedral", "Собор", "✠", 5, 215, 40, "squircle", ["pulse", "orbit"], "grid"],
+          ["solstice", "Солнцестояние", "✹", 5, 30, 85, 0, ["orbit", "shine"], "swirl"]],
+      6: [["blazar", "Блазар", "✷", 6, 195, 90, 0, ["pulse", "spin"], "rays", 1], ["wormhole", "Червоточина", "◎", 6, 265, 80, "blob", ["orbit", "spin"], "swirl", 1],
+          ["supernova", "Сверхновая", "✺", 6, 18, 90, 0, ["pulse", "shine", "orbit"], "rays", 1]],
+      7: [["genesis", "Генезис", "✦", 7, 55, 95, 0, ["pulse", "orbit", "shine"], "swirl", 1], ["apeiron", "Апейрон", "❂", 7, 300, 85, "blob", ["holo", "orbit", "shine"], "rays", 1]],
+    };
+    for (const [t, l] of Object.entries(MORE_SKINS)) NEW_SKINS[t].list.push(...l);
+    Object.assign(NEW_SKINS[7], { cost: [2.5e18, 4e20], bonus: [5e8, 9e9] });
+    Object.assign(NEW_SKINS[6], { cost: [9e13, 3.2e15], bonus: [2e6, 9.2e6] });
+    Object.assign(NEW_SKINS[5], { cost: [2.5e12, 2.8e13], bonus: [2e5, 8.2e5] });
     const OLD_SKINS = SKINS.slice();
     for (const t of Object.values(NEW_SKINS)) {
       t.list.forEach((sp, i) => SKINS.push(makeSkin(sp, between(t.bonus[0], t.bonus[1], i, t.list.length), { cost: between(t.cost[0], t.cost[1], i, t.list.length) })));
@@ -1142,8 +1174,11 @@
       ["citrine", "Цитрин", "✸", 8, 46, 95, 0, ["spin", "shine"], "rays", 0, 130], ["tanzanite", "Танзанит", "❉", 8, 260, 70, 0, ["orbit", "pulse"], "swirl", 1, 180],
       ["alexandrite", "Александрит", "✧", 8, 165, 60, "squircle", ["holo", "orbit"], "grid", 1, 250], ["morganite", "Морганит", "❁", 8, 340, 65, "blob", ["orbit", "shine"], "rays", 0, 350],
       ["jadeite", "Жадеит", "◇", 8, 135, 75, 0, ["spin", "pulse", "shine"], "waves", 1, 500], ["labradorite", "Лабрадорит", "✪", 8, 215, 85, 0, ["holo", "orbit", "shine"], "swirl", 1, 750],
+      ["spinel", "Шпинель", "♥", 8, 355, 75, "squircle", "pulse", "dots", 0, 16], ["peridot", "Перидот", "❀", 8, 90, 70, "leaf", "shine", "waves", 0, 24],
+      ["rhodonite", "Родонит", "✦", 8, 340, 55, "blob", ["pulse", "shine"], "swirl", 0, 38], ["ametrine", "Аметрин", "❖", 8, 285, 75, 0, ["holo", "shine"], "rays", 0, 55],
+      ["heliodor", "Гелиодор", "☼", 8, 52, 90, 0, ["spin", "shine"], "rays", 0, 78], ["andalusite", "Андалузит", "◈", 8, 160, 70, "squircle", ["orbit", "holo"], "grid", 1, 110],
     ].forEach((sp, i) => {
-      SKINS.push({ ...makeSkin(sp.slice(0, 10), between(1e4, 3e9, i, 12), { cost: sp[10] }), gem: sp[10] });
+      SKINS.push({ ...makeSkin(sp.slice(0, 10), round2(1e4 * Math.pow(sp[10] / 12, 2.8)), { cost: sp[10] }), gem: sp[10] });
     });
     SKINS.push({ ...makeSkin(["gift", "Подарок", "🎁", 8, 350, 75, "squircle", ["pulse", "shine"], "dots", 0], 50000, { cost: 1 }), promo: "TGCLICK" });
 
@@ -1253,6 +1288,36 @@
       ["elves", "Эльфийский лес", "forest", "firefly", ["#6ee7b7", "#064e3b"], "16,185,129", "#064e3b", "trees", "moon", { golden: 0.25, lump: 1 }],
       ["dragonpeak", "Драконья гора", "flame", "ember", ["#fcd34d", "#991b1b"], "220,38,38", "#7f1d1d", "peaks", "sun", { click: 0.8, crit: 0.05 }],
       ["cradle", "Колыбель времени", "space", "shard", ["#fde68a", "#6d28d9"], "168,85,247", "#4c1d95", "domes", "ring", { income: 0.5, fever: 20000, discount: 0.1 }],
+      ["arcport", "Арктический порт", "gear", "snow", ["#e0f2fe", "#1e40af"], "96,165,250", "#1e3a8a", "blocks", "moon", { discount: 0.15, offline: 0.2 }],
+      ["deepmine", "Заброшенная шахта", "cave", "ash", ["#fdba74", "#292524"], "194,120,60", "#292524", "ruins", "", { click: 0.9, golden: 0.1 }],
+      ["copper", "Медные горы", "cave", "sand", ["#fdba74", "#9a3412"], "217,119,6", "#78350f", "peaks", "sun", { income: 0.5 }],
+      ["saltlake", "Солёное озеро", "drop", "foam", ["#fbcfe8", "#0d9488"], "244,114,182", "#0f766e", "waves", "sun", { lump: 1.2, offline: 0.3 }],
+      ["island", "Тропический остров", "beach", "petal", ["#86efac", "#0891b2"], "45,212,191", "#0e7490", "waves", "sun", { gems: 0.5 }],
+      ["reef", "Коралловый риф", "ocean", "bubble", ["#fda4af", "#0e7490"], "251,113,133", "#0e7490", "hills", "sun", { crit: 0.09, click: 0.4 }],
+      ["wreck", "Затонувший корабль", "atlantis", "bubble", ["#99f6e4", "#134e4a"], "20,184,166", "#134e4a", "ruins", "", { discount: 0.18 }],
+      ["trench", "Глубоководье", "ocean", "plankton", ["#67e8f9", "#172554"], "37,99,235", "#0f172a", "spires", "", { income: 0.6, critp: 2 }],
+      ["icepalace", "Ледяной дворец", "castle", "crystal", ["#e0f2fe", "#0369a1"], "125,211,252", "#0c4a6e", "spires", "moon", { crit: 0.1 }],
+      ["crater", "Метеоритный кратер", "moon", "ash", ["#d6d3d1", "#7c2d12"], "168,162,158", "#44403c", "peaks", "stars", { click: 1, fever: 15000 }],
+      ["satellite", "Спутник", "gear", "star", ["#cbd5e1", "#1e293b"], "148,163,184", "#0f172a", "blocks", "ring", { income: 0.55, discount: 0.1 }],
+      ["moontown", "Лунный город", "city", "meteor", ["#bfdbfe", "#1d4ed8"], "96,165,250", "#1e3a8a", "domes", "moon", { offline: 0.6 }],
+      ["darkmatter", "Тёмная материя", "void", "swirl", ["#a78bfa", "#0c0a09"], "124,58,237", "#0c0a09", "hills", "hole", { critp: 3, gems: 0.3 }],
+      ["starforge", "Звёздная кузница", "flame", "meteor", ["#fde68a", "#b45309"], "251,191,36", "#451a03", "blocks", "stars", { income: 0.6, click: 0.5 }],
+      ["crystalpeak", "Кристальные горы", "cave", "crystal", ["#a5f3fc", "#7c3aed"], "103,232,249", "#4c1d95", "peaks", "stars", { crit: 0.1, critp: 1.5 }],
+      ["magmalake", "Магмовое озеро", "volcano", "ember", ["#fde047", "#b91c1c"], "239,68,68", "#7f1d1d", "dunes", "sun", { click: 1.1, lump: 0.6 }],
+      ["cloudcandy", "Карамельные облака", "candy", "petal", ["#fbcfe8", "#a78bfa"], "244,114,182", "#c084fc", "domes", "sun", { golden: 0.3 }],
+      ["chocolate", "Шоколадная река", "candy", "foam", ["#d6a77a", "#451a03"], "180,100,60", "#451a03", "waves", "", { offline: 0.5, gems: 0.3 }],
+      ["gingerbread", "Пряничный город", "candy", "confetti", ["#fed7aa", "#92400e"], "251,146,60", "#78350f", "blocks", "sun", { income: 0.65 }],
+      ["circus", "Цирк", "star", "confetti", ["#fde047", "#be123c"], "244,63,94", "#9f1239", "domes", "stars", { golden: 0.25, lump: 1.5 }],
+      ["library", "Библиотека", "temple", "glow", ["#fde68a", "#78350f"], "217,119,6", "#451a03", "ruins", "", { gems: 0.6 }],
+      ["alchemy", "Алхимическая башня", "castle", "glow", ["#bef264", "#14532d"], "132,204,22", "#14532d", "spires", "moon", { discount: 0.2, income: 0.4 }],
+      ["giantwood", "Лес гигантов", "forest", "leaf", ["#86efac", "#14532d"], "22,163,74", "#052e16", "trees", "sun", { click: 1.2 }],
+      ["bloomvale", "Цветущая долина", "meadow", "petal", ["#fbcfe8", "#15803d"], "74,222,128", "#166534", "hills", "sun", { income: 0.7, offline: 0.3 }],
+      ["mistisle", "Туманный остров", "swamp", "mist", ["#e2e8f0", "#475569"], "148,163,184", "#334155", "hills", "moon", { crit: 0.1, fever: 20000 }],
+      ["ghostship", "Призрачный корабль", "atlantis", "ash", ["#cbd5e1", "#1e293b"], "148,163,184", "#0f172a", "ruins", "moon", { critp: 3, lump: 1 }],
+      ["darkwood", "Тёмный лес", "forest", "glow", ["#6ee7b7", "#022c22"], "16,185,129", "#022c22", "trees", "moon", { golden: 0.3, gems: 0.4 }],
+      ["skytemple", "Небесный храм", "temple", "gold", ["#fef3c7", "#0369a1"], "125,211,252", "#7dd3fc", "domes", "sun", { income: 0.75, discount: 0.15 }],
+      ["starsea", "Звёздный океан", "ocean", "star", ["#a5b4fc", "#1e1b4b"], "99,102,241", "#1e1b4b", "waves", "stars", { offline: 0.8, click: 0.8 }],
+      ["eternity", "Врата вечности", "void", "shard", ["#fef08a", "#4c1d95"], "250,204,21", "#2e1065", "domes", "ring", { income: 0.9, critp: 3, gems: 0.5 }],
     ].forEach(([id, name, icon, fx, grad, sky, ground, kind, sun, perk], k) => {
       const sc = scenery(kind, k + 1, ground);
       ICONS[id] = ICONS[icon];
@@ -1284,9 +1349,16 @@
       ROBOT: { avatar: 18, text: "аватарку 🤖" },
     };
 
-    const SEASON = 2, VERSION = "2.0";
+    const SEASON = 2, VERSION = "2.1";
     const CHANGELOG = [
-      { v: "2.0", t: "Сезон 2", items: [
+      { v: "2.1", t: "Боссы и больше контента", items: [
+        "Миры теперь сбрасываются перерождением: открывай их заново по порядку",
+        "Боссы: время от времени появляется босс, успей отбить его кликами за 12 секунд",
+        "Точный удар: когда кольцо сжимается вокруг монеты, нажми в нужный момент",
+        "Кристальный сундук (за кристаллы): случайный скин, аватарка, монеты или буст",
+        "+30 скинов за монеты и +6 скинов за кристаллы",
+        "+30 новых миров, всего 91" ] },
+      { v: "2.0", t: "Сезон 2", season: true, items: [
         "Перерождение теперь стоит монет: первое за 1 млн, каждое следующее в 32 раза дороже",
         "После перерождения улучшения дорожают в 16 раз, зато весь доход растёт навсегда",
         "Перерождения не копятся: одно за раз, за каждое фиксированная награда в кристаллах",
@@ -1328,9 +1400,12 @@
       ["skins10", "skin", "Коллекционер", "Собери 10 скинов", 10, 6, () => state.owned.length],
       ["skins20", "skin", "Гардероб", "Собери 20 скинов", 20, 8, () => state.owned.length],
       ["skinsAll", "skin", "Музей монет", "Собери все скины", SKINS.length, 15, () => state.owned.length],
-      ["worlds3", "space", "Путешественник", "Открой 3 мира", 3, 3, () => state.worlds.length],
-      ["worlds6", "space", "Исследователь", "Открой 6 миров", 6, 6, () => state.worlds.length],
-      ["worldsAll", "space", "Покоритель миров", "Открой все миры", WORLDS.length, 10, () => state.worlds.length],
+      ["worlds3", "space", "Путешественник", "Открой 3 мира", 3, 3, () => state.wmax],
+      ["worlds6", "space", "Исследователь", "Открой 6 миров", 6, 6, () => state.wmax],
+      ["worldsAll", "space", "Покоритель миров", "Открой все миры сразу", WORLDS.length, 10, () => state.worlds.length],
+      ["boss1", "power", "Охотник на боссов", "Победи босса", 1, 2, () => state.bosses],
+      ["boss10", "power", "Истребитель", "Победи 10 боссов", 10, 6, () => state.bosses],
+      ["perfect50", "mult", "Снайпер", "Сделай 50 точных ударов", 50, 4, () => state.perfects],
       ["frenzy10", "power", "Неудержимый", "Вызови бешенство 10 раз", 10, 3, () => state.frenzies],
       ["chest10", "gold", "Кладоискатель", "Открой 10 сундуков", 10, 4, () => state.chests],
       ["exp10", "gold", "Исследователь времени", "Заверши 10 экспедиций", 10, 4, () => state.exps],
@@ -1358,6 +1433,7 @@
       { id: "turbo", name: "Турбо ×3", cost: 4, icon: "turbo", grad: ["#ffb347", "#ff5a1f"],
         desc: () => { const l = Math.ceil((state.turbo - Date.now()) / 1000); return `Весь доход ×3 на 2 минуты${l > 0 ? ` · осталось ${l} с` : ""}`; } },
       { id: "rain", name: "Золотой дождь", cost: 2, icon: "rain", grad: ["#ffe27a", "#f0a500"], desc: () => "Золотая монета вылетает прямо сейчас" },
+      { id: "loot", name: "Кристальный сундук", cost: 15, icon: "chest", grad: ["#67e8f9", "#7c3aed"], desc: () => "Случайный приз: скин, аватарка, монеты, кристаллы или буст" },
       { id: "cash", name: "Касса", cost: 5, icon: "cash", grad: ["#7ee0b5", "#0f8f6a"], desc: () => `+${fmt(cashAmount())} монет, это доход примерно за час` },
     ];
 
@@ -1487,6 +1563,9 @@
       cd: { surge: 0, meteor: 0, haste: 0 },
       exp: { until: 0, kind: 0 },
       exps: 0,
+      wmax: 1,
+      bosses: 0,
+      perfects: 0,
       season: SEASON,
       rbNote: -1,
       avatar: 0,
@@ -1626,16 +1705,19 @@
           next.earned = Math.max(clean(s.earned), next.score);
           for (const u of UPGRADES) next.lv[u.id] = Math.min(u.max || Infinity, whole(s.lv && s.lv[u.id]));
           for (const u of PERMS) next.perm[u.id] = Math.min(u.max || Infinity, whole(s.perm && s.perm[u.id]));
-          const owned = Array.isArray(s.owned) ? s.owned.filter((id) => SKINS.some((x) => x.id === id)) : [];
+          const owned = idsOf(s.owned, SKINS).filter((id) => SKINS.some((x) => x.id === id));
           next.owned = Array.from(new Set(["classic", ...owned]));
           next.skin = next.owned.includes(s.skin) ? s.skin : "classic";
-          const worlds = Array.isArray(s.worlds) ? s.worlds.filter((id) => WORLDS.some((x) => x.id === id)) : [];
+          const worlds = idsOf(s.worlds, WORLDS).filter((id) => WORLDS.some((x) => x.id === id));
           next.worlds = Array.from(new Set(["meadow", ...worlds]));
           next.world = next.worlds.includes(s.world) ? s.world : "meadow";
+          next.wmax = Math.max(whole(s.wmax), next.worlds.length);
+          next.bosses = whole(s.bosses);
+          next.perfects = whole(s.perfects);
           next.clicks = whole(s.clicks);
           next.golden = whole(s.golden);
           next.total = Math.max(clean(s.total), next.earned);
-          next.claimed = Array.isArray(s.claimed) ? s.claimed.filter((id) => ACHS.some((a) => a.id === id)) : [];
+          next.claimed = idsOf(s.claimed, ACHS).filter((id) => ACHS.some((a) => a.id === id));
           next.lastSeen = clean(s.lastSeen);
           const d = s.daily || {};
           next.daily = { last: typeof d.last === "string" ? d.last : "", streak: whole(d.streak) };
@@ -1670,10 +1752,24 @@
       return next;
     }
 
+    // Lists of owned skins / opened worlds / claimed awards are saved as hex bitmasks over the (append-only!) data arrays:
+    // the full id lists alone would not fit into the 4096 characters CloudStorage allows.
+    const packSet = (list, ids) => {
+      const have = new Set(ids), bits = list.map((x) => (have.has(x.id) ? 1 : 0));
+      let out = "";
+      for (let i = 0; i < bits.length; i += 4) out += (bits[i] * 8 + (bits[i + 1] || 0) * 4 + (bits[i + 2] || 0) * 2 + (bits[i + 3] || 0)).toString(16);
+      return out;
+    };
+    const unpackSet = (list, hex) => list.filter((_, i) => {
+      const d = parseInt(String(hex)[i >> 2] || "0", 16) || 0;
+      return (d >> (3 - (i & 3))) & 1;
+    }).map((x) => x.id);
+    const idsOf = (raw, list) => (typeof raw === "string" ? unpackSet(list, raw) : Array.isArray(raw) ? raw : []);
+
     function writeNow() {
       if (saveBlocked) return;
       state.lastSeen = Date.now();
-      const json = JSON.stringify(state);
+      const json = JSON.stringify({ ...state, owned: packSet(SKINS, state.owned), worlds: packSet(WORLDS, state.worlds), claimed: packSet(ACHS, state.claimed) });
       if (cloud) cloud.setItem(STORAGE_KEY, json, () => {});
       try { localStorage.setItem(STORAGE_KEY, json); } catch {} // a local mirror next to the cloud copy
     }
@@ -1817,11 +1913,11 @@
           <div class="keep-row">Получишь:
             <span class="pill keep">Весь доход ×${xs(REBIRTH_INCOME)} навсегда (сейчас ×${xs(rebirthMult())}, будет ×${xs(rebirthMult(n + 1))})</span></div>
           <div class="keep-row">Останется:
-            <span class="pill keep">Скины</span><span class="pill keep">Миры</span><span class="pill keep">Кристаллы</span>
+            <span class="pill keep">Скины</span><span class="pill keep">Кристаллы</span>
             <span class="pill keep">Награды</span><span class="pill keep">Постоянные улучшения</span>
             <span class="pill keep">${pct}% уровней улучшений</span></div>
           <div class="keep-row">Сбросится:
-            <span class="pill lose">Монеты</span><span class="pill lose">${100 - pct}% уровней улучшений</span>
+            <span class="pill lose">Монеты</span><span class="pill lose">Миры (откроешь заново)</span><span class="pill lose">${100 - pct}% уровней улучшений</span>
             <span class="pill lose">Цены улучшений ×${PRICE_STEP} (сейчас ×${xs(priceMult())}, будут ×${xs(priceMult(n + 1))})</span></div>
           <div class="keep-row">Следующее перерождение будет стоить ${fmt(rebirthCost(n + 1))} монет за забег (в ${REBIRTH_STEP} раз дороже).</div>
           <button class="rebirth-btn" id="rb-btn" data-act="rebirth"></button>
@@ -1845,7 +1941,8 @@
         ["Лига", leagueInfo().cur.n], ["Цены улучшений", `×${xs(priceMult())}`], ["Версия", `${VERSION}, сезон ${SEASON}`],
         ["Золотых монет поймано", fmt(state.golden)], ["Бешенств", fmt(state.frenzies)],
         ["Сундуков открыто", fmt(state.chests)], ["Достижений", `${state.claimed.length} из ${ACHS.length}`],
-        ["Скинов", `${state.owned.length} из ${SKINS.length}`], ["Миров", `${state.worlds.length} из ${WORLDS.length}`],
+        ["Скинов", `${state.owned.length} из ${SKINS.length}`], ["Миров сейчас", `${state.worlds.length} из ${WORLDS.length}`],
+        ["Боссов побеждено", fmt(state.bosses)], ["Точных ударов", fmt(state.perfects)],
       ];
       return `<div class="statgrid">${rows.map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join("")}</div>`;
     }
@@ -2216,6 +2313,8 @@
       state.rebirths += 1;
       state.score = startCoins();
       state.earned = 0;
+      state.worlds = ["meadow"]; // worlds are lost too: open them again in order
+      state.world = "meadow";
       for (const id of Object.keys(state.lv)) state.lv[id] = Math.floor(state.lv[id] * keep);
       rebirthArmed = false;
       clearTimeout(armTimer);
@@ -2235,6 +2334,7 @@
       ceremony(state.rebirths, g, rebirthMult());
       toast(`Перерождение ${state.rebirths}: +${fmt(g)} кристаллов, осталось ${Math.round(keepShare() * 100)}% уровней`);
       applySkin();
+      applyWorld();
       renderStats();
       renderList();
       flush();
@@ -2482,6 +2582,8 @@
       } else if (id === "rain") {
         spawnGolden();
         toast("Золотая монета вылетела");
+      } else if (id === "loot") {
+        openLoot();
       } else {
         const gain = cashAmount();
         addCoins(gain);
@@ -2556,6 +2658,7 @@
       state = defaultState();
       state.settings = settings;
       state.seenVer = VERSION;
+      boss = null; stageEl.classList.remove("boss"); endTarget();
       buff = { until: 0, mult: 1 }; frenzyUntil = 0; combo = 0; wheelAngle = 0;
       shownLeague = -1; lastSubmit = 0; lastSentTotal = -1; topState.me = null; topState.status = "idle";
       today = dayKey();
@@ -2643,6 +2746,7 @@
         if (state.rebirths < w.rebirths || state.score < w.cost) return;
         state.score -= w.cost;
         state.worlds.push(w.id);
+        state.wmax = Math.max(state.wmax, state.worlds.length);
       }
       state.world = w.id;
       haptic("success");
@@ -2679,6 +2783,103 @@
       } else renderCombo();
     }
 
+    // ---- boss: now and then a boss shows up; hit the coin enough times within 12 seconds to beat it ----
+    const BOSS_MS = 12000, BOSS_WAIT = 25000;
+    let boss = null, nextBoss = Date.now() + 150000 + Math.random() * 120000;
+    const bossEl = document.getElementById("boss-chip");
+    const bossNeed = () => 40 + 4 * Math.min(state.bosses, 25);
+    const bossReward = () => Math.round(Math.max(perSec() * 1200, perClick() * 250, 3000) * (1 + 0.1 * Math.min(state.bosses, 30)));
+    function endBoss(msg, wait) {
+      boss = null;
+      nextBoss = Date.now() + wait;
+      stageEl.classList.remove("boss");
+      if (msg) toast(msg);
+      renderBoss();
+    }
+    function renderBoss() {
+      if (!boss) { bossEl.hidden = true; bossEl.classList.remove("fight"); return; }
+      const now = Date.now();
+      if (now > boss.until) { endBoss(boss.phase === "wait" ? "Босс ушёл" : "Не успел: босс ушёл", 240000); return; }
+      bossEl.hidden = false;
+      if (boss.phase === "wait") {
+        bossEl.classList.remove("fight");
+        bossEl.innerHTML = `${ICONS.bolt}<span>Босс! Нажми и сразись</span>`;
+      } else {
+        bossEl.classList.add("fight");
+        bossEl.style.setProperty("--p", Math.min(100, boss.hits / boss.need * 100).toFixed(0) + "%");
+        bossEl.innerHTML = `<span>Босс: ${boss.hits} из ${boss.need} · ${Math.ceil((boss.until - now) / 1000)} с</span>`;
+      }
+    }
+    function startBoss() {
+      if (!boss || boss.phase !== "wait") return;
+      boss = { phase: "fight", until: Date.now() + BOSS_MS, hits: 0, need: bossNeed() };
+      stageEl.classList.add("boss");
+      toast(`Босс! Нажми на монету ${boss.need} раз за ${BOSS_MS / 1000} секунд`);
+      haptic("crit");
+      renderBoss();
+    }
+    function winBoss() {
+      const coins = bossReward(), gems = 1 + (state.bosses % 5 === 4 ? 2 : 0);
+      addCoins(coins);
+      state.gems += gems;
+      state.bosses += 1;
+      endBoss(`Босс побеждён: +${fmt(coins)} монет и ${gems} ${gems === 1 ? "кристалл" : "кристалла"}`, 360000 + Math.random() * 180000);
+      haptic("success");
+      celebrate();
+      renderStats();
+      flush();
+    }
+    bossEl.addEventListener("pointerdown", (e) => { e.preventDefault(); startBoss(); });
+
+    // ---- precise hit: a ring shrinks around the coin, tap while it is green for a big bonus ----
+    let target = null, targetTimer = null, nextTarget = Date.now() + 12000;
+    const targetEl = document.getElementById("target");
+    const HOT_FROM = 1150, HOT_TO = 1500;
+    function endTarget() {
+      target = null;
+      clearTimeout(targetTimer);
+      targetEl.hidden = true;
+      targetEl.classList.remove("on", "hot");
+    }
+    function spawnTarget() {
+      endTarget();
+      target = { at: Date.now() };
+      targetEl.hidden = false;
+      void targetEl.offsetWidth;
+      targetEl.classList.add("on");
+      const mine = target;
+      setTimeout(() => { if (target === mine) targetEl.classList.add("hot"); }, HOT_FROM);
+      targetTimer = setTimeout(() => { if (target === mine) endTarget(); }, HOT_TO + 80);
+    }
+    function perfect(x, y) {
+      const gain = Math.round(perClick() * 8);
+      addCoins(gain);
+      state.perfects += 1;
+      showPlus(x, y, gain, true);
+      ripple(x, y);
+      burst(x, y, true);
+      bump();
+      haptic("gold");
+      endTarget();
+    }
+
+    // ---- crystal chest: the gem sink with a random prize ----
+    function openLoot() {
+      const skins = SKINS.filter((x) => !x.gem && !x.promo && x.r <= 3 && !state.owned.includes(x.id));
+      const avs = AVATARS.map((_, i) => i).filter((i) => AVATARS[i].kind === "gem" && !state.avs.includes(i));
+      const table = [["coins", 34], ["gems", 20], ["turbo", 14], ["golden", 10], ["skin", skins.length ? 16 : 0], ["avatar", avs.length ? 6 : 0]];
+      let r = Math.random() * table.reduce((n, t) => n + t[1], 0), kind = "coins";
+      for (const [k, w] of table) { if (r < w) { kind = k; break; } r -= w; }
+      if (kind === "golden" && goldenEl) kind = "coins";
+      if (kind === "coins") { const g = wheelCoins(90); addCoins(g); toast(`Сундук: +${fmt(g)} монет`); }
+      else if (kind === "gems") { const n = 6 + Math.floor(Math.random() * 10); state.gems += n; toast(`Сундук: +${n} кристаллов`); }
+      else if (kind === "turbo") { state.turbo = Math.max(Date.now(), state.turbo) + 180000; toast("Сундук: турбо ×3 на 3 минуты"); }
+      else if (kind === "golden") { spawnGolden(); toast("Сундук: золотая монета"); }
+      else if (kind === "skin") { const sk = skins[Math.floor(Math.random() * skins.length)]; state.owned.push(sk.id); toast(`Сундук: скин «${sk.name}»!`); }
+      else { const i = avs[Math.floor(Math.random() * avs.length)]; state.avs.push(i); toast(`Сундук: аватарка ${AVATARS[i].e}`); }
+      celebrate();
+    }
+
     function pressCoin(x, y) {
       if (!ready) return;
       tickCombo();
@@ -2692,6 +2893,8 @@
       showPlus(x, y, gain, crit);
       burst(x, y, crit);
       if (crit) { ripple(x, y); bump(); }
+      if (boss && boss.phase === "fight") { boss.hits += crit ? 2 : 1; if (boss.hits >= boss.need) winBoss(); else renderBoss(); }
+      if (target) { const t = Date.now() - target.at; if (t >= HOT_FROM && t <= HOT_TO) perfect(x, y); }
       coin.classList.add("pressed");
       haptic(crit ? "crit" : undefined);
     }
@@ -2748,7 +2951,7 @@
 
     const seasonView = () => `<h3>Начался сезон ${SEASON}</h3>
       <div class="sub">Все игроки начали заново, а топ очищен. Прогресс прошлого сезона не переносится, настройки сохранены.</div>
-      <div class="clog"><ul>${CHANGELOG[0].items.slice(0, 8).map((t) => `<li>${t}</li>`).join("")}</ul></div>
+      <div class="clog"><ul>${(CHANGELOG.find((c) => c.season) || CHANGELOG[0]).items.slice(0, 8).map((t) => `<li>${t}</li>`).join("")}</ul></div>
       <button class="mok" type="button" data-m="close">Играть</button>`;
 
     function renderModal() {
@@ -2904,6 +3107,14 @@
         nextGolden = Date.now() + goldenGap();
       }
       if (!document.hidden) submitScore(false);
+      const nowT = Date.now();
+      if (!boss && nowT >= nextBoss && !document.hidden && state.total >= 3000 && modalEl.hidden) {
+        boss = { phase: "wait", until: nowT + BOSS_WAIT };
+        toast("Появился босс! Нажми на красную плашку");
+        haptic("gold");
+      }
+      if (!target && !boss && nowT >= nextTarget && coin.offsetParent && nowT - comboAt < 4000) { spawnTarget(); nextTarget = nowT + 10000 + Math.random() * 10000; }
+      renderBoss();
       if (saveBlocked && Date.now() >= retryAt) { // the cloud did not answer at start: keep asking, then pick the real save up
         retryAt = Date.now() + 15000;
         readSave().then((raw) => {
