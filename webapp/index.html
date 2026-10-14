@@ -1165,6 +1165,7 @@
     let nextGolden = Date.now() + 40000 + Math.random() * 40000;
     let toastTimer = null;
     let rewardSig = "";
+    let pressing = false; // a pointer is down inside the list
     let combo = 0, comboAt = 0, comboTimer = null, frenzyUntil = 0;
     const COMBO_NEED = 30, COMBO_GAP = 700, FRENZY_MS = 6000;
     let today = "";
@@ -1572,6 +1573,15 @@
         })).join("") + '<div class="section">Постоянные улучшения за кристаллы</div>' + PERMS.map((u) => {
           const lvl = state.perm[u.id];
           const maxed = lvl >= (u.max || Infinity);
+          if (lvl >= 1 && (u.id === "manager" || u.id === "collector")) { // bought: this row is the on/off switch
+            const on = state.settings[u.id];
+            return itemHTML({
+              act: `set:${u.id}`, cta: on, lead: iconTile(u.id, u.grad),
+              name: `${u.name} <span class="lv">ур. ${lvl} / ${u.max}</span>`,
+              desc: `${u.desc(lvl)} · ${on ? "включён, нажми, чтобы выключить" : "выключен, нажми, чтобы включить"}`,
+              price: on ? "Вкл" : "Выкл",
+            });
+          }
           return itemHTML({
             act: `perm:${u.id}`, cls: maxed ? "maxed" : "", disabled: maxed, lead: iconTile(u.id, u.grad),
             name: `${u.name} <span class="lv">ур. ${lvl}${u.max ? ` / ${u.max}` : ""}</span>`, desc: u.desc(lvl),
@@ -1654,8 +1664,8 @@
       document.querySelector('.tab[data-tab="upgrades"]').classList.toggle("has-badge", ready && canBuyUpgrade());
       document.querySelector('.tab[data-tab="rebirth"]').classList.toggle("has-badge", ready && rebirthGain() >= 2);
       if (sig !== rewardSig) {
-        rewardSig = sig;
-        if (tab === "rewards") keepScroll(renderList);
+        if (tab !== "rewards") rewardSig = sig;
+        else if (!pressing) { rewardSig = sig; keepScroll(renderList); } // not under a pressed finger: the tap would be lost
       }
     }
 
@@ -2256,6 +2266,10 @@
       release();
     });
 
+    listEl.addEventListener("pointerdown", () => { pressing = true; });
+    ["pointerup", "pointercancel"].forEach((ev) => document.addEventListener(ev, () => { pressing = false; }));
+    window.addEventListener("blur", () => { pressing = false; });
+
     listEl.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-act]");
       if (!btn || btn.disabled) return;
@@ -2303,7 +2317,7 @@
       const gain = perSec();
       if (gain) { addCoins(gain); save(); }
       if (Date.now() < state.haste) { addCoins(perClick() * 10); save(); }
-      if (autoBuy() && tab === "upgrades") keepScroll(renderList);
+      if (autoBuy() && tab === "upgrades" && !pressing) keepScroll(renderList);
       if (!goldenEl && !document.hidden && Date.now() >= nextGolden) {
         spawnGolden();
         nextGolden = Date.now() + goldenGap();
