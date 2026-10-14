@@ -1358,7 +1358,7 @@
         "Кристальный сундук (за кристаллы): случайный скин, аватарка, монеты или буст",
         "+30 скинов за монеты и +6 скинов за кристаллы",
         "+30 новых миров, всего 91" ] },
-      { v: "2.0", t: "Сезон 2", items: [
+      { v: "2.0", t: "Сезон 2", season: true, items: [
         "Перерождение теперь стоит монет: первое за 1 млн, каждое следующее в 32 раза дороже",
         "После перерождения улучшения дорожают в 16 раз, зато весь доход растёт навсегда",
         "Перерождения не копятся: одно за раз, за каждое фиксированная награда в кристаллах",
@@ -1705,10 +1705,10 @@
           next.earned = Math.max(clean(s.earned), next.score);
           for (const u of UPGRADES) next.lv[u.id] = Math.min(u.max || Infinity, whole(s.lv && s.lv[u.id]));
           for (const u of PERMS) next.perm[u.id] = Math.min(u.max || Infinity, whole(s.perm && s.perm[u.id]));
-          const owned = Array.isArray(s.owned) ? s.owned.filter((id) => SKINS.some((x) => x.id === id)) : [];
+          const owned = idsOf(s.owned, SKINS).filter((id) => SKINS.some((x) => x.id === id));
           next.owned = Array.from(new Set(["classic", ...owned]));
           next.skin = next.owned.includes(s.skin) ? s.skin : "classic";
-          const worlds = Array.isArray(s.worlds) ? s.worlds.filter((id) => WORLDS.some((x) => x.id === id)) : [];
+          const worlds = idsOf(s.worlds, WORLDS).filter((id) => WORLDS.some((x) => x.id === id));
           next.worlds = Array.from(new Set(["meadow", ...worlds]));
           next.world = next.worlds.includes(s.world) ? s.world : "meadow";
           next.wmax = Math.max(whole(s.wmax), next.worlds.length);
@@ -1717,7 +1717,7 @@
           next.clicks = whole(s.clicks);
           next.golden = whole(s.golden);
           next.total = Math.max(clean(s.total), next.earned);
-          next.claimed = Array.isArray(s.claimed) ? s.claimed.filter((id) => ACHS.some((a) => a.id === id)) : [];
+          next.claimed = idsOf(s.claimed, ACHS).filter((id) => ACHS.some((a) => a.id === id));
           next.lastSeen = clean(s.lastSeen);
           const d = s.daily || {};
           next.daily = { last: typeof d.last === "string" ? d.last : "", streak: whole(d.streak) };
@@ -1752,10 +1752,24 @@
       return next;
     }
 
+    // Lists of owned skins / opened worlds / claimed awards are saved as hex bitmasks over the (append-only!) data arrays:
+    // the full id lists alone would not fit into the 4096 characters CloudStorage allows.
+    const packSet = (list, ids) => {
+      const have = new Set(ids), bits = list.map((x) => (have.has(x.id) ? 1 : 0));
+      let out = "";
+      for (let i = 0; i < bits.length; i += 4) out += (bits[i] * 8 + (bits[i + 1] || 0) * 4 + (bits[i + 2] || 0) * 2 + (bits[i + 3] || 0)).toString(16);
+      return out;
+    };
+    const unpackSet = (list, hex) => list.filter((_, i) => {
+      const d = parseInt(String(hex)[i >> 2] || "0", 16) || 0;
+      return (d >> (3 - (i & 3))) & 1;
+    }).map((x) => x.id);
+    const idsOf = (raw, list) => (typeof raw === "string" ? unpackSet(list, raw) : Array.isArray(raw) ? raw : []);
+
     function writeNow() {
       if (saveBlocked) return;
       state.lastSeen = Date.now();
-      const json = JSON.stringify(state);
+      const json = JSON.stringify({ ...state, owned: packSet(SKINS, state.owned), worlds: packSet(WORLDS, state.worlds), claimed: packSet(ACHS, state.claimed) });
       if (cloud) cloud.setItem(STORAGE_KEY, json, () => {});
       try { localStorage.setItem(STORAGE_KEY, json); } catch {} // a local mirror next to the cloud copy
     }
@@ -2937,7 +2951,7 @@
 
     const seasonView = () => `<h3>Начался сезон ${SEASON}</h3>
       <div class="sub">Все игроки начали заново, а топ очищен. Прогресс прошлого сезона не переносится, настройки сохранены.</div>
-      <div class="clog"><ul>${CHANGELOG[0].items.slice(0, 8).map((t) => `<li>${t}</li>`).join("")}</ul></div>
+      <div class="clog"><ul>${(CHANGELOG.find((c) => c.season) || CHANGELOG[0]).items.slice(0, 8).map((t) => `<li>${t}</li>`).join("")}</ul></div>
       <button class="mok" type="button" data-m="close">Играть</button>`;
 
     function renderModal() {
