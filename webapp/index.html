@@ -276,6 +276,8 @@
     .tab.active svg { color: var(--accent-ink); filter: drop-shadow(0 0 6px rgba(255, 200, 61, .55)); }
     .badge { display: none; position: absolute; top: 5px; left: calc(50% + 7px); width: 9px; height: 9px; border-radius: 50%; background: #ff4f6d; box-shadow: 0 0 0 2px var(--bg); }
     .tab.has-badge:not(.active) .badge { display: block; }
+    .tab[data-tab="upgrades"] .badge { background: var(--good); }
+    .tab[data-tab="rebirth"] .badge { background: #a78bfa; }
 
     /* list rows */
     .item {
@@ -477,10 +479,10 @@
     </section>
     <nav class="tabs" aria-label="Разделы">
       <button class="tab active" data-tab="home" aria-label="Монета"><span class="ti"></span><span class="tl">Тап</span></button>
-      <button class="tab" data-tab="upgrades" aria-label="Прокачка"><span class="ti"></span><span class="tl">Прокачка</span></button>
+      <button class="tab" data-tab="upgrades" aria-label="Прокачка"><span class="ti"></span><span class="tl">Прокачка</span><i class="badge"></i></button>
       <button class="tab" data-tab="skins" aria-label="Скины"><span class="ti"></span><span class="tl">Скины</span></button>
       <button class="tab" data-tab="worlds" aria-label="Миры"><span class="ti"></span><span class="tl">Миры</span></button>
-      <button class="tab" data-tab="rebirth" aria-label="Перерождение"><span class="ti"></span><span class="tl">Престиж</span></button>
+      <button class="tab" data-tab="rebirth" aria-label="Перерождение"><span class="ti"></span><span class="tl">Престиж</span><i class="badge"></i></button>
       <button class="tab" data-tab="rewards" aria-label="Награды"><span class="ti"></span><span class="tl">Награды</span><i class="badge"></i></button>
     </nav>
   </main>
@@ -541,6 +543,7 @@
       candy:    svg('<circle cx="12" cy="9" r="6" fill="currentColor"/><path d="M12 15v6M9.500 9a2.500 2.500 0 0 1 5 0" stroke="#fff"/>'),
       sound:    svg('<path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 8.500a5 5 0 0 1 0 7M18.500 6a8.500 8.500 0 0 1 0 12"/>'),
       haptic:   svg('<rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4 8v8M20 8v8"/>'),
+      share:    svg('<circle cx="6" cy="12" r="2.500"/><circle cx="18" cy="6" r="2.500"/><circle cx="18" cy="18" r="2.500"/><path d="M8.200 11l7.600-4M8.200 13l7.600 4"/>'),
       wheel:    svg('<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.600 5.600l12.800 12.800M18.400 5.600L5.600 18.400"/>'),
     });
     ICONS.crit = ICONS.bolt;
@@ -1061,11 +1064,12 @@
       if (raw) {
         try {
           const s = JSON.parse(raw);
-          const whole = (v) => Math.max(0, Math.floor(Number(v) || 0));
-          next.score = Number(s.score) || 0;
+          const clean = (v) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : 0; };
+          const whole = (v) => Math.floor(clean(v));
+          next.score = clean(s.score);
           next.gems = whole(s.gems);
           next.rebirths = whole(s.rebirths);
-          next.earned = Math.max(Number(s.earned) || 0, next.score);
+          next.earned = Math.max(clean(s.earned), next.score);
           for (const u of UPGRADES) next.lv[u.id] = Math.min(u.max || Infinity, whole(s.lv && s.lv[u.id]));
           for (const u of PERMS) next.perm[u.id] = Math.min(u.max || Infinity, whole(s.perm && s.perm[u.id]));
           const owned = Array.isArray(s.owned) ? s.owned.filter((id) => SKINS.some((x) => x.id === id)) : [];
@@ -1076,12 +1080,12 @@
           next.world = next.worlds.includes(s.world) ? s.world : "meadow";
           next.clicks = whole(s.clicks);
           next.golden = whole(s.golden);
-          next.total = Math.max(Number(s.total) || 0, next.earned);
+          next.total = Math.max(clean(s.total), next.earned);
           next.claimed = Array.isArray(s.claimed) ? s.claimed.filter((id) => ACHS.some((a) => a.id === id)) : [];
-          next.lastSeen = Number(s.lastSeen) || 0;
+          next.lastSeen = clean(s.lastSeen);
           const d = s.daily || {};
           next.daily = { last: typeof d.last === "string" ? d.last : "", streak: whole(d.streak) };
-          next.turbo = Number(s.turbo) || 0;
+          next.turbo = clean(s.turbo);
           next.wheel = typeof s.wheel === "string" ? s.wheel : "";
           const q = s.quests || {};
           next.quests = {
@@ -1109,14 +1113,16 @@
       else try { localStorage.setItem(STORAGE_KEY, json); } catch {}
     }
 
+    // Writes at most once per 1.5 s while playing; purchases and leaving the app save at once (flush).
     function save() {
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(writeNow, 300);
+      if (saveTimer) return;
+      saveTimer = setTimeout(() => { saveTimer = null; writeNow(); }, 1500);
     }
 
     function flush() {
       if (!ready) return;
       clearTimeout(saveTimer);
+      saveTimer = null;
       writeNow();
     }
 
@@ -1217,6 +1223,7 @@
         </button>`;
     }
 
+    const canBuyUpgrade = () => UPGRADES.some((u) => upgradeVisible(u) && !isMax(u) && upgradeCost(u) <= state.score);
     const upgradeVisible = (u) => u.always || state.lv[u.id] > 0 || state.total >= u.base * 0.4;
 
     function upgradeItem(u) {
@@ -1337,7 +1344,8 @@
           });
         }).join("") + '<div class="section">Настройки</div>' +
           settingItem("sound", "Звук", "Тихие эффекты кликов, покупок и золотых монет") +
-          settingItem("haptic", "Вибрация", "Отклик при кликах и покупках в Telegram");
+          settingItem("haptic", "Вибрация", "Отклик при кликах и покупках в Telegram") +
+          itemHTML({ act: "share", cta: true, lead: iconTile("share", ["#4ea4f6", "#2563eb"]), name: "Пригласить друзей", desc: "Отправить ссылку на игру в Telegram", price: "Поделиться" });
       } else {
         listEl.innerHTML = rebirthCard() + '<div class="section">Бусты за кристаллы</div>' + BOOSTS.map((b) => itemHTML({
           act: `boost:${b.id}`, lead: iconTile(b.icon, b.grad), name: b.name, desc: b.desc(),
@@ -1418,6 +1426,8 @@
       updateRebirthCard();
       const sig = ready ? claimable().join(",") : "";
       document.querySelector('.tab[data-tab="rewards"]').classList.toggle("has-badge", sig !== "");
+      document.querySelector('.tab[data-tab="upgrades"]').classList.toggle("has-badge", ready && canBuyUpgrade());
+      document.querySelector('.tab[data-tab="rebirth"]').classList.toggle("has-badge", ready && rebirthGain() >= 2);
       if (sig !== rewardSig) {
         rewardSig = sig;
         if (tab === "rewards") keepScroll(renderList);
@@ -1661,6 +1671,13 @@
       }, 3500);
     }
 
+    function share() {
+      const text = "Заходи в Coin Clicker: копи монеты, открывай миры и скины!";
+      const url = `https://t.me/share/url?url=${encodeURIComponent(location.href.split("#")[0])}&text=${encodeURIComponent(text)}`;
+      if (tg && tg.openTelegramLink) tg.openTelegramLink(url);
+      else window.open(url, "_blank", "noopener");
+    }
+
     function toggleSetting(id) {
       state.settings[id] = !state.settings[id];
       if (id === "sound" && state.settings.sound) SFX.success();
@@ -1801,6 +1818,7 @@
       else if (kind === "boost") buyBoost(id);
       else if (kind === "spin") spin();
       else if (kind === "set") toggleSetting(id);
+      else if (kind === "share") share();
       else useSkin(id);
     });
 
