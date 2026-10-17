@@ -708,7 +708,7 @@
     const tg = window.Telegram && window.Telegram.WebApp;
     // Season 2 lives under its own key: a cached older copy of the page keeps reading and writing "state" and can no longer
     // strip the season mark from (and so reset) the new save.
-    const STORAGE_KEY = "s2", OLD_KEY = "state";
+    const STORAGE_KEY = "s3", OLD_KEYS = ["s2", "state"]; // season 3 has its own key; the older ones are only read to tell a returning player from a new one
 
     const svg = (body) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
     const ICONS = {
@@ -1295,6 +1295,31 @@
       ["passdiamond", "Алмазный пропуск", "★", 13, 195, 85, "squircle", ["holo", "orbit", "shine"], "checker", 1, 50, 2e8], ["passchamp", "Чемпионский пропуск", "★", 13, 300, 90, "squircle", ["holo", "orbit", "pulse", "shine"], "rays", 1, 60, 2e9],
     ].forEach((sp) => { SKINS.push({ ...makeSkin(sp.slice(0, 10), sp[11], { cost: sp[10] }), pass: sp[10] }); });
 
+    // Four tiers above everything else: 10 skins each, prices from 1e82 to 1e277, real click bonuses that keep rising.
+    {
+      const tiers = [
+        ["Запредельные", "#2dd4bf", ["Грань Миров", "Эхо Вечности", "Разрыв Реальности", "Сумеречный Император", "Хрональный Шторм", "Звёздный Разлом", "Лик Бездны", "Пепел Миров", "Врата Забвения", "Корона Пустоты"]],
+        ["Предвечные", "#f472b6", ["Первый Свет", "Семя Вселенной", "Колыбель Богов", "Древний Ураган", "Сердце Хаоса", "Печать Начала", "Исток Времён", "Дыхание Тьмы", "Песнь Мироздания", "Тень Творца"]],
+        ["Всемогущие", "#a3e635", ["Длань Судьбы", "Трон Мироздания", "Мировой Змей", "Око Всевидящего", "Меч Судного Дня", "Венец Богов", "Ткач Реальности", "Кузнец Звёзд", "Владыка Бытия", "Перст Творца"]],
+        ["Бесконечные", "#f8fafc", ["Бесконечный Цикл", "Вечный Огонь", "Последний Предел", "Омега-Альфа", "Дыхание Бесконечности", "Абсолютный Ноль", "Единый Кристалл", "Хроно-Сфера", "Мультиверс", "Точка Сингулярности"]],
+      ];
+      const gl = ["✺", "❂", "✹", "❖", "✦", "☼", "◉", "❃", "⁂", "✵", "♛", "⚜", "☄", "✸", "❋", "✷", "☸", "⚛", "♚", "✧"];
+      const shapes = [0, "squircle", "blob", "leaf", "square"];
+      const fxs = [["pulse", "orbit", "shine"], ["holo", "orbit", "spin"], ["flame", "pulse", "shine"], ["glitch", "orbit", "shine"], ["holo", "pulse", "orbit", "shine"]];
+      const pats = ["rays", "swirl", "grid", "checker", "waves", "stripes", "dots"];
+      let n = 0;
+      tiers.forEach(([title, color, names], t) => {
+        RARITY.push({ n: title, c: color });
+        const r = RARITY.length - 1;
+        names.forEach((name, i) => {
+          const lo = 82 + t * 50;
+          SKINS.push(makeSkin(["x" + (n + 1), name, gl[n % gl.length], r, (n * 53 + 20) % 360, 70 + (n * 11) % 30, shapes[(n + t) % 5], fxs[n % 5], pats[(n * 3 + t) % 7], n % 3 === 0 ? 0 : 1],
+            round2(Math.pow(10, 22 + t * 10 + (i * 8) / 9)), { cost: round2(Math.pow(10, lo + (i * 45) / 9)) }));
+          n++;
+        });
+      });
+    }
+
     // ---- forms of the clicked object (the coin can become a star, a heart, a gear...) ----
     const polyPts = (pts) => pts.map(([x, y]) => `${(50 + 50 * x).toFixed(1)}% ${(50 + 50 * y).toFixed(1)}%`).join(", ");
     const radial = (n, f, off = 0) => Array.from({ length: n }, (_, i) => { const a = (i / n) * Math.PI * 2 - Math.PI / 2 + off, r = f(a, i); return [Math.cos(a) * r, Math.sin(a) * r]; });
@@ -1629,14 +1654,18 @@
     const TALENT_MAX = 5, TALENT_COST = [1, 1, 2, 2, 3];
     // Leagues beyond Mythic: 142 more ("title + number"), each about x2.15 harder than the one before; league 150 needs about 5e59 coins.
     // Keep the titles in sync with leaderboard.py (the bot prints the league name).
-    const LEAGUE_TITLES = ["Титан", "Гигант", "Властелин", "Чемпион", "Мастер", "Гранд", "Архонт", "Страж", "Владыка", "Император", "Полубог", "Бог", "Демиург", "Творец", "Хранитель", "Вечный", "Космос", "Вселенная", "Мультивселенная", "Абсолют"];
+    const LEAGUE_TITLES = ["Титан", "Гигант", "Властелин", "Чемпион", "Мастер", "Гранд", "Архонт", "Страж", "Владыка", "Император", "Полубог", "Бог", "Демиург", "Творец", "Хранитель", "Вечный", "Космос", "Вселенная", "Мультиверс", "Абсолют"];
     for (let i = 0; i < 142; i++) {
       const h = (i * 37 + 200) % 360;
       LEAGUES.push({ n: i < 140 ? `${LEAGUE_TITLES[Math.floor(i / 7)]} ${["I", "II", "III", "IV", "V", "VI", "VII"][i % 7]}` : ["Предел", "Бесконечность"][i - 140],
         at: round2(5e12 * Math.pow(2.15, i + 1)), c: [hsl(h, 75, 72), hsl(h, 70, 40)] });
     }
-    const SEASON = 2, VERSION = "2.6";
+    const SEASON = 3, VERSION = "2.7";
     const CHANGELOG = [
+      { v: "2.7", t: "Сезон 3", season: true, items: [
+        "Все игроки начали заново: прогресс обнулён, топ очищен (настройки остались)",
+        "Четыре новые редкости скинов, каждая дороже всех прежних: «Запредельные», «Предвечные», «Всемогущие» и «Бесконечные», по 10 скинов с ценами от 1e82 до 1e277",
+        "Коллекция из всех 18 редкостей даёт +90% к доходу" ] },
       { v: "2.6", t: "Формы монеты и ещё куча контента", items: [
         "Формы монеты: 20 силуэтов (звезда, сердце, шестерня, цветок, молния, корона…), меняют и саму монету, и значок валюты («Награды» → «Форма»)",
         "Боевой пропуск на 60 уровней: опыт за клики, боссов и задания, награды монетами, кристаллами, питомцами и скинами",
@@ -1668,7 +1697,7 @@
         "Кристальный сундук (за кристаллы): случайный скин, аватарка, монеты или буст",
         "+30 скинов за монеты и +6 скинов за кристаллы",
         "+30 новых миров, всего 91" ] },
-      { v: "2.0", t: "Сезон 2", season: true, items: [
+      { v: "2.0", t: "Сезон 2", items: [
         "Перерождение теперь стоит монет: первое за 1 млн, каждое следующее в 32 раза дороже",
         "После перерождения улучшения дорожают в 16 раз, зато весь доход растёт навсегда",
         "Перерождения не копятся: одно за раз, за каждое фиксированная награда в кристаллах",
@@ -2075,9 +2104,9 @@
         const r = await readCloud(STORAGE_KEY);
         cloudOk = r.ok;
         cloudRaw = r.value;
-        if (r.ok && !cloudRaw) { const old = await readCloud(OLD_KEY, 2); cloudRaw = old.value; }
+        if (r.ok && !cloudRaw) for (const k of OLD_KEYS) { const old = await readCloud(k, 2); if (old.value) { cloudRaw = old.value; break; } }
       }
-      const cands = [cloudRaw, readLocal(STORAGE_KEY), readLocal(OLD_KEY)].filter(Boolean)
+      const cands = [cloudRaw, readLocal(STORAGE_KEY), ...OLD_KEYS.map(readLocal)].filter(Boolean)
         .map((raw) => ({ raw, st: stampOf(raw) })).filter((c) => c.st);
       const cur = cands.filter((c) => c.st.season === SEASON).sort((a, b) => b.st.seen - a.st.seen)[0];
       saveBlocked = !!cloud && !cloudOk && !cur;

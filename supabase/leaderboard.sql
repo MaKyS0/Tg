@@ -1,5 +1,5 @@
 -- Leaderboard for the Coin Clicker mini app (Supabase / Postgres).
--- Season 2: scores from older seasons are rejected (p_season), the table was cleared when the season started and rows now
+-- Season 3: scores from older seasons are rejected (p_season), the table was cleared when the season started and rows
 -- carry the avatar. Run once in the SQL editor of your project, then put the project URL and the publishable key into `TOP` in webapp/index.html.
 --
 -- Trust model: the Telegram id sent by the game is taken on trust (the bot token is not checked here), so the top is an
@@ -9,7 +9,7 @@
 create table if not exists public.leaderboard (
   tg_id bigint primary key check (tg_id > 0),
   name text not null check (char_length(name) between 1 and 24),
-  total numeric not null check (total >= 0 and total < 1e100),
+  total numeric not null check (total >= 0 and total < 1e300),
   rebirths integer not null default 0 check (rebirths between 0 and 1000000),
   league smallint not null default 0 check (league between 0 and 200),
   skin text check (skin is null or char_length(skin) <= 24),
@@ -22,7 +22,7 @@ alter table public.leaderboard add column if not exists avatar smallint not null
 alter table public.leaderboard drop constraint if exists leaderboard_league_check;
 alter table public.leaderboard add constraint leaderboard_league_check check (league between 0 and 200);
 alter table public.leaderboard drop constraint if exists leaderboard_total_check;
-alter table public.leaderboard add constraint leaderboard_total_check check (total >= 0 and total < 1e100);
+alter table public.leaderboard add constraint leaderboard_total_check check (total >= 0 and total < 1e300);
 
 create index if not exists leaderboard_total_idx on public.leaderboard (total desc, tg_id);
 create index if not exists leaderboard_rebirths_idx on public.leaderboard (rebirths desc, total desc);
@@ -49,9 +49,9 @@ declare
   av smallint;
   v_total numeric;
 begin
-  if p_season is distinct from 2 then raise exception 'old season'; end if; -- bump together with SEASON in webapp/index.html
+  if p_season is distinct from 3 then raise exception 'old season'; end if; -- bump together with SEASON in webapp/index.html
   if p_id is null or p_id <= 0 then raise exception 'bad id'; end if;
-  if p_total is null or p_total < 0 or p_total >= 1e100 then raise exception 'bad total'; end if;
+  if p_total is null or p_total < 0 or p_total >= 1e300 then raise exception 'bad total'; end if;
   nm := left(btrim(regexp_replace(coalesce(p_name, ''), '[[:cntrl:]]', '', 'g')), 24);
   if nm = '' then nm := 'Игрок'; end if;
   av := greatest(0, least(coalesce(p_avatar, 0), 200));
